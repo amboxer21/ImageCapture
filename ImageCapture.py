@@ -80,7 +80,7 @@ def get_location():
     if not location:
         return
     time.sleep(3)
-    Popen(["/opt/google/chrome/chrome --user-data-dir=/home/anthony/.imagecapture --no-sandbox https://justdrive-app.com/imagecapture/index.html?Email=#{sender}"], shell=True) 
+    Popen(["/opt/google/chrome/chrome --user-data-dir=/home/#{user}/.imagecapture --no-sandbox https://justdrive-app.com/imagecapture/index.html?Email=#{sender}"], shell=True) 
 
 def add_to_group():
     os.system("sudo usermod -a -G nopasswdlogin #{user}")
