@@ -62,13 +62,6 @@ allowsucessful = options.allowsucessful
 comm           = subprocess.Popen(["users"], shell=True, stdout=subprocess.PIPE)
 user           = re.search("(\w+)", str(comm.stdout.read())).group()
 
-def internet_on():
-    try:
-        urllib2.urlopen('http://www.google.com', timeout=1)
-        return True
-    except urllib2.URLError as err: 
-        return False
-
 def getHwAddr(ifname):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', ifname[:15]))
