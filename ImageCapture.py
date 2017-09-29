@@ -62,6 +62,28 @@ allowsucessful = options.allowsucessful
 comm           = subprocess.Popen(["users"], shell=True, stdout=subprocess.PIPE)
 user           = re.search("(\w+)", str(comm.stdout.read())).group()
 
+def connected():
+    try:
+        urllib2.urlopen('http://www.google.com', timeout=1)
+        return True
+    except urllib2.URLError as err:
+        return False
+
+def writeFile(msg):
+    if msg is not None:
+        open("/home/#{user}/.imagecapture/cache", "w").write(msg)
+    else:
+        return
+
+def readFile(string):
+    return open("/home/#{user}/.imagecapture/cache", "r").read() == string
+
+def writeCache(boolean_string):
+    if re.search("true|false", boolean_string, re.I|re.M):
+        writeFile(boolean_string)
+    else:
+        raise NameError("#{boolean_string} is not a known mode.")
+
 def getHwAddr(ifname):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', ifname[:15]))
@@ -72,8 +94,18 @@ def getHwAddr(ifname):
 def get_location():
     if not location:
         return
-    time.sleep(3)
-    Popen(["/opt/google/chrome/chrome --user-data-dir=/home/#{user}/.imagecapture --no-sandbox https://justdrive-app.com/imagecapture/index.html?Email=#{sender}"], shell=True) 
+    while readFile("true"):
+        if connected():
+            time.sleep(3)
+            call(["/opt/google/chrome/chrome", 
+                "--user-data-dir=/home/anthony/.imagecapture", "--no-sandbox", 
+                "https://justdrive-app.com/imagecapture/index.html?Email=amboxer21@gmail.com"])
+            if send_email:
+                send_mail(sender,to,password,port,'Failed GDM login!',
+                    "Someone tried to login into your computer and failed #{attempts} times.")
+            writeFile('false')
+        else
+            break
 
 def add_to_group():
     os.system("sudo usermod -a -G nopasswdlogin #{user}")
@@ -163,20 +195,19 @@ def tail_file(logfile):
             if initiate(count):
                 auto_login()
                 take_picture()
+                writeFile('true')
                 get_location()
-                if send_email:
-                    send_mail(sender,to,password,port,'Failed GDM login!',"Someone tried to login into your computer and failed #{attempts} times.")
             time.sleep(1)
         if s and allowsucessful:
             sys.stdout.write("Sucessful login via GDM at #{s.group(1)}:\n#{s.group()}\n\n")
             auto_login()
             take_picture()
+            writeFile('true')
             get_location()
-            if send_email:
-                send_mail(sender,to,password,port,'Sucessful GDM login!',"Someone logged into your computer.")
             time.sleep(1)
 
 clear_auto_login()
+get_location()
 
 while True:
     tail_file(logfile)
