@@ -6,6 +6,8 @@ import webbrowser as wb
 import sys,os,re,smtplib,fcntl,webbrowser
 import subprocess,time,cv2,socket,struct
 
+from name import user
+from fileops import ops
 from tailf import tailf
 from optparse import OptionParser
 
@@ -29,10 +31,7 @@ parser.add_option("-s", "--allow-sucessful", dest='allowsucessful', action="stor
 
 print "options: #{options}\n"
 
-def file_exists(file):
-    return os.path.exists(file)
-
-if not file_exists(options.logfile):
+if not ops.fileExists(options.logfile):
     logfile = '/var/log/auth.log'
 else:
     logfile = options.logfile
@@ -53,14 +52,13 @@ if options.password is not None:
 if options.password is None or options.email is None:
     send_email = False
 
+user           = user.name()
 port           = options.port
 clear          = options.clear
 attempts       = options.attempts
 location       = options.location
 enablecam      = options.enablecam
 allowsucessful = options.allowsucessful
-comm           = subprocess.Popen(["users"], shell=True, stdout=subprocess.PIPE)
-user           = re.search("(\w+)", str(comm.stdout.read())).group()
 
 def connected():
     try:
@@ -69,21 +67,6 @@ def connected():
     except urllib2.URLError as err:
         return False
 
-def writeFile(msg):
-    if msg is not None:
-        open("/home/#{user}/.imagecapture/cache", "w").write(msg)
-    else:
-        return
-
-def readFile(string):
-    return open("/home/#{user}/.imagecapture/cache", "r").read() == string
-
-def writeCache(boolean_string):
-    if re.search("true|false", boolean_string, re.I|re.M):
-        writeFile(boolean_string)
-    else:
-        raise NameError("#{boolean_string} is not a known mode.")
-
 def getHwAddr(ifname):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', ifname[:15]))
@@ -91,29 +74,29 @@ def getHwAddr(ifname):
 
 #print getHwAddr('wlo1')
 
-def get_location():
+def getLocation():
     if not location:
         return
-    while readFile("true"):
+    while readFile("true", user):
         if connected():
             time.sleep(3)
             call(["/opt/google/chrome/chrome", 
-                "--user-data-dir=/home/anthony/.imagecapture", "--no-sandbox", 
-                "https://justdrive-app.com/imagecapture/index.html?Email=amboxer21@gmail.com"])
+                "--user-data-dir=/home/#{user}/.imagecapture", "--no-sandbox", 
+                "https://justdrive-app.com/imagecapture/index.html?Email=#{to}"])
             if send_email:
-                send_mail(sender,to,password,port,'Failed GDM login!',
+                sendMail(sender,to,password,port,'Failed GDM login!',
                     "Someone tried to login into your computer and failed #{attempts} times.")
-            writeFile('false')
+            ops.writeFile('false', user)
         else
             break
 
-def add_to_group():
+def addToGroup():
     os.system("sudo usermod -a -G nopasswdlogin #{user}")
 
-def remove_from_group():
+def removeFromGroup():
     os.system("sudo gpasswd -d #{user} nopasswdlogin")
 
-def take_picture():
+def takePicture():
     camera = cv2.VideoCapture(video)
     if not camera.isOpened():
         print "No cam available at #{video}"
@@ -130,7 +113,7 @@ def take_picture():
     cv2.imwrite("intruder.png", image)
     del(camera)
 
-def send_mail(sender,to,password,port,subject,body):
+def sendMail(sender,to,password,port,subject,body):
     try:
         message = MIMEMultipart()
         message['Body'] = body
@@ -144,7 +127,7 @@ def send_mail(sender,to,password,port,subject,body):
     except smtplib.SMTPAuthenticationError:
         print "\nCould not athenticate with password and username!\n"
 
-def user_present(username):
+def userPresent(username):
     with open("/etc/group", "r") as f:
         for line in f:
             nop = re.search("^nopasswdlogin.*(#{username})",line)
@@ -153,24 +136,24 @@ def user_present(username):
             elif nop is not None and not nop:
                 return False 
 
-def auto_login_remove():
-    if not options.autologin and user_present(user):
-        remove_from_group()
+def autoLoginRemove():
+    if not options.autologin and userPresent(user):
+        removeFromGroup()
 
-def clear_auto_login():
+def clearAutoLogin():
     if len(sys.argv) > 2 and clear:
         print "Too many arguments for clear given. Exiting now." 
         sys.exit(1)
-    if clear and user_present(user):
-        remove_from_group()
+    if clear and userPresent(user):
+        removeFromGroup()
         sys.exit(1)
-    elif clear and not user_present(user):
+    elif clear and not userPresent(user):
         sys.exit(1)
 
-def auto_login():
+def autoLogin():
     if options.autologin:
         print "Automatically logging you in now."
-        add_to_group()
+        addToGroup()
   
 def initiate(count):
     if count == attempts or options.allowsucessful:
@@ -178,11 +161,11 @@ def initiate(count):
     else:
         return False
 
-def tail_file(logfile):
+def tailFile(logfile):
 
     count = 0
 
-    auto_login_remove()
+    autoLoginRemove()
 
     for line in tailf(logfile):
 
@@ -193,21 +176,21 @@ def tail_file(logfile):
             count += 1
             sys.stdout.write("Failed login via GDM at #{f.group(1)}:\n#{f.group()}\n\n")
             if initiate(count):
-                auto_login()
-                take_picture()
-                writeFile('true')
-                get_location()
+                autoLogin()
+                takePicture()
+                ops.writeFile('true', user)
+                getLocation()
             time.sleep(1)
         if s and allowsucessful:
             sys.stdout.write("Sucessful login via GDM at #{s.group(1)}:\n#{s.group()}\n\n")
-            auto_login()
-            take_picture()
-            writeFile('true')
-            get_location()
+            autoLogin()
+            takePicture()
+            ops.writeFile('true', user)
+            getLocation()
             time.sleep(1)
 
-clear_auto_login()
-get_location()
+clearAutoLogin()
+getLocation()
 
 while True:
-    tail_file(logfile)
+    tailFile(logfile)
