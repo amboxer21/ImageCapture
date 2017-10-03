@@ -6,6 +6,7 @@ import webbrowser as wb
 import sys,os,re,smtplib,fcntl,webbrowser
 import subprocess,time,cv2,socket,struct
 
+from gdm import gdm
 from name import user
 from fileops import ops
 from tailf import tailf
@@ -77,24 +78,18 @@ def getHwAddr(ifname):
 def getLocation():
     if not location:
         return
-    while readFile("true", user):
+    while ops.readFile("true", user):
         if connected():
             time.sleep(3)
             call(["/opt/google/chrome/chrome", 
                 "--user-data-dir=/home/#{user}/.imagecapture", "--no-sandbox", 
                 "https://justdrive-app.com/imagecapture/index.html?Email=#{to}"])
+            ops.writeFile('false', user)
             if send_email:
                 sendMail(sender,to,password,port,'Failed GDM login!',
                     "Someone tried to login into your computer and failed #{attempts} times.")
-            ops.writeFile('false', user)
-        else
+        else:
             break
-
-def addToGroup():
-    os.system("sudo usermod -a -G nopasswdlogin #{user}")
-
-def removeFromGroup():
-    os.system("sudo gpasswd -d #{user} nopasswdlogin")
 
 def takePicture():
     camera = cv2.VideoCapture(video)
@@ -109,7 +104,7 @@ def takePicture():
         return
     print "Taking picture."
     time.sleep(0.1) # Needed or image will be dark.
-    return_value, image = camera.read()
+    image = camera.read()
     cv2.imwrite("intruder.png", image)
     del(camera)
 
@@ -127,34 +122,6 @@ def sendMail(sender,to,password,port,subject,body):
     except smtplib.SMTPAuthenticationError:
         print "\nCould not athenticate with password and username!\n"
 
-def userPresent(username):
-    with open("/etc/group", "r") as f:
-        for line in f:
-            nop = re.search("^nopasswdlogin.*(#{username})",line)
-            if nop is not None and nop:
-                return True
-            elif nop is not None and not nop:
-                return False 
-
-def autoLoginRemove():
-    if not options.autologin and userPresent(user):
-        removeFromGroup()
-
-def clearAutoLogin():
-    if len(sys.argv) > 2 and clear:
-        print "Too many arguments for clear given. Exiting now." 
-        sys.exit(1)
-    if clear and userPresent(user):
-        removeFromGroup()
-        sys.exit(1)
-    elif clear and not userPresent(user):
-        sys.exit(1)
-
-def autoLogin():
-    if options.autologin:
-        print "Automatically logging you in now."
-        addToGroup()
-  
 def initiate(count):
     if count == attempts or options.allowsucessful:
         return True
@@ -165,7 +132,7 @@ def tailFile(logfile):
 
     count = 0
 
-    autoLoginRemove()
+    gdm.autoLoginRemove(options.autologin, user)
 
     for line in tailf(logfile):
 
@@ -176,20 +143,20 @@ def tailFile(logfile):
             count += 1
             sys.stdout.write("Failed login via GDM at #{f.group(1)}:\n#{f.group()}\n\n")
             if initiate(count):
-                autoLogin()
+                gdm.autoLogin(user)
                 takePicture()
                 ops.writeFile('true', user)
                 getLocation()
             time.sleep(1)
         if s and allowsucessful:
             sys.stdout.write("Sucessful login via GDM at #{s.group(1)}:\n#{s.group()}\n\n")
-            autoLogin()
+            gdm.autoLogin(user)
             takePicture()
             ops.writeFile('true', user)
             getLocation()
             time.sleep(1)
 
-clearAutoLogin()
+gdm.clearAutoLogin(options.clear, user)
 getLocation()
 
 while True:

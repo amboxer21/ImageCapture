@@ -9,6 +9,11 @@ if [[ $EUID != 0 ]]; then
   exit;
 fi
 
+usage() {
+  echo -e "USAGE: sudo bash Build/Debian/build.sh <email> <password>";
+  exit;
+};
+
 if [[ $# != 2 ]]; then
   usage;
 elif [[ $# > 2 ]]; then
@@ -28,11 +33,6 @@ if [[ ! -e $config_dir ]]; then
 else
   echo -e "Config already exists.";
 fi
-
-usage() {
-  echo -e "USAGE: sudo bash Build/Debian/build.sh <email> <password>";
-  exit;
-};
 
 write_to_config() {
   echo -e "Write credentials(E-mail: $1 - Password: $2) to file? ";
