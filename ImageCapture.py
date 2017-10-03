@@ -121,6 +121,9 @@ def sendMail(sender,to,password,port,subject,body):
         print "\nSent email successfully.\n"
     except smtplib.SMTPAuthenticationError:
         print "\nCould not athenticate with password and username!\n"
+    except:
+        print("Unexpected error in sendMail():", sys.exc_info()[0])
+        raise
 
 def initiate(count):
     if count == attempts or options.allowsucessful:

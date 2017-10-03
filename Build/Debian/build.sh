@@ -105,7 +105,7 @@ for i in interpy pytailf opencv-python; do
   install_dep 'pip' $i;
 done
 
-for i in libopencv-dev python-opencv python-dev; do
+for i in libopencv-dev python-opencv python-dev procmail sendmail-base sendmail-bin sendmail-cf sensible-mda; do
   install_dep 'bash' $i;
 done
 
