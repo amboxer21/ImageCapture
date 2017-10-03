@@ -29,7 +29,7 @@ parser.add_option("-C", "--clear-autologin", dest='clear', action="store_true", 
 parser.add_option("-s", "--allow-sucessful", dest='allowsucessful', action="store_true", default=False, help="Run ImageCapture even if login is sucessful.")
 (options, args) = parser.parse_args()
 
-print "options: #{options}\n"
+print "\noptions: #{options}\n"
 
 if not ops.fileExists(options.logfile):
     logfile = '/var/log/auth.log'
