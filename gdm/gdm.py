@@ -27,7 +27,6 @@ def clearAutoLogin(clear, user):
         print "Too many arguments for clear given. Exiting now."
         sys.exit(1)
     if clear and userPresent(user):
-        print "Removing #{user} from nopasswordlogin group."
         removeFromGroup(user)
         sys.exit(1)
     elif clear and not userPresent(user):
