@@ -16,17 +16,28 @@ from email.MIMEImage import MIMEImage
 from email.MIMEMultipart import MIMEMultipart
 
 parser = OptionParser()
-parser.add_option("-e", "--email", dest='email')
-parser.add_option("-p", "--password", dest='password')
-parser.add_option("-v", "--video", dest='video', default=0, help="Specify camera location.")
-parser.add_option("-P", "--port", dest='port', default=587, help="E-mail port defaults to 587 if not specified.")
-parser.add_option("-a", "--attempts", dest='attempts', default=3, help="Number of failed attempts defaults to 3.")
-parser.add_option("-L", "--location", dest='location', action="store_true", default=False, help="Enable location capturing.") 
-parser.add_option("-l", "--log-file", dest='logfile', default='/var/log/auth.log', help="Tail log defaults to /var/log/auth.log.")
-parser.add_option("-c", "--enable-cam", dest='enablecam', action="store_true", default=False, help="Enable cam capture of intruder.")
-parser.add_option("-A", "--auto-login", dest='autologin', action="store_true", default=False, help="Auto login user after no of failed attempts.")
-parser.add_option("-C", "--clear-autologin", dest='clear', action="store_true", default=False, help="Remove autologin. Must be root to use this feature.")
-parser.add_option("-s", "--allow-sucessful", dest='allowsucessful', action="store_true", default=False, help="Run ImageCapture even if login is sucessful.")
+parser.add_option("-e",
+    "--email", dest='email')
+parser.add_option("-p",
+    "--password", dest='password')
+parser.add_option("-v",
+    "--video", dest='video', default=0, help="Specify camera location.")
+parser.add_option("-P", 
+    "--port", dest='port', default=587, help="E-mail port defaults to 587 if not specified.")
+parser.add_option("-a",
+    "--attempts", dest='attempts', default=3, help="Number of failed attempts defaults to 3.")
+parser.add_option("-L",
+    "--location", dest='location', action="store_true", default=False, help="Enable location capturing.") 
+parser.add_option("-l",
+    "--log-file", dest='logfile', default='/var/log/auth.log', help="Tail log defaults to /var/log/auth.log.")
+parser.add_option("-c",
+    "--enable-cam", dest='enablecam', action="store_true", default=False, help="Enable cam capture of intruder.")
+parser.add_option("-A",
+    "--auto-login", dest='autologin', action="store_true", default=False, help="Auto login user after no of failed attempts.")
+parser.add_option("-C",
+    "--clear-autologin", dest='clear', action="store_true", default=False, help="Remove autologin. Must be root to use this feature.")
+parser.add_option("-s",
+    "--allow-sucessful", dest='allowsucessful', action="store_true", default=False, help="Run ImageCapture even if login is sucessful.")
 (options, args) = parser.parse_args()
 
 print "\noptions: #{options}\n"
