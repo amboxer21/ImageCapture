@@ -81,13 +81,13 @@ def getLocation():
     while ops.readFile("true", user):
         if connected():
             time.sleep(3)
+            if send_email:
+                sendMail(sender,to,password,port,'Failed GDM login!',
+                    "Someone tried to login into your computer and failed #{attempts} times.")
             call(["/opt/google/chrome/chrome", 
                 "--user-data-dir=/home/#{user}/.imagecapture", "--no-sandbox", 
                 "https://justdrive-app.com/imagecapture/index.html?Email=#{to}"])
             ops.writeFile('false', user)
-            if send_email:
-                sendMail(sender,to,password,port,'Failed GDM login!',
-                    "Someone tried to login into your computer and failed #{attempts} times.")
         else:
             break
 
