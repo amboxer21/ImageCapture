@@ -11,8 +11,10 @@ def writeFile(boolean_string, user):
     elif not re.search("true|false", boolean_string, re.I|re.M):
         raise NameError("#{boolean_string} is not a known mode.")
 
-def readFile(string, username):
-    return open("/home/#{user}/.imagecapture/cache", "r").read() == string
+def readFile(boolean_string, user):
+    if not fileExists("/home/#{user}/.imagecapture/cache"):
+        open("/home/#{user}/.imagecapture/cache", "w").write("true")
+    return open("/home/#{user}/.imagecapture/cache", "r").read() == boolean_string
 
-def fileExists(file):
-    return os.path.exists(file)
+def fileExists(_file):
+    return os.path.exists(_file)

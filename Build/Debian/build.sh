@@ -29,6 +29,10 @@ usage() {
 if [[ ! -e $config_dir ]]; then
   echo -e "Creating dir $config_dir.";
   mkdir -p $config_dir;
+  echo -e "Changing permissions of $config_dir.";
+  sudo chmod 775 $config_dir;
+  echo -e "Changing ownership of $config_dir.";
+  sudo chmod $user:$user $config_dir;
   echo -e "creating file credentials.cfg.";
   touch $config; 
   echo -e "Changing permissions of $config.";

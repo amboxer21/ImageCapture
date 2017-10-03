@@ -4,7 +4,7 @@
 import webbrowser as wb
 
 import sys,os,re,smtplib,fcntl,webbrowser
-import subprocess,time,cv2,socket,struct
+import subprocess,time,cv2,socket,struct,urllib2
 
 from gdm import gdm
 from name import user
@@ -12,8 +12,8 @@ from fileops import ops
 from tailf import tailf
 from optparse import OptionParser
 
+from subprocess import Popen, call
 from email.MIMEImage import MIMEImage
-from subprocess import Popen, check_call
 from email.MIMEMultipart import MIMEMultipart
 
 parser = OptionParser()
@@ -104,8 +104,8 @@ def takePicture():
         return
     print "Taking picture."
     time.sleep(0.1) # Needed or image will be dark.
-    image = camera.read()
-    cv2.imwrite("intruder.png", image)
+    image = camera.read()[1]
+    cv2.imwrite("/home/#{user}/.imagecapture/intruder.png", image)
     del(camera)
 
 def sendMail(sender,to,password,port,subject,body):
@@ -113,7 +113,7 @@ def sendMail(sender,to,password,port,subject,body):
         message = MIMEMultipart()
         message['Body'] = body
         message['Subject'] = subject
-        message.attach(MIMEImage(file("intruder.png").read()))
+        message.attach(MIMEImage(file("/home/#{user}/.imagecapture/intruder.png").read()))
         mail = smtplib.SMTP('smtp.gmail.com',port)
         mail.starttls()
         mail.login(sender,password)
@@ -143,14 +143,14 @@ def tailFile(logfile):
             count += 1
             sys.stdout.write("Failed login via GDM at #{f.group(1)}:\n#{f.group()}\n\n")
             if initiate(count):
-                gdm.autoLogin(user)
+                gdm.autoLogin(options.autologin, user)
                 takePicture()
                 ops.writeFile('true', user)
                 getLocation()
             time.sleep(1)
         if s and allowsucessful:
             sys.stdout.write("Sucessful login via GDM at #{s.group(1)}:\n#{s.group()}\n\n")
-            gdm.autoLogin(user)
+            gdm.autoLogin(options.autologin, user)
             takePicture()
             ops.writeFile('true', user)
             getLocation()
