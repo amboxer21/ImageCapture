@@ -16,6 +16,11 @@ elif [[ $# > 2 ]]; then
   exit;
 fi
 
+usage() {
+  echo -e "USAGE: sudo bash Build/Debian/build.sh <email> <password>";
+  exit;
+};
+
 if [[ ! -e $config_dir ]]; then
   echo -e "Creating dir $config_dir.";
   mkdir -p $config_dir;
@@ -28,11 +33,6 @@ if [[ ! -e $config_dir ]]; then
 else
   echo -e "Config already exists.";
 fi
-
-usage() {
-  echo -e "USAGE: sudo bash Build/Debian/build.sh <email> <password>";
-  exit;
-};
 
 write_to_config() {
   echo -e "Write credentials(E-mail: $1 - Password: $2) to file? ";
@@ -92,13 +92,22 @@ for i in mdm.conf common-auth; do
   copy_scripts_to_path '/etc/pam.d' $i;
 done
 
-for i in interpy pytailf; do
+for i in interpy pytailf opencv-python; do
   install_dep 'pip' $i;
 done
 
-for i in libopencv-dev python-opencv; do
+for i in libopencv-dev python-opencv python-dev; do
   install_dep 'bash' $i;
 done
+
+if [[ ! opencv_version 2> /dev/null | egrep -o "^3\.[0-9]\.[0-9]" ]]; then
+  echo -e "Please install OpenCV 3.X.X from source before continuing.";
+  return;
+else
+  if [[ pip list 2> /dev/null | egrep --color -i opencv-python && -e /usr/local/lib/python2.7/dist-packages/cv2 ]]; then
+    sudo find / -type f -name "cv2.so" \( ! -wholename '/usr/local/lib/python2.7/dist-packages/*' \) -exec cp -i {} /usr/local/lib/python2.7/dist-packages/cv2/ \;
+  fi
+fi
 
 for i in ImageCapture.py is_imagecapture_running.sh; do 
   copy_scripts_to_path '/usr/local/bin' $i;
