@@ -4,13 +4,16 @@
 import webbrowser as wb
 
 import sys,os,re,smtplib,fcntl,webbrowser
-import subprocess,time,cv2,socket,struct
+import subprocess,time,cv2,socket,struct,urllib2
 
+from gdm import gdm
+from name import user
+from fileops import ops
 from tailf import tailf
 from optparse import OptionParser
 
+from subprocess import Popen, call
 from email.MIMEImage import MIMEImage
-from subprocess import Popen, check_call
 from email.MIMEMultipart import MIMEMultipart
 
 parser = OptionParser()
@@ -29,10 +32,7 @@ parser.add_option("-s", "--allow-sucessful", dest='allowsucessful', action="stor
 
 print "options: #{options}\n"
 
-def file_exists(file):
-    return os.path.exists(file)
-
-if not file_exists(options.logfile):
+if not ops.fileExists(options.logfile):
     logfile = '/var/log/auth.log'
 else:
     logfile = options.logfile
@@ -53,20 +53,19 @@ if options.password is not None:
 if options.password is None or options.email is None:
     send_email = False
 
+user           = user.name()
 port           = options.port
 clear          = options.clear
 attempts       = options.attempts
 location       = options.location
 enablecam      = options.enablecam
 allowsucessful = options.allowsucessful
-comm           = subprocess.Popen(["users"], shell=True, stdout=subprocess.PIPE)
-user           = re.search("(\w+)", str(comm.stdout.read())).group()
 
-def internet_on():
+def connected():
     try:
         urllib2.urlopen('http://www.google.com', timeout=1)
         return True
-    except urllib2.URLError as err: 
+    except urllib2.URLError as err:
         return False
 
 def getHwAddr(ifname):
@@ -76,19 +75,23 @@ def getHwAddr(ifname):
 
 #print getHwAddr('wlo1')
 
-def get_location():
+def getLocation():
     if not location:
         return
-    time.sleep(3)
-    Popen(["/opt/google/chrome/chrome --user-data-dir=/home/#{user}/.imagecapture --no-sandbox https://justdrive-app.com/imagecapture/index.html?Email=#{sender}"], shell=True) 
+    while ops.readFile("true", user):
+        if connected():
+            time.sleep(3)
+            if send_email:
+                sendMail(sender,to,password,port,'Failed GDM login!',
+                    "Someone tried to login into your computer and failed #{attempts} times.")
+            call(["/opt/google/chrome/chrome", 
+                "--user-data-dir=/home/#{user}/.imagecapture", "--no-sandbox", 
+                "https://justdrive-app.com/imagecapture/index.html?Email=#{to}"])
+            ops.writeFile('false', user)
+        else:
+            break
 
-def add_to_group():
-    os.system("sudo usermod -a -G nopasswdlogin #{user}")
-
-def remove_from_group():
-    os.system("sudo gpasswd -d #{user} nopasswdlogin")
-
-def take_picture():
+def takePicture():
     camera = cv2.VideoCapture(video)
     if not camera.isOpened():
         print "No cam available at #{video}"
@@ -101,16 +104,16 @@ def take_picture():
         return
     print "Taking picture."
     time.sleep(0.1) # Needed or image will be dark.
-    return_value, image = camera.read()
-    cv2.imwrite("intruder.png", image)
+    image = camera.read()[1]
+    cv2.imwrite("/home/#{user}/.imagecapture/intruder.png", image)
     del(camera)
 
-def send_mail(sender,to,password,port,subject,body):
+def sendMail(sender,to,password,port,subject,body):
     try:
         message = MIMEMultipart()
         message['Body'] = body
         message['Subject'] = subject
-        message.attach(MIMEImage(file("intruder.png").read()))
+        message.attach(MIMEImage(file("/home/#{user}/.imagecapture/intruder.png").read()))
         mail = smtplib.SMTP('smtp.gmail.com',port)
         mail.starttls()
         mail.login(sender,password)
@@ -118,46 +121,21 @@ def send_mail(sender,to,password,port,subject,body):
         print "\nSent email successfully.\n"
     except smtplib.SMTPAuthenticationError:
         print "\nCould not athenticate with password and username!\n"
+    except:
+        print("Unexpected error in sendMail():", sys.exc_info()[0])
+        raise
 
-def user_present(username):
-    with open("/etc/group", "r") as f:
-        for line in f:
-            nop = re.search("^nopasswdlogin.*(#{username})",line)
-            if nop is not None and nop:
-                return True
-            elif nop is not None and not nop:
-                return False 
-
-def auto_login_remove():
-    if not options.autologin and user_present(user):
-        remove_from_group()
-
-def clear_auto_login():
-    if len(sys.argv) > 2 and clear:
-        print "Too many arguments for clear given. Exiting now." 
-        sys.exit(1)
-    if clear and user_present(user):
-        remove_from_group()
-        sys.exit(1)
-    elif clear and not user_present(user):
-        sys.exit(1)
-
-def auto_login():
-    if options.autologin:
-        print "Automatically logging you in now."
-        add_to_group()
-  
 def initiate(count):
     if count == attempts or options.allowsucessful:
         return True
     else:
         return False
 
-def tail_file(logfile):
+def tailFile(logfile):
 
     count = 0
 
-    auto_login_remove()
+    gdm.autoLoginRemove(options.autologin, user)
 
     for line in tailf(logfile):
 
@@ -168,22 +146,21 @@ def tail_file(logfile):
             count += 1
             sys.stdout.write("Failed login via GDM at #{f.group(1)}:\n#{f.group()}\n\n")
             if initiate(count):
-                auto_login()
-                take_picture()
-                get_location()
-                if send_email:
-                    send_mail(sender,to,password,port,'Failed GDM login!',"Someone tried to login into your computer and failed #{attempts} times.")
+                gdm.autoLogin(options.autologin, user)
+                takePicture()
+                ops.writeFile('true', user)
+                getLocation()
             time.sleep(1)
         if s and allowsucessful:
             sys.stdout.write("Sucessful login via GDM at #{s.group(1)}:\n#{s.group()}\n\n")
-            auto_login()
-            take_picture()
-            get_location()
-            if send_email:
-                send_mail(sender,to,password,port,'Sucessful GDM login!',"Someone logged into your computer.")
+            gdm.autoLogin(options.autologin, user)
+            takePicture()
+            ops.writeFile('true', user)
+            getLocation()
             time.sleep(1)
 
-clear_auto_login()
+gdm.clearAutoLogin(options.clear, user)
+getLocation()
 
 while True:
-    tail_file(logfile)
+    tailFile(logfile)
