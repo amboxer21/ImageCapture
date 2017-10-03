@@ -2,16 +2,15 @@
 # coding: interpy
 
 import webbrowser as wb
+import modules.gdm.gdm as gdm
+import modules.name.user as user
+import modules.fileops.ops as ops
 
 import sys,os,re,smtplib,fcntl,webbrowser
 import subprocess,time,cv2,socket,struct,urllib2
 
-from gdm import gdm
-from name import user
-from fileops import ops
 from tailf import tailf
 from optparse import OptionParser
-
 from subprocess import Popen, call
 from email.MIMEImage import MIMEImage
 from email.MIMEMultipart import MIMEMultipart
