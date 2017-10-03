@@ -9,6 +9,11 @@ if [[ $EUID != 0 ]]; then
   exit;
 fi
 
+usage() {
+  echo -e "USAGE: sudo bash Build/Debian/build.sh <email> <password>";
+  exit;
+};
+
 if [[ $# != 2 ]]; then
   usage;
 elif [[ $# > 2 ]]; then
