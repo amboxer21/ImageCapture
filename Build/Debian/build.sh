@@ -115,6 +115,10 @@ if [[ ! opencv_version 2> /dev/null | egrep -o "^3\.[0-9]\.[0-9]" ]]; then
 else
   if [[ pip list 2> /dev/null | egrep --color -i opencv-python && -e /usr/local/lib/python2.7/dist-packages/cv2 ]]; then
     sudo find / -type f -name "cv2.so" \( ! -wholename '/usr/local/lib/python2.7/dist-packages/*' \) -exec cp -i {} /usr/local/lib/python2.7/dist-packages/cv2/ \;
+    echo -e "Copying source compiled cv2 shared object into /usr/local/lib/python2.7/dist-packages/";
+  else
+    echo -e "Failed to copy the source compiled cv2 shared object\nto /usr/local/lib/python2.7/dist-packages/cv2/. Exiting now!";
+    exit;
   fi
 fi
 
