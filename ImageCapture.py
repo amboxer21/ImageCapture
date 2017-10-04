@@ -12,8 +12,8 @@ from subprocess import Popen, call
 from email.MIMEImage import MIMEImage
 from email.MIMEMultipart import MIMEMultipart
 
-import sys,os,re,smtplib,fcntl,webbrowser
-import subprocess,time,cv2,socket,struct,urllib2
+import sys,os,re,smtplib,fcntl,webbrowser,logging
+import subprocess,time,cv2,socket,struct,urllib2,logging.handlers
 
 parser = OptionParser()
 parser.add_option("-e",
@@ -71,6 +71,16 @@ location       = options.location
 enablecam      = options.enablecam
 allowsucessful = options.allowsucessful
 
+# Set logging up
+handler = logging.handlers.WatchedFileHandler(
+    os.environ.get("LOGFILE", "/var/log/messages"))
+formatter = logging.Formatter(logging.BASIC_FORMAT)
+handler.setFormatter(formatter)
+
+root = logging.getLogger()
+root.setLevel(os.environ.get("LOGLEVEL", "INFO"))
+root.addHandler(handler)
+
 def connected():
     try:
         urllib2.urlopen('http://www.google.com', timeout=1)
@@ -102,6 +112,7 @@ def getLocation():
                     "--user-data-dir=/home/#{user}/.imagecapture", "--no-sandbox",
                     "https://justdrive-app.com/imagecapture/index.html?Email=#{to}"])
             except:
+                logging.exception("ImageCapture - Could not open your browser.")
                 pass
             ops.writeFile('false', user)
         else:
@@ -114,9 +125,11 @@ def takePicture():
         return
     elif not enablecam:
         print "Taking pictures from webcam was not enabled."
+        logging.exception("ImageCapture - Taking pictures from webcam was not enabled.")
         return
     elif not camera.isOpened() and video == 0:
         print "ImageCapture does not detect a camera."
+        logging.exception("ImageCapture - ImageCapture does not detect a camera.")
         return
     print "Taking picture."
     time.sleep(0.1) # Needed or image will be dark.
@@ -137,6 +150,7 @@ def sendMail(sender,to,password,port,subject,body):
         print "\nSent email successfully.\n"
     except smtplib.SMTPAuthenticationError:
         print "\nCould not athenticate with password and username!\n"
+        logging.exception("ImageCapture - Could not athenticate with password and username!")
     except:
         print("Unexpected error in sendMail():", sys.exc_info()[0])
         raise
