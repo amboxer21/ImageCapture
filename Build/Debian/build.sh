@@ -105,7 +105,7 @@ for i in interpy pytailf opencv-python; do
   install_dep 'pip' $i;
 done
 
-for i in libopencv-dev python-opencv python-dev procmail sendmail-base sendmail-bin sendmail-cf sensible-mda; do
+for i in libopencv-dev python-opencv python-dev procmail sendmail-base sendmail-bin sendmail-cf sensible-mda syslog-ng; do
   install_dep 'bash' $i;
 done
 
@@ -130,6 +130,8 @@ for i in ImageCapture.py is_imagecapture_running.sh; do
   echo -e "Changing ownership of $i";
   sudo chown $user:$user /usr/local/bin/$i;
 done
+
+sudo cp -R modules /usr/local/bin/;
 
 if [[ `egrep -io "-e 'username' -p 'password' &" /usr/local/bin/is_imagecapture_running.sh` ]]; then
   echo -e "Modifying daemon script and adding username and password.";
