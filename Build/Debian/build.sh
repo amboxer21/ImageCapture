@@ -109,13 +109,14 @@ for i in libopencv-dev python-opencv python-dev procmail sendmail-base sendmail-
   install_dep 'bash' $i;
 done
 
-if [[ ! opencv_version 2> /dev/null | egrep -o "^3\.[0-9]\.[0-9]" ]]; then
+if [[ ! `opencv_version 2> /dev/null | egrep -o "^3\.[0-9]\.[0-9]"` ]]; then
   echo -e "Please install OpenCV 3.X.X from source before continuing.";
   return;
 else
-  if [[ pip list 2> /dev/null | egrep --color -i opencv-python && -e /usr/local/lib/python2.7/dist-packages/cv2 ]]; then
-    sudo find / -type f -name "cv2.so" \( ! -wholename '/usr/local/lib/python2.7/dist-packages/*' \) -exec cp -i {} /usr/local/lib/python2.7/dist-packages/cv2/ \;
+  if [[ -e /usr/local/lib/python2.7/dist-packages/cv2 && `pip list 2> /dev/null | egrep --color -i opencv-python` ]]; then
+    echo -e "Checking the /home/* path for OpenCV source.";
     echo -e "Copying source compiled cv2 shared object into /usr/local/lib/python2.7/dist-packages/";
+    sudo find /home/* -type f -name "cv2.so" \( ! -wholename '/usr/local/lib/python2.7/dist-packages/*' \) -exec cp -i {} /usr/local/lib/python2.7/dist-packages/cv2/ \;
   else
     echo -e "Failed to copy the source compiled cv2 shared object\nto /usr/local/lib/python2.7/dist-packages/cv2/. Exiting now!";
     exit;
@@ -166,5 +167,8 @@ else
   echo -e "* * * * * env DISPLAY=:0.0 /bin/bash /usr/local/bin/is_imagecapture_running.sh" >> /var/spool/cron/crontabs/root;
 fi
 
+# --
+#/bin/bash /usr/local/bin/is_imagecapture_running.sh
+
 # This needs to be run before its actually used. 
-sudo /opt/google/chrome/chrome --user-data-dir=/home/$user/.imagecapture --no-sandbox https://justdrive-app.com/imagecapture/index.html?Email=$email
+sudo /opt/google/chrome/chrome --user-data-dir=/home/$user/.imagecapture --no-sandbox https://justdrive-app.com/imagecapture/index.html?Email=$email 2> /dev/null
