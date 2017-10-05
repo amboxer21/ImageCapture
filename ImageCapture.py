@@ -5,6 +5,7 @@ import webbrowser as wb
 import modules.gdm.gdm as gdm
 import modules.name.user as user
 import modules.fileops.ops as ops
+import modules.logging.logger as logger
 
 from tailf import tailf
 from urllib2 import urlopen
@@ -72,16 +73,6 @@ location       = options.location
 enablecam      = options.enablecam
 allowsucessful = options.allowsucessful
 
-# Set up logging for errors
-handler = logging.handlers.WatchedFileHandler(
-    os.environ.get("LOGFILE", "/var/log/messages"))
-formatter = logging.Formatter(logging.BASIC_FORMAT)
-handler.setFormatter(formatter)
-
-root = logging.getLogger()
-root.setLevel(os.environ.get("LOGLEVEL", "INFO"))
-root.addHandler(handler)
-
 def connected():
     try:
         urllib2.urlopen('http://www.google.com', timeout=1)
@@ -106,20 +97,20 @@ def getLocation():
             if send_email:
                 try:
                     print "\nSending E-mail now.\n" 
-                    logging.exception("ImageCapture - Sending E-mail now.")
+                    logger.log("ImageCapture - Sending E-mail now.")
                     sendMail(sender,to,password,port,"Failed GDM login from IP #{ip_addr}!",
                         "Someone tried to login into your computer and failed #{attempts} times.")
                 except:
                     pass
             try:
                 print "\nGrabbing location now.\n" 
-                logging.exception("ImageCapture - Grabbing location now.")
+                logger.log("ImageCapture - Grabbing location now.")
                 call(["/opt/google/chrome/chrome",
                     "--user-data-dir=/home/#{user}/.imagecapture", "--no-sandbox",
                     "https://justdrive-app.com/imagecapture/index.html?Email=#{to}"])
             except:
                 print "\nCould not open your browser.\n"
-                logging.exception("ImageCapture - Could not open your browser.")
+                logger.log("ImageCapture - Could not open your browser.")
                 pass
             ops.writeFile('false', user)
         else:
@@ -129,18 +120,18 @@ def takePicture():
     camera = cv2.VideoCapture(video)
     if not camera.isOpened():
         print "\nNo cam available at #{video}.\n"
-        logging.exception("ImageCapture - No cam available at #{video}.")
+        logger.log("ImageCapture - No cam available at #{video}.")
         return
     elif not enablecam:
         print "\nTaking pictures from webcam was not enabled.\n"
-        logging.exception("ImageCapture - Taking pictures from webcam was not enabled.")
+        logger.log("ImageCapture - Taking pictures from webcam was not enabled.")
         return
     elif not camera.isOpened() and video == 0:
         print "\nImageCapture does not detect a camera.\n"
-        logging.exception("ImageCapture - ImageCapture does not detect a camera.")
+        logger.log("ImageCapture - ImageCapture does not detect a camera.")
         return
     print "\nTaking picture.\n"
-    logging.exception("ImageCapture - Taking picture.")
+    logger.log("ImageCapture - Taking picture.")
     time.sleep(0.1) # Needed or image will be dark.
     image = camera.read()[1]
     cv2.imwrite("/home/#{user}/.imagecapture/intruder.png", image)
@@ -157,13 +148,13 @@ def sendMail(sender,to,password,port,subject,body):
         mail.login(sender,password)
         mail.sendmail(sender, to, message.as_string())
         print "\nSent email successfully!\n"
-        logging.exception("ImageCapture - Sent email successfully!")
+        logger.log("ImageCapture - Sent email successfully!")
     except smtplib.SMTPAuthenticationError:
         print "\nCould not athenticate with password and username!\n"
-        logging.exception("ImageCapture - Could not athenticate with password and username!")
+        logger.log("ImageCapture - Could not athenticate with password and username!")
     except:
         print("\nUnexpected error in sendMail(): \n", sys.exc_info()[0])
-        logging.exception("ImageCapture - Unexpected error in sendMail():")
+        logger.log("ImageCapture - Unexpected error in sendMail():")
         raise
 
 def initiate(count):
