@@ -12,3 +12,4 @@ def log(message):
     root.setLevel(os.environ.get("LOGLEVEL", "INFO"))
     root.addHandler(handler)
     logging.exception("ImageCapture - " + message)
+    print "#{message}"
