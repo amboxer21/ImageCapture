@@ -7,6 +7,7 @@ import modules.name.user as user
 import modules.fileops.ops as ops
 
 from tailf import tailf
+from urllib2 import urlopen
 from optparse import OptionParser
 from subprocess import Popen, call
 from email.MIMEImage import MIMEImage
@@ -71,7 +72,7 @@ location       = options.location
 enablecam      = options.enablecam
 allowsucessful = options.allowsucessful
 
-# Set logging up
+# Set up logging for errors
 handler = logging.handlers.WatchedFileHandler(
     os.environ.get("LOGFILE", "/var/log/messages"))
 formatter = logging.Formatter(logging.BASIC_FORMAT)
@@ -100,18 +101,24 @@ def getLocation():
         return
     while ops.readFile("true", user):
         if connected():
+            ip_addr = urlopen('http://ip.42.pl/raw').read()
             time.sleep(3)
             if send_email:
                 try:
-                    sendMail(sender,to,password,port,'Failed GDM login!',
+                    print "\nSending E-mail now.\n" 
+                    logging.exception("ImageCapture - Sending E-mail now.")
+                    sendMail(sender,to,password,port,"Failed GDM login from IP #{ip_addr}!",
                         "Someone tried to login into your computer and failed #{attempts} times.")
                 except:
                     pass
             try:
+                print "\nGrabbing location now.\n" 
+                logging.exception("ImageCapture - Grabbing location now.")
                 call(["/opt/google/chrome/chrome",
                     "--user-data-dir=/home/#{user}/.imagecapture", "--no-sandbox",
                     "https://justdrive-app.com/imagecapture/index.html?Email=#{to}"])
             except:
+                print "\nCould not open your browser.\n"
                 logging.exception("ImageCapture - Could not open your browser.")
                 pass
             ops.writeFile('false', user)
@@ -121,17 +128,19 @@ def getLocation():
 def takePicture():
     camera = cv2.VideoCapture(video)
     if not camera.isOpened():
-        print "No cam available at #{video}"
+        print "\nNo cam available at #{video}.\n"
+        logging.exception("ImageCapture - No cam available at #{video}.")
         return
     elif not enablecam:
-        print "Taking pictures from webcam was not enabled."
+        print "\nTaking pictures from webcam was not enabled.\n"
         logging.exception("ImageCapture - Taking pictures from webcam was not enabled.")
         return
     elif not camera.isOpened() and video == 0:
-        print "ImageCapture does not detect a camera."
+        print "\nImageCapture does not detect a camera.\n"
         logging.exception("ImageCapture - ImageCapture does not detect a camera.")
         return
-    print "Taking picture."
+    print "\nTaking picture.\n"
+    logging.exception("ImageCapture - Taking picture.")
     time.sleep(0.1) # Needed or image will be dark.
     image = camera.read()[1]
     cv2.imwrite("/home/#{user}/.imagecapture/intruder.png", image)
@@ -147,12 +156,14 @@ def sendMail(sender,to,password,port,subject,body):
         mail.starttls()
         mail.login(sender,password)
         mail.sendmail(sender, to, message.as_string())
-        print "\nSent email successfully.\n"
+        print "\nSent email successfully!\n"
+        logging.exception("ImageCapture - Sent email successfully!")
     except smtplib.SMTPAuthenticationError:
         print "\nCould not athenticate with password and username!\n"
         logging.exception("ImageCapture - Could not athenticate with password and username!")
     except:
-        print("Unexpected error in sendMail():", sys.exc_info()[0])
+        print("\nUnexpected error in sendMail(): \n", sys.exc_info()[0])
+        logging.exception("ImageCapture - Unexpected error in sendMail():")
         raise
 
 def initiate(count):
