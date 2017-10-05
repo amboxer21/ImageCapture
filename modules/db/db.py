@@ -18,25 +18,47 @@ def findOrCreateTable():
         query = db.execute("select * from connected")
         print "Table(connected) already exists."
     except sqlite3.OperationalError:
-        db.execute('''CREATE TABLE connected(id integer primary key AUTOINCREMENT, get_location text not null, coordinates text not null, ip_addr text not null);''')
+        db.execute('''CREATE TABLE connected(id integer primary key AUTOINCREMENT, location_bool text not null, coordinates text not null, ip_addr text not null);''')
         print "Table(connected) does not exist, creating now."
 
 def writeToDB(location_bool, coordinates, ip_addr): 
-    if location_bool is None || coordinates is None || ip_addr is None:
+    if location_bool is None or coordinates is None or ip_addr is None:
         return
     elif not re.search("true|false", location_bool, re.I|re.M):
         logger.log("#{location_bool} is not a known mode.")
-    elif not re.search("\A(\d|\-\d)+\.\d+,\s(\d|\-\d)+\.\d+",string, re.M | re.I): 
+    elif not re.search("\A(\d|\-\d)+\.\d+,\s(\d|\-\d)+\.\d+", coordinates, re.M | re.I): 
         logger.log("Improper coordinate format -> #{coordinates}.")
     elif not re.search("\A\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}$", ip_addr, re.M|re.I):
         logger.log("Improper ip address format -> #{ip_addr}.") 
     else:
-        db.execute("insert into connected (get_location) values(#{location_bool}, #{coordinates}, #{ip_addr})")
+        db.execute("insert into connected (location_bool, coordinates, ip_addr) values(#{location_bool}, #{coordinates}, #{ip_addr})")
+        db.commit()
 
-def readFromDB():
-    if not fileExists("/home/#{user}/.imagecapture/imagecapture.db"):
-        open("/home/#{user}/.imagecapture/cache", "w").write("true")
-    return open("/home/#{user}/.imagecapture/cache", "r").read() == boolean_string
+def readFromDB(column):
+    query = db.execute("select * from test")
+    for row in query:
+        if column == 'location_bool':
+            return str(row[0])
+        elif column == 'coordinates':
+            return str(row[1])
+        elif column == 'ip_addr':
+            return str(row[2])
+        else:
+            logger.log("Not a known column for the connected table in the imagecapture db.") 
+            return
 
-def updateDB():
-    #
+def updateDB(column,value):
+    if column is None or value is None:
+        return
+    elif re.search("true|false", value, re.I|re.M) and column == 'location_bool':
+        db.execute("update connected set location_bool = \"#{location_bool}\")")
+        db.commit()
+    elif re.search("\A(\d|\-\d)+\.\d+,\s(\d|\-\d)+\.\d+",value, re.M | re.I) and column == 'coordinates':    
+        db.execute("update connected set coordinates = \"#{coordinates}\")")
+        db.commit()
+    elif re.search("\A\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}$", value, re.M|re.I) and column == 'ip_addr':
+        db.execute("update connected set ip_addr = \"#{ip_addr}\")")
+        db.commit()
+    else:
+        logger.log("#{column} is not a known column for the connected table in the imagecapture db.")
+        return 
