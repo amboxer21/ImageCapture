@@ -31,7 +31,8 @@ def writeToDB(location_bool, coordinates, ip_addr):
     elif not re.search("\A\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}$", ip_addr, re.M|re.I):
         logger.log("Improper ip address format -> #{ip_addr}.") 
     else:
-        db.execute("insert into connected (location_bool, coordinates, ip_addr) values(#{location_bool}, #{coordinates}, #{ip_addr})")
+        coor = re.sub("[\(\)]", "", str(coordinates))
+        db.execute("insert into connected (location_bool, coordinates, ip_addr) values(#{location_bool}, #{coor}, #{ip_addr})")
         db.commit()
 
 def readFromDB(column):
