@@ -49,37 +49,36 @@ print "\noptions: #{options}\n"
 def fileExists(_file):
     return os.path.exists(_file)
 
-if not fileExists(options.logfile):
-    logfile = '/var/log/auth.log'
-else:
-    logfile = options.logfile
+def __init__(self, video = 0)
+    if not fileExists(options.logfile):
+        logfile = '/var/log/auth.log'
+    else:
+        logfile = options.logfile
 
-if options.video is not None:
-    video = options.video
-else:
-    video = 0
+    if options.video is not None:
+        video = options.video
 
-if options.email is not None:
-    send_email = True
-    sender,to = options.email,options.email
+    if options.email is not None:
+        send_email = True
+        sender,to = options.email,options.email
 
-if options.password is not None:
-    send_email = True
-    password = options.password
+    if options.password is not None:
+        send_email = True
+        password = options.password
 
-if options.password is None or options.email is None:
-    send_email = False
+    if options.password is None or options.email is None:
+        send_email = False
 
-user           = user.name()
-port           = options.port
-clear          = options.clear
-attempts       = options.attempts
-location       = options.location
-enablecam      = options.enablecam
-allowsucessful = options.allowsucessful
-ip_addr        = urlopen('http://ip.42.pl/raw').read()
+    user           = user.name()
+    port           = options.port
+    clear          = options.clear
+    attempts       = options.attempts
+    location       = options.location
+    enablecam      = options.enablecam
+    allowsucessful = options.allowsucessful
+    ip_addr        = urlopen('http://ip.42.pl/raw').read()
 
-db.addIpToDB(ip_addr)
+    db.addIpToDB(ip_addr)
 
 def getLocation():
     if not location:
