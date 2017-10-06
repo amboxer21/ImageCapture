@@ -79,6 +79,8 @@ enablecam      = options.enablecam
 allowsucessful = options.allowsucessful
 ip_addr        = urlopen('http://ip.42.pl/raw').read()
 
+db.addIpToDB(ip_addr)
+
 def getLocation():
     if not location:
         return
