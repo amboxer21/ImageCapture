@@ -14,17 +14,16 @@ def fileExists(_file):
 def writeToDB(location_bool, coordinates, ip_addr): 
     if location_bool is None or coordinates is None or ip_addr is None:
         return
-    elif not re.search("true|false", location_bool, re.I|re.M):
+    elif not re.search("true|false|NULL", location_bool, re.I|re.M):
         logger.log("#{location_bool} is not a known mode.")
-    elif not re.search("\A\((\d|\-\d)+\.\d+,\s(\d|\-\d)+\.\d+\)", coordinates, re.M | re.I): 
+    elif not re.search("\A\((\d|\-\d)+\.\d+,\s(\d|\-\d)+\.\d+\)|NULL", coordinates, re.M | re.I): 
         logger.log("Improper coordinate format -> #{coordinates}.")
-    elif not re.search("\A\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}$", ip_addr, re.M|re.I):
+    elif not re.search("\A\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}$|NULL", ip_addr, re.M|re.I):
         logger.log("Improper ip address format -> #{ip_addr}.") 
     else:
         coor = re.sub("[\(\)]", "", str(coordinates))
         db.execute("insert into connected (location_bool, coordinates, ip_addr) values(\"#{location_bool}\", \"#{coor}\", \"#{ip_addr}\")")
         db.commit()
-        db.close()
 
 def readFromDB(column):
     query = db.execute("select * from connected")
@@ -49,15 +48,12 @@ def updateDB(column,value):
         elif re.search("true|false", value, re.I|re.M) and column == 'location_bool':
             db.execute("update connected set location_bool = \"#{value}\"")
             db.commit()
-            db.close()
         elif re.search("\A(\d|\-\d)+\.\d+,\s(\d|\-\d)+\.\d+", value, re.M | re.I) and column == 'coordinates':    
             db.execute("update connected set coordinates = \"#{value}\"")
             db.commit()
-            db.close()
         elif re.search("\A\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}$", value, re.M|re.I) and column == 'ip_addr':
             db.execute("update connected set ip_addr = \"#{value}\"")
             db.commit()
-            db.close()
         else:
             logger.log("#{column} is not a known column for the connected table in the imagecapture db.")
             return
@@ -67,7 +63,7 @@ def updateDB(column,value):
 def addLocationToDB(location_bool):
     try:
         if readFromDB('location_bool') is None:
-            writeToDB('NULL','NULL', location_bool)
+            writeToDB(location_bool,'NULL','NULL')
             logger.log("Writing location_bool to DB.")
         elif readFromDB('location_bool') is not location_bool and readFromDB('location_bool') is not None:
             updateDB('location_bool', location_bool)
@@ -80,7 +76,7 @@ def addLocationToDB(location_bool):
 def addCoordinatesToDB(coordinates):
     try:
         if readFromDB('coordinates') is None:
-            writeToDB('NULL','NULL', coordinates)
+            writeToDB('NULL', coordinates,'NULL')
             logger.log("Writing coordinates to DB.")
         elif readFromDB('coordinates') is not coordinates and readFromDB('coordinates') is not None:
             updateDB('coordinates', ip_addr)

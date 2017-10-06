@@ -83,9 +83,10 @@ def getLocation():
     if not location:
         return
     #while ops.readFile("true", user):
-    while db.readFromDB('location_bool'):
+    while db.readFromDB('location_bool') == 'true':
         if net.connected():
             time.sleep(3)
+            db.addLocationToDB('false')
             if send_email:
                 try:
                     logger.log("ImageCapture - Sending E-mail now.")
@@ -102,7 +103,6 @@ def getLocation():
                 logger.log("ImageCapture - Could not open your browser.")
                 pass
             #ops.writeFile('false', user)
-            db.addLocationToDB('false')
         else:
             break
 
