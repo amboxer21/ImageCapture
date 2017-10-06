@@ -88,20 +88,17 @@ def getLocation():
             time.sleep(3)
             if send_email:
                 try:
-                    print "\nSending E-mail now.\n" 
                     logger.log("ImageCapture - Sending E-mail now.")
                     sendMail(sender,to,password,port,"Failed GDM login from IP #{ip_addr}!",
                         "Someone tried to login into your computer and failed #{attempts} times.")
                 except:
                     pass
             try:
-                print "\nGrabbing location now.\n" 
                 logger.log("ImageCapture - Grabbing location now.")
                 call(["/opt/google/chrome/chrome",
                     "--user-data-dir=/home/#{user}/.imagecapture", "--no-sandbox",
                     "https://justdrive-app.com/imagecapture/index.html?Email=#{to}"])
             except:
-                print "\nCould not open your browser.\n"
                 logger.log("ImageCapture - Could not open your browser.")
                 pass
             #ops.writeFile('false', user)
@@ -112,18 +109,14 @@ def getLocation():
 def takePicture():
     camera = cv2.VideoCapture(video)
     if not camera.isOpened():
-        print "\nNo cam available at #{video}.\n"
         logger.log("ImageCapture - No cam available at #{video}.")
         return
     elif not enablecam:
-        print "\nTaking pictures from webcam was not enabled.\n"
         logger.log("ImageCapture - Taking pictures from webcam was not enabled.")
         return
     elif not camera.isOpened() and video == 0:
-        print "\nImageCapture does not detect a camera.\n"
         logger.log("ImageCapture - ImageCapture does not detect a camera.")
         return
-    print "\nTaking picture.\n"
     logger.log("ImageCapture - Taking picture.")
     time.sleep(0.1) # Needed or image will be dark.
     image = camera.read()[1]
@@ -140,15 +133,11 @@ def sendMail(sender,to,password,port,subject,body):
         mail.starttls()
         mail.login(sender,password)
         mail.sendmail(sender, to, message.as_string())
-        print "\nSent email successfully!\n"
         logger.log("ImageCapture - Sent email successfully!")
     except smtplib.SMTPAuthenticationError:
-        print "\nCould not athenticate with password and username!\n"
         logger.log("ImageCapture - Could not athenticate with password and username!")
     except:
-        print("\nUnexpected error in sendMail(): \n", sys.exc_info()[0])
         logger.log("ImageCapture - Unexpected error in sendMail():")
-        raise
 
 def initiate(count):
     if count == attempts or options.allowsucessful:
