@@ -2,6 +2,7 @@
 # coding: interpy
 
 import webbrowser as wb
+import modules.db.db as db
 import modules.gdm.gdm as gdm
 import modules.name.user as user
 import modules.fileops.ops as ops
@@ -44,7 +45,10 @@ parser.add_option("-s",
 
 print "\noptions: #{options}\n"
 
-if not ops.fileExists(options.logfile):
+def fileExists(_file):
+    return os.path.exists(_file)
+
+if not fileExists(options.logfile):
     logfile = '/var/log/auth.log'
 else:
     logfile = options.logfile
@@ -72,6 +76,7 @@ attempts       = options.attempts
 location       = options.location
 enablecam      = options.enablecam
 allowsucessful = options.allowsucessful
+ip_addr        = urlopen('http://ip.42.pl/raw').read()
 
 def connected():
     try:
@@ -91,8 +96,8 @@ def getLocation():
     if not location:
         return
     while ops.readFile("true", user):
+    #while db.readFromDB('location_bool'):
         if connected():
-            ip_addr = urlopen('http://ip.42.pl/raw').read()
             time.sleep(3)
             if send_email:
                 try:
@@ -113,6 +118,7 @@ def getLocation():
                 logger.log("ImageCapture - Could not open your browser.")
                 pass
             ops.writeFile('false', user)
+            #db.updateDB('location_bool', 'false')
         else:
             break
 
@@ -181,6 +187,7 @@ def tailFile(logfile):
                 gdm.autoLogin(options.autologin, user)
                 takePicture()
                 ops.writeFile('true', user)
+                #db.updateDB('location_bool', 'true')
                 getLocation()
             time.sleep(1)
         if s and allowsucessful:
@@ -188,6 +195,7 @@ def tailFile(logfile):
             gdm.autoLogin(options.autologin, user)
             takePicture()
             ops.writeFile('true', user)
+            #db.updateDB('location_bool', 'true')
             getLocation()
             time.sleep(1)
 
