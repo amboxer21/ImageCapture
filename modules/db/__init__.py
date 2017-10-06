@@ -3,6 +3,7 @@
 
 import sqlite3
 import modules.name.user as username
+import modules.logging.logger as logger
 
 user    = username.name()
 DB_PATH = "/home/#{user}/.imagecapture"
@@ -11,7 +12,7 @@ db      = sqlite3.connect(DB_FILE)
 
 try:
     query = db.execute("select * from connected")
-    print "Table(connected) already exists."
+    logger.log("Table(connected) already exists.")
 except sqlite3.OperationalError:
     db.execute('''CREATE TABLE connected(id integer primary key AUTOINCREMENT, location_bool text not null, coordinates text not null, ip_addr text not null);''')
-    print "Table(connected) does not exist, creating now."
+    logger.log("Table(connected) does not exist, creating now.")

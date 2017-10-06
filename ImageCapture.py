@@ -162,8 +162,6 @@ def tailFile(logfile):
 
     gdm.autoLoginRemove(options.autologin, user)
 
-    db.addIpToDB(ip_addr)
-
     for line in tailf(logfile):
 
         s = re.search("(^.*\d+:\d+:\d+).*password.*pam: unlocked login keyring", line, re.I | re.M)
