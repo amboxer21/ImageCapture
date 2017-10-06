@@ -6,7 +6,7 @@ import modules.logging.logger as logger
 
 class Server:
 
-    def __init__(self,host='127.0.0.1',port=8081):
+    def __init__(self,host='127.0.0.1',port=8083):
         global s
         self.host = host
         self.port = port
@@ -23,12 +23,13 @@ class Server:
         logger.log('Socket bind complete')
         s.listen(10)
         logger.log('Socket now listening')
+        conn, addr = s.accept()
+        logger.log('Connected with ' + addr[0] + ':' + str(addr[1]))
 
         while 1:
-            conn, addr = s.accept()
-            logger.log('Connected with ' + addr[0] + ':' + str(addr[1]))
-            data = conn.recv(1024)
-            logger.log("mesg: #{data}")   
+            data = conn.recv(10)
+            logger.log("msg: #{data}")   
+            conn.send(data)
         s.close()
 
 S = Server()
