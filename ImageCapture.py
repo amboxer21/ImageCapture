@@ -3,6 +3,7 @@
 
 import webbrowser as wb
 import modules.db.db as db
+import modules.net.net as net
 import modules.gdm.gdm as gdm
 import modules.name.user as user
 import modules.fileops.ops as ops
@@ -78,26 +79,12 @@ enablecam      = options.enablecam
 allowsucessful = options.allowsucessful
 ip_addr        = urlopen('http://ip.42.pl/raw').read()
 
-def connected():
-    try:
-        urllib2.urlopen('http://www.google.com', timeout=1)
-        return True
-    except urllib2.URLError as err:
-        return False
-
-def getHwAddr(ifname):
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', ifname[:15]))
-    return ':'.join(['%02x' % ord(char) for char in info[18:24]])
-
-#print getHwAddr('wlo1')
-
 def getLocation():
     if not location:
         return
-    while ops.readFile("true", user):
-    #while db.readFromDB('location_bool'):
-        if connected():
+    #while ops.readFile("true", user):
+    while db.readFromDB('location_bool'):
+        if net.connected():
             time.sleep(3)
             if send_email:
                 try:
@@ -117,8 +104,8 @@ def getLocation():
                 print "\nCould not open your browser.\n"
                 logger.log("ImageCapture - Could not open your browser.")
                 pass
-            ops.writeFile('false', user)
-            #db.updateDB('location_bool', 'false')
+            #ops.writeFile('false', user)
+            db.addLocationToDB('false')
         else:
             break
 
@@ -175,6 +162,8 @@ def tailFile(logfile):
 
     gdm.autoLoginRemove(options.autologin, user)
 
+    db.addIpToDB(ip_addr)
+
     for line in tailf(logfile):
 
         s = re.search("(^.*\d+:\d+:\d+).*password.*pam: unlocked login keyring", line, re.I | re.M)
@@ -186,16 +175,16 @@ def tailFile(logfile):
             if initiate(count):
                 gdm.autoLogin(options.autologin, user)
                 takePicture()
-                ops.writeFile('true', user)
-                #db.updateDB('location_bool', 'true')
+                #ops.writeFile('true', user)
+                db.addLocationToDB('true')
                 getLocation()
             time.sleep(1)
         if s and allowsucessful:
             sys.stdout.write("Sucessful login via GDM at #{s.group(1)}:\n#{s.group()}\n\n")
             gdm.autoLogin(options.autologin, user)
             takePicture()
-            ops.writeFile('true', user)
-            #db.updateDB('location_bool', 'true')
+            #ops.writeFile('true', user)
+            db.addLocationToDB('true')
             getLocation()
             time.sleep(1)
 

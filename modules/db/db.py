@@ -2,24 +2,14 @@
 # coding: interpy
 
 import sqlite3,os,re
-import modules.name.user as username
-import modules.logging.logger as logger
 
-user    = username.name()
-DB_PATH = "/home/#{user}/.imagecapture"
-DB_FILE = "#{DB_PATH}/imagecapture.db"
-db      = sqlite3.connect(DB_FILE)
+from modules.db import db 
+from modules.db import user 
+
+import modules.logging.logger as logger
 
 def fileExists(_file):
     return os.path.exists(_file)
-
-def findOrCreateTable():
-    try:
-        query = db.execute("select * from connected")
-        print "Table(connected) already exists."
-    except sqlite3.OperationalError:
-        db.execute('''CREATE TABLE connected(id integer primary key AUTOINCREMENT, location_bool text not null, coordinates text not null, ip_addr text not null);''')
-        print "Table(connected) does not exist, creating now."
 
 def writeToDB(location_bool, coordinates, ip_addr): 
     if location_bool is None or coordinates is None or ip_addr is None:
@@ -38,12 +28,12 @@ def writeToDB(location_bool, coordinates, ip_addr):
 def readFromDB(column):
     query = db.execute("select * from connected")
     for row in query:
-        if column == 'location_bool' and row[0] is not None:
-            return str(row[0])
-        elif column == 'coordinates' and row[1] is not None:
+        if column == 'location_bool' and row[1] is not None:
             return str(row[1])
-        elif column == 'ip_addr' and row[2] is not None:
+        elif column == 'coordinates' and row[2] is not None:
             return str(row[2])
+        elif column == 'ip_addr' and row[3] is not None:
+            return str(row[3])
         else:
             logger.log("Not a known column or DB is empty.") 
             return
@@ -51,17 +41,48 @@ def readFromDB(column):
 def updateDB(column,value):
     if column is None or value is None:
         return
-    if readFromDB('location_bool') is None or readFromDB('coordinates') is None or readFromDB('ip_addr') is None:
+    try:
+        if readFromDB('location_bool') is None or readFromDB('coordinates') is None or readFromDB('ip_addr') is None:
             logger.log("You must write to the database first before updating!")
-    elif re.search("true|false", value, re.I|re.M) and column == 'location_bool':
-        db.execute("update connected set location_bool = \"#{value}\"")
-        db.commit()
-    elif re.search("\A(\d|\-\d)+\.\d+,\s(\d|\-\d)+\.\d+", value, re.M | re.I) and column == 'coordinates':    
-        db.execute("update connected set coordinates = \"#{value}\"")
-        db.commit()
-    elif re.search("\A\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}$", value, re.M|re.I) and column == 'ip_addr':
-        db.execute("update connected set ip_addr = \"#{value}\"")
-        db.commit()
-    else:
-        logger.log("#{column} is not a known column for the connected table in the imagecapture db.")
-        return 
+            return
+        elif re.search("true|false", value, re.I|re.M) and column == 'location_bool':
+            db.execute("update connected set location_bool = \"#{value}\"")
+            db.commit()
+        elif re.search("\A(\d|\-\d)+\.\d+,\s(\d|\-\d)+\.\d+", value, re.M | re.I) and column == 'coordinates':    
+            db.execute("update connected set coordinates = \"#{value}\"")
+            db.commit()
+        elif re.search("\A\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}$", value, re.M|re.I) and column == 'ip_addr':
+            db.execute("update connected set ip_addr = \"#{value}\"")
+            db.commit()
+        else:
+            logger.log("#{column} is not a known column for the connected table in the imagecapture db.")
+            return
+    except sqlite3.OperationalError:
+      logger.log("The database is lock, could not add coordinates to DB.")
+
+def addLocationToDB(location_bool):
+    try:
+        if readFromDB('location_bool') is None:
+            writeToDB('NULL','NULL', location_bool)
+        elif readFromDB('location_bool') is not location_bool and readFromDB('location_bool') is not None:
+            updateDB('location_bool', location_bool)
+    except sqlite3.OperationalError:
+      logger.log("The database is lock, could not add location to DB.")
+
+def addCoordinatesToDB(coordinates):
+    try:
+        if readFromDB('coordinates') is None:
+            writeToDB('NULL','NULL', coordinates)
+        elif readFromDB('coordinates') is not coordinates and readFromDB('coordinates') is not None:
+            updateDB('coordinates', ip_addr)
+    except sqlite3.OperationalError:
+      logger.log("The database is lock, could not add coordinates to DB.")
+
+def addIpToDB(ip_addr):
+    try:
+        if readFromDB('ip_addr') is None:
+            writeToDB('NULL','NULL', ip_addr)
+        elif readFromDB('ip_addr') is not ip_addr and readFromDB('ip_addr') is not None:
+            updateDB('ip_addr', ip_addr)
+    except sqlite3.OperationalError:
+      logger.log("The database is lock, could not add IP address to DB.")
