@@ -32,7 +32,6 @@ def writeToDB(location_bool, coordinates, ip_addr):
         logger.log("Improper ip address format -> #{ip_addr}.") 
     else:
         coor = re.sub("[\(\)]", "", str(coordinates))
-        print coor
         db.execute("insert into connected (location_bool, coordinates, ip_addr) values(\"#{location_bool}\", \"#{coor}\", \"#{ip_addr}\")")
         db.commit()
 
