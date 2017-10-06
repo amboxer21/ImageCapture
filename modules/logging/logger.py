@@ -14,3 +14,4 @@ def log(message):
     root.addHandler(handler)
     logging.exception("ImageCapture - " + message)
     print "#{message}"
+    return

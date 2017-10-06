@@ -51,6 +51,8 @@ def readFromDB(column):
 def updateDB(column,value):
     if column is None or value is None:
         return
+    if readFromDB('location_bool') is None or readFromDB('coordinates') is None or readFromDB('ip_addr') is None:
+            logger.log("You must write to the database first before updating!")
     elif re.search("true|false", value, re.I|re.M) and column == 'location_bool':
         db.execute("update connected set location_bool = \"#{value}\"")
         db.commit()
