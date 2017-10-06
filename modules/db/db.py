@@ -26,12 +26,14 @@ def writeToDB(location_bool, coordinates, ip_addr):
         return
     elif not re.search("true|false", location_bool, re.I|re.M):
         logger.log("#{location_bool} is not a known mode.")
-    elif not re.search("\A(\d|\-\d)+\.\d+,\s(\d|\-\d)+\.\d+", coordinates, re.M | re.I): 
+    elif not re.search("\A\((\d|\-\d)+\.\d+,\s(\d|\-\d)+\.\d+\)", coordinates, re.M | re.I): 
         logger.log("Improper coordinate format -> #{coordinates}.")
     elif not re.search("\A\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}$", ip_addr, re.M|re.I):
         logger.log("Improper ip address format -> #{ip_addr}.") 
     else:
-        db.execute("insert into connected (location_bool, coordinates, ip_addr) values(#{location_bool}, #{coordinates}, #{ip_addr})")
+        coor = re.sub("[\(\)]", "", str(coordinates))
+        print coor
+        db.execute("insert into connected (location_bool, coordinates, ip_addr) values(\"#{location_bool}\", \"#{coor}\", \"#{ip_addr}\")")
         db.commit()
 
 def readFromDB(column):

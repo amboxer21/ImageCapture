@@ -1,4 +1,5 @@
-#!/usr/bin/env
+#!/usr/bin/env python
+# coding: interpy
 
 import logging,logging.handlers,os
 
