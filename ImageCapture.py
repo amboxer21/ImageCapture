@@ -2,9 +2,11 @@
 # coding: interpy
 
 import webbrowser as wb
+import modules.db.db as db
+import modules.net.net as net
 import modules.gdm.gdm as gdm
 import modules.name.user as user
-import modules.fileops.ops as ops
+import modules.logging.logger as logger
 
 from tailf import tailf
 from urllib2 import urlopen
@@ -35,6 +37,8 @@ parser.add_option("-c",
     "--enable-cam", dest='enablecam', action="store_true", default=False, help="Enable cam capture of intruder.")
 parser.add_option("-A",
     "--auto-login", dest='autologin', action="store_true", default=False, help="Auto login user after no of failed attempts.")
+parser.add_option("-w",
+    "--website", dest='website', default='https://justdrive-app.com/imagecapture/index.html', help="Use alternate website to capture location.")
 parser.add_option("-C",
     "--clear-autologin", dest='clear', action="store_true", default=False, help="Remove autologin. Must be root to use this feature.")
 parser.add_option("-s",
@@ -43,7 +47,10 @@ parser.add_option("-s",
 
 print "\noptions: #{options}\n"
 
-if not ops.fileExists(options.logfile):
+def fileExists(_file):
+    return os.path.exists(_file)
+
+if not fileExists(options.logfile):
     logfile = '/var/log/auth.log'
 else:
     logfile = options.logfile
@@ -63,6 +70,8 @@ if options.password is not None:
 
 if options.password is None or options.email is None:
     send_email = False
+if options.website is not None:
+    website = options.website
 
 user           = user.name()
 port           = options.port
@@ -71,76 +80,47 @@ attempts       = options.attempts
 location       = options.location
 enablecam      = options.enablecam
 allowsucessful = options.allowsucessful
+ip_addr        = urlopen('http://ip.42.pl/raw').read()
 
-# Set up logging for errors
-handler = logging.handlers.WatchedFileHandler(
-    os.environ.get("LOGFILE", "/var/log/messages"))
-formatter = logging.Formatter(logging.BASIC_FORMAT)
-handler.setFormatter(formatter)
-
-root = logging.getLogger()
-root.setLevel(os.environ.get("LOGLEVEL", "INFO"))
-root.addHandler(handler)
-
-def connected():
-    try:
-        urllib2.urlopen('http://www.google.com', timeout=1)
-        return True
-    except urllib2.URLError as err:
-        return False
-
-def getHwAddr(ifname):
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', ifname[:15]))
-    return ':'.join(['%02x' % ord(char) for char in info[18:24]])
-
-#print getHwAddr('wlo1')
+db.addIpToDB(ip_addr)
 
 def getLocation():
     if not location:
         return
-    while ops.readFile("true", user):
-        if connected():
-            ip_addr = urlopen('http://ip.42.pl/raw').read()
+    while db.readFromDB('location_bool') == 'true':
+        if net.connected():
             time.sleep(3)
+            db.addLocationToDB('false')
             if send_email:
                 try:
-                    print "\nSending E-mail now.\n" 
-                    logging.exception("ImageCapture - Sending E-mail now.")
+                    logger.log("ImageCapture - Sending E-mail now.")
                     sendMail(sender,to,password,port,"Failed GDM login from IP #{ip_addr}!",
                         "Someone tried to login into your computer and failed #{attempts} times.")
                 except:
                     pass
             try:
-                print "\nGrabbing location now.\n" 
-                logging.exception("ImageCapture - Grabbing location now.")
+                logger.log("ImageCapture - Grabbing location now.")
                 call(["/opt/google/chrome/chrome",
                     "--user-data-dir=/home/#{user}/.imagecapture", "--no-sandbox",
-                    "https://justdrive-app.com/imagecapture/index.html?Email=#{to}"])
+                    "#{website}?Email=#{to}"])
             except:
-                print "\nCould not open your browser.\n"
-                logging.exception("ImageCapture - Could not open your browser.")
+                logger.log("ImageCapture - Could not open your browser.")
                 pass
-            ops.writeFile('false', user)
         else:
             break
 
 def takePicture():
     camera = cv2.VideoCapture(video)
     if not camera.isOpened():
-        print "\nNo cam available at #{video}.\n"
-        logging.exception("ImageCapture - No cam available at #{video}.")
+        logger.log("ImageCapture - No cam available at #{video}.")
         return
     elif not enablecam:
-        print "\nTaking pictures from webcam was not enabled.\n"
-        logging.exception("ImageCapture - Taking pictures from webcam was not enabled.")
+        logger.log("ImageCapture - Taking pictures from webcam was not enabled.")
         return
     elif not camera.isOpened() and video == 0:
-        print "\nImageCapture does not detect a camera.\n"
-        logging.exception("ImageCapture - ImageCapture does not detect a camera.")
+        logger.log("ImageCapture - ImageCapture does not detect a camera.")
         return
-    print "\nTaking picture.\n"
-    logging.exception("ImageCapture - Taking picture.")
+    logger.log("ImageCapture - Taking picture.")
     time.sleep(0.1) # Needed or image will be dark.
     image = camera.read()[1]
     cv2.imwrite("/home/#{user}/.imagecapture/intruder.png", image)
@@ -156,15 +136,11 @@ def sendMail(sender,to,password,port,subject,body):
         mail.starttls()
         mail.login(sender,password)
         mail.sendmail(sender, to, message.as_string())
-        print "\nSent email successfully!\n"
-        logging.exception("ImageCapture - Sent email successfully!")
+        logger.log("ImageCapture - Sent email successfully!")
     except smtplib.SMTPAuthenticationError:
-        print "\nCould not athenticate with password and username!\n"
-        logging.exception("ImageCapture - Could not athenticate with password and username!")
+        logger.log("ImageCapture - Could not athenticate with password and username!")
     except:
-        print("\nUnexpected error in sendMail(): \n", sys.exc_info()[0])
-        logging.exception("ImageCapture - Unexpected error in sendMail():")
-        raise
+        logger.log("ImageCapture - Unexpected error in sendMail():")
 
 def initiate(count):
     if count == attempts or options.allowsucessful:
@@ -189,14 +165,14 @@ def tailFile(logfile):
             if initiate(count):
                 gdm.autoLogin(options.autologin, user)
                 takePicture()
-                ops.writeFile('true', user)
+                db.addLocationToDB('true')
                 getLocation()
             time.sleep(1)
         if s and allowsucessful:
             sys.stdout.write("Sucessful login via GDM at #{s.group(1)}:\n#{s.group()}\n\n")
             gdm.autoLogin(options.autologin, user)
             takePicture()
-            ops.writeFile('true', user)
+            db.addLocationToDB('true')
             getLocation()
             time.sleep(1)
 
