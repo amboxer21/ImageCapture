@@ -6,7 +6,6 @@ import modules.db.db as db
 import modules.net.net as net
 import modules.gdm.gdm as gdm
 import modules.name.user as user
-import modules.fileops.ops as ops
 import modules.logging.logger as logger
 
 from tailf import tailf
@@ -38,6 +37,8 @@ parser.add_option("-c",
     "--enable-cam", dest='enablecam', action="store_true", default=False, help="Enable cam capture of intruder.")
 parser.add_option("-A",
     "--auto-login", dest='autologin', action="store_true", default=False, help="Auto login user after no of failed attempts.")
+parser.add_option("-w",
+    "--website", dest='website', default='https://justdrive-app.com/imagecapture/index.html', help="Use alternate website to capture location.")
 parser.add_option("-C",
     "--clear-autologin", dest='clear', action="store_true", default=False, help="Remove autologin. Must be root to use this feature.")
 parser.add_option("-s",
@@ -69,6 +70,8 @@ if options.password is not None:
 
 if options.password is None or options.email is None:
     send_email = False
+if options.website is not None:
+    website = options.website
 
 user           = user.name()
 port           = options.port
@@ -84,7 +87,6 @@ db.addIpToDB(ip_addr)
 def getLocation():
     if not location:
         return
-    #while ops.readFile("true", user):
     while db.readFromDB('location_bool') == 'true':
         if net.connected():
             time.sleep(3)
@@ -100,11 +102,10 @@ def getLocation():
                 logger.log("ImageCapture - Grabbing location now.")
                 call(["/opt/google/chrome/chrome",
                     "--user-data-dir=/home/#{user}/.imagecapture", "--no-sandbox",
-                    "https://justdrive-app.com/imagecapture/index.html?Email=#{to}"])
+                    "#{website}?Email=#{to}"])
             except:
                 logger.log("ImageCapture - Could not open your browser.")
                 pass
-            #ops.writeFile('false', user)
         else:
             break
 
@@ -164,7 +165,6 @@ def tailFile(logfile):
             if initiate(count):
                 gdm.autoLogin(options.autologin, user)
                 takePicture()
-                #ops.writeFile('true', user)
                 db.addLocationToDB('true')
                 getLocation()
             time.sleep(1)
@@ -172,7 +172,6 @@ def tailFile(logfile):
             sys.stdout.write("Sucessful login via GDM at #{s.group(1)}:\n#{s.group()}\n\n")
             gdm.autoLogin(options.autologin, user)
             takePicture()
-            #ops.writeFile('true', user)
             db.addLocationToDB('true')
             getLocation()
             time.sleep(1)

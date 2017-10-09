@@ -65,7 +65,7 @@ def addLocationToDB(location_bool):
         if readFromDB('location_bool') is None:
             writeToDB(location_bool,'NULL','NULL')
             logger.log("Writing location_bool to DB.")
-        elif readFromDB('location_bool') is not location_bool and readFromDB('location_bool') is not None:
+        elif readFromDB('location_bool') != location_bool and readFromDB('location_bool') is not None:
             updateDB('location_bool', location_bool)
             logger.log("Updating location_bool variable in DB.")
         else:
@@ -78,7 +78,7 @@ def addCoordinatesToDB(coordinates):
         if readFromDB('coordinates') is None:
             writeToDB('NULL', coordinates,'NULL')
             logger.log("Writing coordinates to DB.")
-        elif readFromDB('coordinates') is not coordinates and readFromDB('coordinates') is not None:
+        elif readFromDB('coordinates') != coordinates and readFromDB('coordinates') is not None:
             updateDB('coordinates', ip_addr)
             logger.log("Updating coordinates variable in DB.")
         else:
@@ -91,10 +91,10 @@ def addIpToDB(ip_addr):
         if readFromDB('ip_addr') is None:
             writeToDB('NULL','NULL', ip_addr)
             logger.log("Writing ip_addr to DB.")
-        elif readFromDB('ip_addr') is not ip_addr and readFromDB('ip_addr') is not None:
+        elif readFromDB('ip_addr') != ip_addr and readFromDB('ip_addr') is not None:
             updateDB('ip_addr', ip_addr)
             logger.log("Updating ip_addr variable in DB.")
         else:
             return
     except sqlite3.OperationalError:
-      logger.log("The database is locked, could not add IP address to DB.")
+        logger.log("The database is locked, could not add IP address to DB.")
