@@ -12,7 +12,6 @@ db      = sqlite3.connect(DB_FILE)
 
 try:
     query = db.execute("select * from connected")
-    logger.log("Table(connected) already exists.")
 except sqlite3.OperationalError:
     db.execute('''CREATE TABLE connected(id integer primary key AUTOINCREMENT, location_bool text not null, coordinates text not null, ip_addr text not null);''')
     logger.log("Table(connected) does not exist, creating now.")

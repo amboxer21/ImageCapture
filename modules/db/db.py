@@ -5,6 +5,7 @@ import sqlite3,os,re
 
 from modules.db import db 
 from modules.db import user 
+from subprocess import call
 
 import modules.logging.logger as logger
 
@@ -71,6 +72,7 @@ def addLocationToDB(location_bool):
         else:
             return
     except sqlite3.OperationalError:
+        call(['/usr/bin/rm', '/home/#{user}/.imagecapture/test'])
         logger.log("The database is locked, could not add location_bool to DB.")
         pass
 
@@ -85,6 +87,7 @@ def addCoordinatesToDB(coordinates):
         else:
             return
     except sqlite3.OperationalError:
+        call(['/usr/bin/rm', '/home/#{user}/.imagecapture/test'])
         logger.log("The database is locked, could not add coordinates to DB.")
         pass
 
@@ -99,5 +102,6 @@ def addIpToDB(ip_addr):
         else:
             return
     except sqlite3.OperationalError:
+        call(['/usr/bin/rm', '/home/#{user}/.imagecapture/test'])
         logger.log("The database is locked, could not add IP address to DB.")
         pass
