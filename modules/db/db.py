@@ -71,7 +71,8 @@ def addLocationToDB(location_bool):
         else:
             return
     except sqlite3.OperationalError:
-      logger.log("The database is locked, could not add location_bool to DB.")
+        logger.log("The database is locked, could not add location_bool to DB.")
+        pass
 
 def addCoordinatesToDB(coordinates):
     try:
@@ -84,7 +85,8 @@ def addCoordinatesToDB(coordinates):
         else:
             return
     except sqlite3.OperationalError:
-      logger.log("The database is locked, could not add coordinates to DB.")
+        logger.log("The database is locked, could not add coordinates to DB.")
+        pass
 
 def addIpToDB(ip_addr):
     try:
@@ -98,3 +100,4 @@ def addIpToDB(ip_addr):
             return
     except sqlite3.OperationalError:
         logger.log("The database is locked, could not add IP address to DB.")
+        pass
