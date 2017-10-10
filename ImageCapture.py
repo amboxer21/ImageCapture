@@ -45,7 +45,7 @@ parser.add_option("-s",
     "--allow-sucessful", dest='allowsucessful', action="store_true", default=False, help="Run ImageCapture even if login is sucessful.")
 (options, args) = parser.parse_args()
 
-print "\noptions: #{options}\n"
+print "\nOPTIONS => #{options}\n"
 
 def fileExists(_file):
     return os.path.exists(_file)
@@ -87,6 +87,10 @@ db.addIpToDB(ip_addr)
 def getLocation():
     if not location:
         return
+    elif location and not send_email:
+        logger.log("Cannot E-mail your location without your E-mail and password. Please use the help option and search for -e and -p.\n")
+        sys.exit(0)
+
     while db.readFromDB('location_bool') == 'true':
         if net.connected():
             time.sleep(3)
