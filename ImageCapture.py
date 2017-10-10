@@ -131,7 +131,8 @@ def sendMail(sender,to,password,port,subject,body):
         message = MIMEMultipart()
         message['Body'] = body
         message['Subject'] = subject
-        message.attach(MIMEImage(file("/home/#{user}/.imagecapture/intruder.png").read()))
+        if enablecam:
+          message.attach(MIMEImage(file("/home/#{user}/.imagecapture/intruder.png").read()))
         mail = smtplib.SMTP('smtp.gmail.com',port)
         mail.starttls()
         mail.login(sender,password)
@@ -167,6 +168,13 @@ def tailFile(logfile):
                 takePicture()
                 db.addLocationToDB('true')
                 getLocation()
+                if not enablecam and send_email:
+                    try:
+                        logger.log("ImageCapture - Sending E-mail now.")
+                        sendMail(sender,to,password,port,"Failed GDM login from IP #{ip_addr}!",
+                            "Someone tried to login into your computer and failed #{attempts} times.")
+                    except:
+                        pass
             time.sleep(1)
         if s and allowsucessful:
             sys.stdout.write("Sucessful login via GDM at #{s.group(1)}:\n#{s.group()}\n\n")
@@ -174,6 +182,13 @@ def tailFile(logfile):
             takePicture()
             db.addLocationToDB('true')
             getLocation()
+            if not enablecam and send_email:
+                try:
+                    logger.log("ImageCapture - Sending E-mail now.")
+                    sendMail(sender,to,password,port,"Failed GDM login from IP #{ip_addr}!",
+                        "Someone tried to login into your computer and failed #{attempts} times.")
+                except:
+                    pass
             time.sleep(1)
 
 gdm.clearAutoLogin(options.clear, user)
