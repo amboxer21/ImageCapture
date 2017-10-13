@@ -65,7 +65,7 @@ class ImageCapture():
                 if send_email:
                     try:
                         logger.log("ImageCapture - Sending E-mail now.")
-                        sendMail(self,sender,to,password,port,"Failed GDM login from IP #{ip_addr}!",
+                        self.sendMail(sender,to,password,port,"Failed GDM login from IP #{ip_addr}!",
                             "Someone tried to login into your computer and failed #{attempts} times.")
                     except:
                         pass
@@ -114,7 +114,7 @@ class ImageCapture():
         except:
             logger.log("ImageCapture - Unexpected error in sendMail():")
     
-    def initiate(self,count):
+    def failedLogin(self,count):
         if count == attempts or options.allowsucessful:
             return True
         else:
@@ -134,15 +134,15 @@ class ImageCapture():
             if f and not allowsucessful:
                 count += 1
                 sys.stdout.write("Failed login via GDM at #{f.group(1)}:\n#{f.group()}\n\n")
-                if initiate(count):
+                if self.failedLogin(count):
                     gdm.autoLogin(options.autologin, user)
-                    takePicture(self)
+                    self.takePicture()
                     db.addLocationToDB('true')
                     self.getLocation()
                     if not enablecam and send_email:
                         try:
                             logger.log("ImageCapture - Sending E-mail now.")
-                            sendMail(self,sender,to,password,port,"Failed GDM login from IP #{ip_addr}!",
+                            self.sendMail(sender,to,password,port,"Failed GDM login from IP #{ip_addr}!",
                                 "Someone tried to login into your computer and failed #{attempts} times.")
                         except:
                             pass
@@ -150,13 +150,13 @@ class ImageCapture():
             if s and allowsucessful:
                 sys.stdout.write("Sucessful login via GDM at #{s.group(1)}:\n#{s.group()}\n\n")
                 gdm.autoLogin(options.autologin, user)
-                takePicture(self)
+                self.takePicture()
                 db.addLocationToDB('true')
                 self.getLocation()
                 if not enablecam and send_email:
                     try:
                         logger.log("ImageCapture - Sending E-mail now.")
-                        sendMail(self,sender,to,password,port,"Failed GDM login from IP #{ip_addr}!",
+                        self.sendMail(sender,to,password,port,"Failed GDM login from IP #{ip_addr}!",
                             "Someone tried to login into your computer and failed #{attempts} times.")
                     except:
                         pass
