@@ -22,34 +22,52 @@ class ImageCapture():
     
     global options, args, parser
 
-    parser = OptionParser()
-    parser.add_option("-e",
-        "--email", dest='email')
-    parser.add_option("-p",
-        "--password", dest='password')
-    parser.add_option("-v",
-        "--video", dest='video', default=0, help="Specify camera location.")
-    parser.add_option("-P", 
-        "--port", dest='port', default=587, help="E-mail port defaults to 587 if not specified.")
-    parser.add_option("-a",
-        "--attempts", dest='attempts', default=3, help="Number of failed attempts defaults to 3.")
-    parser.add_option("-L",
-        "--location", dest='location', action="store_true", default=False, help="Enable location capturing.") 
-    parser.add_option("-l",
-        "--log-file", dest='logfile', default='/var/log/auth.log', help="Tail log defaults to /var/log/auth.log.")
-    parser.add_option("-c",
-        "--enable-cam", dest='enablecam', action="store_true", default=False, help="Enable cam capture of intruder.")
-    parser.add_option("-A",
-        "--auto-login", dest='autologin', action="store_true", default=False, help="Auto login user after no of failed attempts.")
-    parser.add_option("-w",
-        "--website", dest='website', default='https://justdrive-app.com/imagecapture/index.html', help="Use alternate website to capture location.")
-    parser.add_option("-C",
-        "--clear-autologin", dest='clear', action="store_true", default=False, help="Remove autologin. Must be root to use this feature.")
-    parser.add_option("-s",
-        "--allow-sucessful", dest='allowsucessful', action="store_true", default=False, help="Run ImageCapture even if login is sucessful.")
-    (options, args) = parser.parse_args()
-    
-    print "\nOPTIONS => #{options}\n"
+    def __init__(self):
+        parser = OptionParser()
+        parser.add_option("-e", "--email", dest='email',
+            default="example@gmail.com")
+        parser.add_option("-p", "--password", dest='password',
+            default="password")
+        parser.add_option("-V", "--video", dest='video',
+            default=0, help="Specify camera location.")
+        parser.add_option("-v", "--verbose", dest='verbose', action="store_true",
+            default=False, help="Print the options passed to ImageCapturePy.")
+        parser.add_option("-P", "--port", dest='port',
+            default=587, help="E-mail port defaults to 587 if not specified.")
+        parser.add_option("-a", "--attempts", dest='attempts',
+            default=3, help="Number of failed attempts defaults to 3.")
+        parser.add_option("-L", "--location", dest='location', action="store_true",
+            default=False, help="Enable location capturing.") 
+        parser.add_option("-l", "--log-file", dest='logfile',
+            default='/var/log/auth.log', help="Tail log defaults to /var/log/auth.log.")
+        parser.add_option("-c", "--enable-cam", dest='enablecam', action="store_true",
+            default=False, help="Enable cam capture of intruder.")
+        parser.add_option("-A", "--auto-login", dest='autologin', action="store_true", 
+            default=False, help="Auto login user after no of failed attempts.")
+        parser.add_option("-w", "--website", dest='website',
+            default='https://justdrive-app.com/imagecapture/index.html', help="Use alternate website to capture location.")
+        parser.add_option("-C", "--clear-autologin", dest='clear', action="store_true",
+            default=False, help="Remove autologin. Must be root to use this feature.")
+        parser.add_option("-s", "--allow-sucessful", dest='allowsucessful', action="store_true",
+            default=False, help="Run ImageCapture even if login is sucessful.")
+        (options, args) = parser.parse_args()
+
+        self.port      = options.port
+        self.clear     = options.clear
+        self.email     = options.email
+        self.video     = options.video
+        self.website   = options.website
+        self.verbose   = options.verbose
+        self.logfile   = options.logfile
+        self.password  = options.password
+        self.attempts  = options.attempts
+        self.location  = options.location
+        self.enablecam = options.enablecam
+        self.autologin = options.autologin
+        self.allowsucessful = options.allowsucessful
+
+        if options.verbose:
+            print "\nOPTIONS => #{options}\n"
     
     def getLocation(self):
         if not self.location:
