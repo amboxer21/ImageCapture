@@ -1,11 +1,11 @@
 #!/usr/bin/env python
     
 #import webbrowser as wb
-#import modules.db.db as db
+import modules.db.db as db
 import modules.net.net as net
 import modules.gdm.gdm as gdm
 import modules.name.user as user
-#import modules.logging.logger as logger
+import modules.logging.logger as logger
     
 from tailf import tailf
 from urllib2 import urlopen
@@ -19,8 +19,6 @@ import subprocess,time,cv2,socket,struct,urllib2,logging.handlers
 
 class ImageCapture():
     
-    global options, args, parser
-
     def __init__(self):
         parser = OptionParser()
         parser.add_option("-e", "--email", dest='email',
@@ -51,27 +49,60 @@ class ImageCapture():
             default=False, help="Run ImageCapture even if login is sucessful.")
         (options, args) = parser.parse_args()
 
-        self.port      = options.port
-        self.clear     = options.clear
-        self.email     = options.email
-        self.video     = options.video
-        self.website   = options.website
-        self.verbose   = options.verbose
-        self.logfile   = options.logfile
-        self.password  = options.password
-        self.attempts  = options.attempts
-        self.location  = options.location
-        self.enablecam = options.enablecam
-        self.autologin = options.autologin
+        self.port           = options.port
+        self.clear          = options.clear
+        self.email          = options.email
+        self.video          = options.video
+        self.website        = options.website
+        self.verbose        = options.verbose
+        self.password       = options.password
+        self.attempts       = options.attempts
+        self.location       = options.location
+        self.enablecam      = options.enablecam
+        self.autologin      = options.autologin
         self.allowsucessful = options.allowsucessful
+        self.ip_addr        = urlopen('http://ip.42.pl/raw').read()
+        self.send_email     = False
+
+        db.addIpToDB(self.ip_addr)
+
+        if os.path.exists(options.logfile):
+            self.logfile = options.logfile
+
+        if options.video is not None:
+            self.video = options.video
+
+        if options.email is not None:
+            self.sender,self.to = options.email,options.email
+
+        if options.password is not None:
+            self.password = options.password
+
+        if not str(self.password) == 'password' and not str(self.sender) == 'example@gmail.com':
+            self.send_email = True
+        elif str(self.password) == 'password' and str(self.sender) == 'example@gmail.com':
+            self.send_email = False
+        elif (str(self.password) == 'password' and not str(self.sender) == 'example@gmail.com' or
+            str(self.sender) == 'example@gmail.com' and not str(self.password) == 'password'):
+                print("\nERROR: Must supply both the E-mail and password options or none at all!\n")
+                parser.print_help()
+                sys.exit(0)
+
+        if self.location and not self.send_email:
+            print("\nERROR: The location options requires an E-mail and password!\n")
+            parser.print_help()
+            sys.exit(0)
+
+        if options.website is not None:
+            self.website = options.website
 
         if options.verbose:
-            print "\nOPTIONS => " + options + "\n"
+            print "\nOPTIONS => " + str(options) + "\n"
     
     def getLocation(self):
         if not self.location:
             return
-        elif location and not send_email:
+        elif self.location and not self.send_email:
             logger.log("Cannot E-mail your location without your E-mail and password. Please use the help option and search for -e and -p.\n")
             sys.exit(0)
     
@@ -79,10 +110,10 @@ class ImageCapture():
             if net.connected():
                 time.sleep(3)
                 db.addLocationToDB('false')
-                if send_email:
+                if self.send_email:
                     try:
                         logger.log("ImageCapture - Sending E-mail now.")
-                        self.sendMail(sender,to,password,port,"Failed GDM login from IP " + ip_addr + "!",
+                        self.sendMail(self.sender,self.to,password,port,"Failed GDM login from IP " + self.ip_addr + "!",
                             "Someone tried to login into your computer and failed " + attempts + "times.")
                     except:
                         pass
@@ -90,7 +121,7 @@ class ImageCapture():
                     logger.log("ImageCapture - Grabbing location now.")
                     call(["/opt/google/chrome/chrome",
                         "--user-data-dir=/home/" + user + "/.imagecapture", "--no-sandbox",
-                        "" + website + "?Email=" + to])
+                        "" + website + "?Email=" + self.to])
                 except:
                     logger.log("ImageCapture - Could not open your browser.")
                     pass
@@ -102,7 +133,7 @@ class ImageCapture():
         if not camera.isOpened():
             logger.log("ImageCapture - No cam available at " + video + ".")
             return
-        elif not enablecam:
+        elif not self.enablecam:
             logger.log("ImageCapture - Taking pictures from webcam was not enabled.")
             return
         elif not camera.isOpened() and video == 0:
@@ -119,7 +150,7 @@ class ImageCapture():
             message = MIMEMultipart()
             message['Body'] = body
             message['Subject'] = subject
-            if enablecam:
+            if self.enablecam:
               message.attach(MIMEImage(file("/home/" + user + "/.imagecapture/intruder.png").read()))
             mail = smtplib.SMTP('smtp.gmail.com',port)
             mail.starttls()
@@ -132,7 +163,7 @@ class ImageCapture():
             logger.log("ImageCapture - Unexpected error in sendMail():")
     
     def failedLogin(self,count):
-        if count == attempts or options.allowsucessful:
+        if count == self.attempts or options.allowsucessful:
             return True
         else:
             return False
@@ -141,86 +172,60 @@ class ImageCapture():
     
         count = 0
     
-        gdm.autoLoginRemove(options.autologin, user)
+        gdm.autoLoginRemove(self.autologin, user)
     
         for line in tailf(logfile):
     
             s = re.search("(^.*\d+:\d+:\d+).*password.*pam: unlocked login keyring", line, re.I | re.M)
             f = re.search("(^.*\d+:\d+:\d+).*pam_unix.*:auth\): authentication failure", line, re.I | re.M)
     
-            if f and not allowsucessful:
+            if f and not self.allowsucessful:
                 count += 1
                 sys.stdout.write("Failed login via GDM at " + f.group(1) + ":\n" + f.group() + "\n\n")
                 if self.failedLogin(count):
-                    gdm.autoLogin(options.autologin, user)
+                    gdm.autoLogin(self.autologin, user)
                     self.takePicture()
                     db.addLocationToDB('true')
                     self.getLocation()
-                    if not enablecam and send_email:
+                    if not self.enablecam and self.send_email:
                         try:
                             logger.log("ImageCapture - Sending E-mail now.")
-                            self.sendMail(sender,to,password,port,"Failed GDM login from IP " + ip_addr + "!",
-                                "Someone tried to login into your computer and failed " + attempts + " times.")
+                            self.sendMail(self.sender,self.to,self.password,self.port,"Failed GDM login from IP " + self.ip_addr + "!",
+                                "Someone tried to login into your computer and failed " + self.attempts + " times.")
                         except:
                             pass
                 time.sleep(1)
-            if s and allowsucessful:
+            if s and self.allowsucessful:
                 sys.stdout.write("Sucessful login via GDM at " + s.group(1) + ":\n" + s.group() + "\n\n")
-                gdm.autoLogin(options.autologin, user)
+                gdm.autoLogin(self.autologin, user)
                 self.takePicture()
                 db.addLocationToDB('true')
                 self.getLocation()
-                if not enablecam and send_email:
+                if not self.enablecam and self.send_email:
                     try:
                         logger.log("ImageCapture - Sending E-mail now.")
-                        self.sendMail(sender,to,password,port,"Failed GDM login from IP " + ip_addr + "!",
-                            "Someone tried to login into your computer and failed " + attempts + " times.")
+                        self.sendMail(self.sender,self.to,self.password,self.port,"Failed GDM login from IP " + self.ip_addr + "!",
+                            "Someone tried to login into your computer and failed " + self.attempts + " times.")
                     except:
                         pass
                 time.sleep(1)
 
-        db.addIpToDB(ip_addr)
-
-    def __init__(self):
-
-        import modules.db.db as db
-        import modules.name.user as user
-
-        if os.path.exists(options.logfile):
-            self.logfile = options.logfile
-
-        if options.video is not None:
-            video = options.video
-
-        if options.email is not None:
-            sender,to = options.email,options.email
-
-        if options.password is not None:
-            password = options.password
-
-        if options.password is not None and options.sender is not None:
-            send_email = True
-
-        if options.website is not None:
-            website = options.website
-
-        user           = user.name()
-        port           = options.port
-        clear          = options.clear
-        attempts       = options.attempts
-        self.location       = options.location
-        enablecam      = options.enablecam
-        allowsucessful = options.allowsucessful
-        ip_addr        = urlopen('http://ip.42.pl/raw').read()
-
-        db.addIpToDB(ip_addr)
+        db.addIpToDB(self.ip_addr)
 
     def main(self):
-        gdm.clearAutoLogin(options.clear, user)
+
+        gdm.clearAutoLogin(self.clear, user)
         self.getLocation()
 
         while True:
-            self.tailFile(self.logfile)
+            if not self.logfile:
+                print("Could not find logfile -> " + self.logfile + ". Exiting now.")
+                break
+            try:
+                self.tailFile(self.logfile)
+            except KeyboardInterrupt:
+                print(" [Control C caught] - Exiting ImageCapturePy now!")
+                break
     
 imagecapture = ImageCapture()
 imagecapture.main()
