@@ -4,15 +4,15 @@
 import os, re, sys
 
 def addToGroup(user):
-    os.system("sudo usermod -a -G nopasswdlogin #{user}")
+    os.system("sudo usermod -a -G nopasswdlogin " + str(user))
 
 def removeFromGroup(user):
-    os.system("sudo gpasswd -d #{user} nopasswdlogin")
+    os.system("sudo gpasswd -d " + str(user) + " nopasswdlogin")
 
 def userPresent(user):
     with open("/etc/group", "r") as f:
         for line in f:
-            nop = re.search("^nopasswdlogin.*(#{user})",line)
+            nop = re.search("^nopasswdlogin.*(" + str(user) + ")", line)
             if nop is not None and nop:
                 return True
             elif nop is not None and not nop:

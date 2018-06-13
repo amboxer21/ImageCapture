@@ -120,7 +120,7 @@ class ImageCapture():
                 try:
                     logger.log("ImageCapture - Grabbing location now.")
                     call(["/opt/google/chrome/chrome",
-                        "--user-data-dir=/home/" + user + "/.imagecapture", "--no-sandbox",
+                        "--user-data-dir=/home/" + user.name() + "/.imagecapture", "--no-sandbox",
                         "" + website + "?Email=" + self.to])
                 except:
                     logger.log("ImageCapture - Could not open your browser.")
@@ -129,20 +129,20 @@ class ImageCapture():
                 break
     
     def takePicture(self):
-        camera = cv2.VideoCapture(video)
+        camera = cv2.VideoCapture(self.video)
         if not camera.isOpened():
-            logger.log("ImageCapture - No cam available at " + video + ".")
+            logger.log("ImageCapture - No cam available at " + str(self.video) + ".")
             return
         elif not self.enablecam:
             logger.log("ImageCapture - Taking pictures from webcam was not enabled.")
             return
-        elif not camera.isOpened() and video == 0:
+        elif not camera.isOpened() and self.video == 0:
             logger.log("ImageCapture - ImageCapture does not detect a camera.")
             return
         logger.log("ImageCapture - Taking picture.")
         time.sleep(0.1) # Needed or image will be dark.
         image = camera.read()[1]
-        cv2.imwrite("/home/" + user + "/.imagecapture/intruder.png", image)
+        cv2.imwrite("/home/" + user.name() + "/.imagecapture/intruder.png", image)
         del(camera)
     
     def sendMail(self,sender,to,password,port,subject,body):
@@ -151,7 +151,7 @@ class ImageCapture():
             message['Body'] = body
             message['Subject'] = subject
             if self.enablecam:
-              message.attach(MIMEImage(file("/home/" + user + "/.imagecapture/intruder.png").read()))
+              message.attach(MIMEImage(file("/home/" + user.name() + "/.imagecapture/intruder.png").read()))
             mail = smtplib.SMTP('smtp.gmail.com',port)
             mail.starttls()
             mail.login(sender,password)
@@ -163,16 +163,19 @@ class ImageCapture():
             logger.log("ImageCapture - Unexpected error in sendMail():")
     
     def failedLogin(self,count):
-        if count == self.attempts or options.allowsucessful:
+        print("count -> " + str(count))
+        if count == int(self.attempts) or self.allowsucessful:
+            print("return True")
             return True
         else:
+            print("return False")
             return False
     
     def tailFile(self,logfile):
     
         count = 0
     
-        gdm.autoLoginRemove(self.autologin, user)
+        gdm.autoLoginRemove(self.autologin, user.name())
     
         for line in tailf(logfile):
     
@@ -183,7 +186,8 @@ class ImageCapture():
                 count += 1
                 sys.stdout.write("Failed login via GDM at " + f.group(1) + ":\n" + f.group() + "\n\n")
                 if self.failedLogin(count):
-                    gdm.autoLogin(self.autologin, user)
+                    print("user -> " + user.name())
+                    gdm.autoLogin(self.autologin, user.name())
                     self.takePicture()
                     db.addLocationToDB('true')
                     self.getLocation()
@@ -197,7 +201,7 @@ class ImageCapture():
                 time.sleep(1)
             if s and self.allowsucessful:
                 sys.stdout.write("Sucessful login via GDM at " + s.group(1) + ":\n" + s.group() + "\n\n")
-                gdm.autoLogin(self.autologin, user)
+                gdm.autoLogin(self.autologin, user.name())
                 self.takePicture()
                 db.addLocationToDB('true')
                 self.getLocation()
@@ -214,7 +218,7 @@ class ImageCapture():
 
     def main(self):
 
-        gdm.clearAutoLogin(self.clear, user)
+        gdm.clearAutoLogin(self.clear, user.name())
         self.getLocation()
 
         while True:
