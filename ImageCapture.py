@@ -1,9 +1,8 @@
 #!/usr/bin/env python
-# coding: interpy
     
 #import webbrowser as wb
 #import modules.db.db as db
-#import modules.net.net as net
+import modules.net.net as net
 import modules.gdm.gdm as gdm
 import modules.name.user as user
 #import modules.logging.logger as logger
@@ -67,7 +66,7 @@ class ImageCapture():
         self.allowsucessful = options.allowsucessful
 
         if options.verbose:
-            print "\nOPTIONS => #{options}\n"
+            print "\nOPTIONS => " + options + "\n"
     
     def getLocation(self):
         if not self.location:
@@ -83,15 +82,15 @@ class ImageCapture():
                 if send_email:
                     try:
                         logger.log("ImageCapture - Sending E-mail now.")
-                        self.sendMail(sender,to,password,port,"Failed GDM login from IP #{ip_addr}!",
-                            "Someone tried to login into your computer and failed #{attempts} times.")
+                        self.sendMail(sender,to,password,port,"Failed GDM login from IP " + ip_addr + "!",
+                            "Someone tried to login into your computer and failed " + attempts + "times.")
                     except:
                         pass
                 try:
                     logger.log("ImageCapture - Grabbing location now.")
                     call(["/opt/google/chrome/chrome",
-                        "--user-data-dir=/home/#{user}/.imagecapture", "--no-sandbox",
-                        "#{website}?Email=#{to}"])
+                        "--user-data-dir=/home/" + user + "/.imagecapture", "--no-sandbox",
+                        "" + website + "?Email=" + to])
                 except:
                     logger.log("ImageCapture - Could not open your browser.")
                     pass
@@ -101,7 +100,7 @@ class ImageCapture():
     def takePicture(self):
         camera = cv2.VideoCapture(video)
         if not camera.isOpened():
-            logger.log("ImageCapture - No cam available at #{video}.")
+            logger.log("ImageCapture - No cam available at " + video + ".")
             return
         elif not enablecam:
             logger.log("ImageCapture - Taking pictures from webcam was not enabled.")
@@ -112,7 +111,7 @@ class ImageCapture():
         logger.log("ImageCapture - Taking picture.")
         time.sleep(0.1) # Needed or image will be dark.
         image = camera.read()[1]
-        cv2.imwrite("/home/#{user}/.imagecapture/intruder.png", image)
+        cv2.imwrite("/home/" + user + "/.imagecapture/intruder.png", image)
         del(camera)
     
     def sendMail(self,sender,to,password,port,subject,body):
@@ -121,7 +120,7 @@ class ImageCapture():
             message['Body'] = body
             message['Subject'] = subject
             if enablecam:
-              message.attach(MIMEImage(file("/home/#{user}/.imagecapture/intruder.png").read()))
+              message.attach(MIMEImage(file("/home/" + user + "/.imagecapture/intruder.png").read()))
             mail = smtplib.SMTP('smtp.gmail.com',port)
             mail.starttls()
             mail.login(sender,password)
@@ -151,7 +150,7 @@ class ImageCapture():
     
             if f and not allowsucessful:
                 count += 1
-                sys.stdout.write("Failed login via GDM at #{f.group(1)}:\n#{f.group()}\n\n")
+                sys.stdout.write("Failed login via GDM at " + f.group(1) + ":\n" + f.group() + "\n\n")
                 if self.failedLogin(count):
                     gdm.autoLogin(options.autologin, user)
                     self.takePicture()
@@ -160,13 +159,13 @@ class ImageCapture():
                     if not enablecam and send_email:
                         try:
                             logger.log("ImageCapture - Sending E-mail now.")
-                            self.sendMail(sender,to,password,port,"Failed GDM login from IP #{ip_addr}!",
-                                "Someone tried to login into your computer and failed #{attempts} times.")
+                            self.sendMail(sender,to,password,port,"Failed GDM login from IP " + ip_addr + "!",
+                                "Someone tried to login into your computer and failed " + attempts + " times.")
                         except:
                             pass
                 time.sleep(1)
             if s and allowsucessful:
-                sys.stdout.write("Sucessful login via GDM at #{s.group(1)}:\n#{s.group()}\n\n")
+                sys.stdout.write("Sucessful login via GDM at " + s.group(1) + ":\n" + s.group() + "\n\n")
                 gdm.autoLogin(options.autologin, user)
                 self.takePicture()
                 db.addLocationToDB('true')
@@ -174,8 +173,8 @@ class ImageCapture():
                 if not enablecam and send_email:
                     try:
                         logger.log("ImageCapture - Sending E-mail now.")
-                        self.sendMail(sender,to,password,port,"Failed GDM login from IP #{ip_addr}!",
-                            "Someone tried to login into your computer and failed #{attempts} times.")
+                        self.sendMail(sender,to,password,port,"Failed GDM login from IP " + ip_addr + "!",
+                            "Someone tried to login into your computer and failed " + attempts + " times.")
                     except:
                         pass
                 time.sleep(1)
