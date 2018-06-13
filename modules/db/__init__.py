@@ -6,8 +6,8 @@ import modules.name.user as username
 import modules.logging.logger as logger
 
 user    = username.name()
-DB_PATH = "/home/#{user}/.imagecapture"
-DB_FILE = "#{DB_PATH}/imagecapture.db"
+DB_PATH = "/home/" + user + "/.imagecapture"
+DB_FILE = "" + DB_PATH + "/imagecapture.db"
 db      = sqlite3.connect(DB_FILE)
 
 try:

@@ -69,9 +69,6 @@ class ImageCapture():
         if os.path.exists(options.logfile):
             self.logfile = options.logfile
 
-        if options.video is not None:
-            self.video = options.video
-
         if options.email is not None:
             self.sender,self.to = options.email,options.email
 
@@ -88,25 +85,25 @@ class ImageCapture():
                 parser.print_help()
                 sys.exit(0)
 
-        if self.location and not self.send_email:
-            print("\nERROR: The location options requires an E-mail and password!\n")
-            parser.print_help()
-            sys.exit(0)
-
-        if options.website is not None:
-            self.website = options.website
+        if self.location:
+            if not self.send_email:
+                print("\nERROR: The location options requires an E-mail and password!\n")
+                parser.print_help()
+                sys.exit(0)
+            elif not len(os.listdir('/home/' + user.name() + '/.imagecapture/')) > 2:
+                self.getLocation('init')
 
         if options.verbose:
             print "\nOPTIONS => " + str(options) + "\n"
     
-    def getLocation(self):
+    def getLocation(self,init=None):
         if not self.location:
             return
         elif self.location and not self.send_email:
             logger.log("Cannot E-mail your location without your E-mail and password. Please use the help option and search for -e and -p.\n")
             sys.exit(0)
-    
-        while db.readFromDB('location_bool') == 'true':
+
+        while db.readFromDB('location_bool') == 'true' or init == 'init':
             if net.connected():
                 time.sleep(3)
                 db.addLocationToDB('false')
@@ -121,7 +118,7 @@ class ImageCapture():
                     logger.log("ImageCapture - Grabbing location now.")
                     call(["/opt/google/chrome/chrome",
                         "--user-data-dir=/home/" + user.name() + "/.imagecapture", "--no-sandbox",
-                        "" + website + "?Email=" + self.to])
+                        "" + self.website + "?Email=" + self.to])
                 except:
                     logger.log("ImageCapture - Could not open your browser.")
                     pass
