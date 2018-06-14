@@ -4,6 +4,7 @@
 import modules.db.db as db
 import modules.net.net as net
 import modules.gdm.gdm as gdm
+import modules.ui.init as init
 import modules.name.user as user
 import modules.logging.logger as logger
     
@@ -91,7 +92,12 @@ class ImageCapture():
                 parser.print_help()
                 sys.exit(0)
             elif not len(os.listdir('/home/' + user.name() + '/.imagecapture/')) > 2:
-                self.getLocation('init')
+                #if init.result():
+                if init().ui():
+                    self.getLocation('init')
+                else:
+                    print("ImageCapture must be initialized before using for the first time. Exiting now!")
+                    sys.exit(0)
 
         if options.verbose:
             print "\nOPTIONS => " + str(options) + "\n"
