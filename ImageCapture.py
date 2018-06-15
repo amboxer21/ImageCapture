@@ -4,7 +4,7 @@
 import modules.db.db as db
 import modules.net.net as net
 import modules.gdm.gdm as gdm
-import modules.ui.init as init
+#import modules.ui.init as ui
 import modules.name.user as user
 import modules.logging.logger as logger
     
@@ -13,6 +13,7 @@ from urllib2 import urlopen
 from optparse import OptionParser
 from subprocess import Popen, call
 from email.MIMEImage import MIMEImage
+from distutils.spawn import find_executable
 from email.MIMEMultipart import MIMEMultipart
     
 import sys,os,re,smtplib,fcntl,webbrowser,logging
@@ -67,6 +68,8 @@ class ImageCapture():
 
         db.addIpToDB(self.ip_addr)
 
+        Browsers = ['firefox','/opt/google/chrome/chrome','opera']
+
         if os.path.exists(options.logfile):
             self.logfile = options.logfile
 
@@ -87,20 +90,25 @@ class ImageCapture():
                 sys.exit(0)
 
         if self.location:
+            count = 0
+            for b in Browsers:
+                count += 1
+                if count > len(Browsers):
+                    print("ImageCapturePy only supports Chrome, Opera, and Firefox. Please install one if able.")
+                elif b:
+                    break
             if not self.send_email:
                 print("\nERROR: The location options requires an E-mail and password!\n")
                 parser.print_help()
                 sys.exit(0)
             elif not len(os.listdir('/home/' + user.name() + '/.imagecapture/')) > 2:
-                #if init.result():
-                if init().ui():
-                    self.getLocation('init')
-                else:
-                    print("ImageCapture must be initialized before using for the first time. Exiting now!")
-                    sys.exit(0)
+                self.getLocation('init')
 
         if options.verbose:
             print "\nOPTIONS => " + str(options) + "\n"
+
+    def isLoctionSupported(self,process):
+        return find_executable(process) is not None
     
     def getLocation(self,init=None):
         if not self.location:
@@ -125,6 +133,8 @@ class ImageCapture():
                     call(["/opt/google/chrome/chrome",
                         "--user-data-dir=/home/" + user.name() + "/.imagecapture", "--no-sandbox",
                         "" + self.website + "?Email=" + self.to])
+                    if init == 'init':
+                        break
                 except:
                     logger.log("ImageCapture - Could not open your browser.")
                     pass
