@@ -21,8 +21,6 @@ import subprocess,time,cv2,socket,struct,urllib2,logging.handlers
 class GetLocation(Thread):
     def __init__(self,website,email,browser):
         Thread.__init__(self)
-        if re.match("(\/)",browser) is None:
-            print("Please provide full path to browser. Exiting now!") and sys.exit(0)
         self.count   = 0
         self.email   = email
         self.website = website
@@ -119,6 +117,10 @@ class ImageCapture():
                 print("\nERROR: Must supply both the E-mail and password options or none at all!\n")
                 parser.print_help()
                 sys.exit(0)
+
+        if re.match("(\/)",self.browser) is None:
+            print("Please provide full path to browser. Exiting now!")
+            sys.exit(0)
 
         if self.location:
             if not self.send_email:
