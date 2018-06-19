@@ -46,6 +46,9 @@ class GetLocation(Thread):
         elif browser == 'firefox':
             call([browser, "--new-window \'" + self.website + "?Email=" + self.email + "\'"])
         #elif browser == 'opera':
+        else:
+            print("\n\nBrowser not found and location functionality will not work.\n\n")
+            sys.sleep(2)
 
 class ImageCapture():
     
