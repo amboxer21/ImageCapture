@@ -1,23 +1,54 @@
 #!/usr/bin/env python
     
-#import webbrowser as wb
 import modules.db.db as db
 import modules.net.net as net
 import modules.gdm.gdm as gdm
-#import modules.ui.init as ui
 import modules.name.user as user
 import modules.logging.logger as logger
-    
+
 from tailf import tailf
 from urllib2 import urlopen
+from threading import Thread
 from optparse import OptionParser
 from subprocess import Popen, call
 from email.MIMEImage import MIMEImage
 from distutils.spawn import find_executable
 from email.MIMEMultipart import MIMEMultipart
-    
+
 import sys,os,re,smtplib,fcntl,webbrowser,logging
 import subprocess,time,cv2,socket,struct,urllib2,logging.handlers
+
+class GetLocation(Thread):
+    def __init__(self,website,email,browser):
+        Thread.__init__(self)
+        self.count   = 0
+        self.email   = email
+        self.website = website
+        self.browser = browser
+
+    def browser_exists(self,browser):
+        return find_executable(browser)
+
+    def run (self):
+        for b in ['/usr/bin/firefox','/usr/bin/opera']:
+            if self.browser_exists(self.browser) and self.count == 0:
+                browser = re.match("(\/\w+\/)(.*\/)(\w+)",self.browser).group(3)
+                print "browser(1) -> " + str(browser)
+                break
+            self.count += 1
+            if self.count > len(Browsers):
+                print("ImageCapturePy only supports Chrome, Opera, and Firefox. Please install one if able.")
+            elif self.browser_exists(b):
+                browser = re.match("(\/\w+\/)(.*\/)(\w+)",b).group(3)
+                print "browser(2) -> " + str(browser)
+                break
+        if browser == 'chrome':
+            print("Broswer == chrome:")
+            call(["/opt/google/chrome/chrome",
+                "--user-data-dir=/home/" + user.name() + "/.imagecapture", "--no-sandbox",
+                "" + self.website + "?Email=" + self.email])
+        #elif browser == 'firefox':
+        #elif browser == 'opera':
 
 class ImageCapture():
     
@@ -49,6 +80,8 @@ class ImageCapture():
             default=False, help="Remove autologin. Must be root to use this feature.")
         parser.add_option("-s", "--allow-sucessful", dest='allowsucessful', action="store_true",
             default=False, help="Run ImageCapture even if login is sucessful.")
+        parser.add_option("-B", "--browser", dest="browser",
+            default="/opt/google/chrome/chrome", help="Select the browser used to grab geolocation data.")
         (options, args) = parser.parse_args()
 
         self.port           = options.port
@@ -57,6 +90,7 @@ class ImageCapture():
         self.video          = options.video
         self.website        = options.website
         self.verbose        = options.verbose
+        self.browser        = options.browser
         self.password       = options.password
         self.attempts       = options.attempts
         self.location       = options.location
@@ -67,8 +101,6 @@ class ImageCapture():
         self.send_email     = False
 
         db.addIpToDB(self.ip_addr)
-
-        Browsers = ['firefox','/opt/google/chrome/chrome','opera']
 
         if os.path.exists(options.logfile):
             self.logfile = options.logfile
@@ -90,13 +122,6 @@ class ImageCapture():
                 sys.exit(0)
 
         if self.location:
-            count = 0
-            for b in Browsers:
-                count += 1
-                if count > len(Browsers):
-                    print("ImageCapturePy only supports Chrome, Opera, and Firefox. Please install one if able.")
-                elif b:
-                    break
             if not self.send_email:
                 print("\nERROR: The location options requires an E-mail and password!\n")
                 parser.print_help()
@@ -130,9 +155,7 @@ class ImageCapture():
                         pass
                 try:
                     logger.log("ImageCapture - Grabbing location now.")
-                    call(["/opt/google/chrome/chrome",
-                        "--user-data-dir=/home/" + user.name() + "/.imagecapture", "--no-sandbox",
-                        "" + self.website + "?Email=" + self.to])
+                    GetLocation(self.website,self.to,self.browser).start()
                     if init == 'init':
                         break
                 except:
