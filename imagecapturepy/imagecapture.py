@@ -35,7 +35,7 @@ class GetLocation(Thread):
                 browser = re.match("(\/\w+)(.*\/)(\w+)",self.browser).group(3)
                 break
             self.count += 1
-            if self.count > len(Browsers):
+            if self.count > len(b):
                 print("ImageCapturePy only supports Chrome, Opera, and Firefox. Please install one if able.")
             elif self.browser_exists(b):
                 browser = re.match("(\/\w+)(.*\/)(\w+)",b).group(3)
