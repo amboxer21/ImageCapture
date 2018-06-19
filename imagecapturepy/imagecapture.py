@@ -44,7 +44,7 @@ class GetLocation(Thread):
             call([self.browser, "--user-data-dir=/home/" + user.name() + "/.imagecapture", "--no-sandbox",
                 "" + self.website + "?Email=" + self.email])
         elif browser == 'firefox':
-            call([browser, "--new-window \'" + self.website + "?Email=" + self.email + "\'"])
+            call([browser, "--new-window", "" + self.website + "?Email=" + self.email + "\""])
         #elif browser == 'opera':
         else:
             print("\n\nBrowser not found and location functionality will not work.\n\n")
