@@ -21,6 +21,8 @@ import subprocess,time,cv2,socket,struct,urllib2,logging.handlers
 class GetLocation(Thread):
     def __init__(self,website,email,browser):
         Thread.__init__(self)
+        if re.match("(\/)",browser) is None:
+            print("Please provide full path to browser. Exiting now!") and sys.exit(0)
         self.count   = 0
         self.email   = email
         self.website = website
@@ -30,24 +32,21 @@ class GetLocation(Thread):
         return find_executable(browser)
 
     def run (self):
-        for b in ['/usr/bin/firefox','/usr/bin/opera']:
+        for b in ['/usr/bin/firefox','/usr/bin/opera','/opt/google/chome/chrome']:
             if self.browser_exists(self.browser) and self.count == 0:
-                browser = re.match("(\/\w+\/)(.*\/)(\w+)",self.browser).group(3)
-                print "browser(1) -> " + str(browser)
+                browser = re.match("(\/\w+)(.*\/)(\w+)",self.browser).group(3)
                 break
             self.count += 1
             if self.count > len(Browsers):
                 print("ImageCapturePy only supports Chrome, Opera, and Firefox. Please install one if able.")
             elif self.browser_exists(b):
-                browser = re.match("(\/\w+\/)(.*\/)(\w+)",b).group(3)
-                print "browser(2) -> " + str(browser)
+                browser = re.match("(\/\w+)(.*\/)(\w+)",b).group(3)
                 break
         if browser == 'chrome':
-            print("Broswer == chrome:")
-            call(["/opt/google/chrome/chrome",
-                "--user-data-dir=/home/" + user.name() + "/.imagecapture", "--no-sandbox",
+            call([self.browser, "--user-data-dir=/home/" + user.name() + "/.imagecapture", "--no-sandbox",
                 "" + self.website + "?Email=" + self.email])
-        #elif browser == 'firefox':
+        elif browser == 'firefox':
+            call([browser, "--new-window \'" + self.website + "?Email=" + self.email + "\'"])
         #elif browser == 'opera':
 
 class ImageCapture():
