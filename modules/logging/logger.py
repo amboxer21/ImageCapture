@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding: interpy
 
 import logging,logging.handlers,os
 
@@ -13,5 +12,5 @@ def log(message):
     root.setLevel(os.environ.get("LOGLEVEL", "INFO"))
     root.addHandler(handler)
     logging.exception("ImageCapture - " + message)
-    print "#{message}"
+    print("ImageCapture - " + str(message))
     return
