@@ -30,7 +30,7 @@ class GetLocation(Thread):
         return find_executable(browser)
 
     def run (self):
-        for b in ['/usr/bin/firefox','/usr/bin/opera','/opt/google/chome/chrome']:
+        for b in ['/opt/google/chome/chrome','/usr/bin/firefox','/usr/bin/opera']:
             if self.browser_exists(self.browser) and self.count == 0:
                 browser = re.match("(\/\w+)(.*\/)(\w+)",self.browser).group(3)
                 break
@@ -143,7 +143,7 @@ class ImageCapture():
         if not self.location:
             return
         elif self.location and not self.send_email:
-            logger.log("Cannot E-mail your location without your E-mail and password. Please use the help option and search for -e and -p.\n")
+            logger.log("ERROR","Cannot E-mail your location without your E-mail and password. Please use the help option and search for -e and -p.\n")
             sys.exit(0)
 
         while db.readFromDB('location_bool') == 'true' or init == 'init':
@@ -152,18 +152,18 @@ class ImageCapture():
                 db.addLocationToDB('false')
                 if self.send_email:
                     try:
-                        logger.log("ImageCapture - Sending E-mail now.")
+                        logger.log("INFO","ImageCapture - Sending E-mail now.")
                         self.sendMail(self.sender,self.to,password,port,"Failed GDM login from IP " + self.ip_addr + "!",
                             "Someone tried to login into your computer and failed " + attempts + "times.")
                     except:
                         pass
                 try:
-                    logger.log("ImageCapture - Grabbing location now.")
+                    logger.log("INFO","ImageCapture - Grabbing location now.")
                     GetLocation(self.website,self.to,self.browser).start()
                     if init == 'init':
                         break
                 except:
-                    logger.log("ImageCapture - Could not open your browser.")
+                    logger.log("WARNING","ImageCapture - Could not open your browser.")
                     pass
             else:
                 break
@@ -171,15 +171,15 @@ class ImageCapture():
     def takePicture(self):
         camera = cv2.VideoCapture(self.video)
         if not camera.isOpened():
-            logger.log("ImageCapture - No cam available at " + str(self.video) + ".")
+            logger.log("ERROR","ImageCapture - No cam available at " + str(self.video) + ".")
             return
         elif not self.enablecam:
-            logger.log("ImageCapture - Taking pictures from webcam was not enabled.")
+            logger.log("WARNING","ImageCapture - Taking pictures from webcam was not enabled.")
             return
         elif not camera.isOpened() and self.video == 0:
-            logger.log("ImageCapture - ImageCapture does not detect a camera.")
+            logger.log("WARNING","ImageCapture - ImageCapture does not detect a camera.")
             return
-        logger.log("ImageCapture - Taking picture.")
+        logger.log("INFO","ImageCapture - Taking picture.")
         time.sleep(0.1) # Needed or image will be dark.
         image = camera.read()[1]
         cv2.imwrite("/home/" + user.name() + "/.imagecapture/intruder.png", image)
@@ -196,11 +196,11 @@ class ImageCapture():
             mail.starttls()
             mail.login(sender,password)
             mail.sendmail(sender, to, message.as_string())
-            logger.log("ImageCapture - Sent email successfully!")
+            logger.log("INFO","ImageCapture - Sent email successfully!")
         except smtplib.SMTPAuthenticationError:
-            logger.log("ImageCapture - Could not athenticate with password and username!")
+            logger.log("ERROR","ImageCapture - Could not athenticate with password and username!")
         except:
-            logger.log("ImageCapture - Unexpected error in sendMail():")
+            logger.log("ERROR","ImageCapture - Unexpected error in sendMail():")
     
     def failedLogin(self,count):
         print("count -> " + str(count))
@@ -233,7 +233,7 @@ class ImageCapture():
                     self.getLocation()
                     if not self.enablecam and self.send_email:
                         try:
-                            logger.log("ImageCapture - Sending E-mail now.")
+                            logger.log("INFO","ImageCapture - Sending E-mail now.")
                             self.sendMail(self.sender,self.to,self.password,self.port,"Failed GDM login from IP " + self.ip_addr + "!",
                                 "Someone tried to login into your computer and failed " + self.attempts + " times.")
                         except:
@@ -247,7 +247,7 @@ class ImageCapture():
                 self.getLocation()
                 if not self.enablecam and self.send_email:
                     try:
-                        logger.log("ImageCapture - Sending E-mail now.")
+                        logger.log("INFO","ImageCapture - Sending E-mail now.")
                         self.sendMail(self.sender,self.to,self.password,self.port,"Failed GDM login from IP " + self.ip_addr + "!",
                             "Someone tried to login into your computer and failed " + self.attempts + " times.")
                     except:

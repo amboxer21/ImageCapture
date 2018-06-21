@@ -2,7 +2,7 @@
 
 import logging,logging.handlers,os
 
-def log(message):
+def log(level,message):
     handler = logging.handlers.WatchedFileHandler(
         os.environ.get("LOGFILE", "/var/log/messages"))
     formatter = logging.Formatter(logging.BASIC_FORMAT)
@@ -11,6 +11,6 @@ def log(message):
     root = logging.getLogger()
     root.setLevel(os.environ.get("LOGLEVEL", "INFO"))
     root.addHandler(handler)
-    logging.exception("ImageCapture - " + message)
-    print("ImageCapture - " + str(message))
+    logging.exception("(" + str(level) + ") " + "ImageCapture - " + message)
+    print("  => (" + str(level) + ") " + "ImageCapture - " + str(message))
     return

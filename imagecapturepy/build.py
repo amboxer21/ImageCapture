@@ -4,14 +4,13 @@ import subprocess,errno,re
 from shutil import copy2
 
 import modules.name.user as user
+import modules.logging.logger as logger
 
 class Build():
 
     def __init__(self):
-        if not self.dir_exists(self.root_directory() + "/pictures"):
-            self.mkdir_p(self.root_directory() + "/pictures")
-        if not self.file_exists(self.root_directory() + "/pictures" + "/capture1.png"):
-            self.create_file(self.root_directory() + "/pictures" + "/capture1.png")
+        if not self.dir_exists(self.root_directory()):
+            self.mkdir_p(self.root_directory())
 
     def root_directory(self):
         return "/home/" + str(user.name()) + "/.imagecapture"
@@ -63,3 +62,21 @@ if __name__ == '__main__':
     build = Build()
     build.chmod(build.root_directory(),0777)
     build.chown(build.root_directory(),user.name(),user.name())
+    if not build.dir_exists(build.root_directory() + "/pictures"):
+        build.mkdir_p(build.root_directory() + "/pictures")
+        build.chmod(build.root_directory() + "/pictures",0777)
+        build.chown(build.root_directory() + "/pictures",user.name(),user.name())
+    else:
+        logger.log("WARN","Directory \"" + build.root_directory() + "/pictures\" " + "exists!")
+    if not build.file_exists(build.root_directory() + "/pictures" + "/capture1.png"):
+        build.create_file(build.root_directory() + "/pictures" + "/capture1.png")
+        build.chmod(build.root_directory() + "/pictures" + "/capture1.png",0775)
+        build.chown(build.root_directory() + "/pictures" + "/capture1.png",user.name(),user.name())
+    else:
+        logger.log("WARN","File \"" + build.root_directory() + "/pictures" + "/capture1.png\" " + "exists!")
+    if not build.file_exists(build.root_directory() + "/credentials.conf"):
+        build.create_file(build.root_directory() + "/credentials.conf")
+        build.chmod(build.root_directory() + "/credentials.conf",0775)
+        build.chown(build.root_directory() + "/credentials.conf",user.name(),user.name())
+    else:
+        logger.log("WARN","File \"" + build.root_directory() + "/credentials.conf\" " + "exists!")
