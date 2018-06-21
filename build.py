@@ -7,10 +7,10 @@ class Build():
 
     def __init__(self):
         self.PICTURE_DIRECTORY = "/home/" + str(user_name()) + "/.imagecapture/pictures"
-        if not dir_exists(PICTURE_DIRECTORY):
-            mkdir_p(PICTURE_DIRECTORY)
-        if not file_exists(PICTURE_DIRECTORY + "/capture1.png"):
-            create_file(PICTURE_DIRECTORY + "/capture1.png")
+        if not dir_exists(self.PICTURE_DIRECTORY):
+            mkdir_p(self.PICTURE_DIRECTORY)
+        if not file_exists(self.PICTURE_DIRECTORY + "/capture1.png"):
+            create_file(self.PICTURE_DIRECTORY + "/capture1.png")
 
     def user_name():
         comm = subprocess.Popen(["users"], shell=True, stdout=subprocess.PIPE)
