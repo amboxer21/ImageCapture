@@ -1,4 +1,5 @@
 from shutil import copy2
+from distutils.spawn import find_executable
 
 import grp,pwd,os,glob,sys
 import subprocess,errno,re
@@ -65,6 +66,21 @@ class Build():
             else:
                 raise
 
+    def executableExists(self,executable_name):
+        return find_executable(executable_name)
+
+    def executableVersion(self,executable_name):
+        if str(executable_name) == 'opencv_version' and executableExists(executable_name):
+            comm = subprocess.Popen([executable_name], shell=True, stdout=subprocess.PIPE)
+            if comm is not None:
+                return str(comm.stdout.read())
+        if self.executableExists(executable_name):
+            comm = subprocess.Popen([executable_name + ' --version'], shell=True, stdout=subprocess.PIPE)
+            if comm is not None:
+                logger.log("INFO","" + str(comm.stdout.read()))
+        else:
+            logger.log("WARN","Executable does not exist!")
+
     def systemQueryCommand(self):
         if self.packageManager() == 'rpm':
             system_query_command = 'rpm -qa'
@@ -74,9 +90,9 @@ class Build():
 
     def installSystemPackage(self,package_name):
         if self.packageManager() == 'rpm':
-            system_install_command = 'sudo yum --assumeyes install ' + str(package_name)
+            system_install_command = 'sudo yum --assumeyes install ' + str(package_name) + ' 2> /dev/null'
         elif self.packageManager() == 'dpkg':
-            system_install_command = 'sudo apt-get --force-yes --yes install ' + str(package_name)
+            system_install_command = 'sudo apt-get --force-yes --yes install ' + str(package_name) + ' 2> /dev/null'
         comm = subprocess.Popen([system_install_command], shell=True, stdout=subprocess.PIPE)
         if comm is not None:
             logger.log("INFO","Installed system package - " + str(package_name))
@@ -84,7 +100,7 @@ class Build():
     def grepSystemPackages(self,package_name):
         comm = subprocess.Popen([self.systemQueryCommand()], shell=True, stdout=subprocess.PIPE)
         if comm is not None:
-            return re.search(str(package_name), str(comm.stdout.read()))
+            return re.search(str(package_name), str(comm.stdout.read()), re.I | re.M)
 
     def listSystemPackages(self):
         packages = []
@@ -96,7 +112,7 @@ class Build():
     def packageManager(self):
         package_manager = {'rpm': ('centos','fedora'), 'dpkg': ('debian','ubuntu')}
         for key,value in package_manager.items():
-            manager = re.search(lsb.release().lower(),str(value))
+            manager = re.search(lsb.release().lower(),str(value), re.I | re.M)
             if manager is not None:
                 return key
 
@@ -153,6 +169,12 @@ if __name__ == '__main__':
                 build.installSystemPackage(package)
             else:
                 logger.log("WARN","System package: " + str(package) + " is already installed!")
+
+        if not build.executableExists('opencv_version'):
+            logger.log("ERROR","Please install OpenCV 3.X.X from source before continuing.")
+            sys.exit(1)
+        elif re.search('^3\.\d+\.\d+',build.executableVersion('opencv_version'), re.I | re.M):
+            logger.log("INFO","Found opencv version " + build.executableVersion('opencv_version'))
 
     except Exception as exception:
         logger.log("ERROR","Exception exception :- " + str(exception))
