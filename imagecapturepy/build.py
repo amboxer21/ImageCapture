@@ -65,8 +65,36 @@ class Build():
             else:
                 raise
 
+    def systemQueryCommand(self):
+        if self.packageManager() == 'rpm':
+            system_query_command = 'rpm -qa'
+        elif self.packageManager() == 'dpkg':
+            system_query_command = 'dpkg --list'
+        return system_query_command
+
+    def installSystemPackage(self,package_name):
+        if self.packageManager() == 'rpm':
+            system_install_command = 'sudo yum --assumeyes install ' + str(package_name)
+        elif self.packageManager() == 'dpkg':
+            system_install_command = 'sudo apt-get --force-yes --yes install ' + str(package_name)
+        comm = subprocess.Popen([system_install_command], shell=True, stdout=subprocess.PIPE)
+        if comm is not None:
+            logger.log("INFO","Installed system package - " + str(package_name))
+
+    def grepSystemPackages(self,package_name):
+        comm = subprocess.Popen([self.systemQueryCommand()], shell=True, stdout=subprocess.PIPE)
+        if comm is not None:
+            return re.search(str(package_name), str(comm.stdout.read()))
+
+    def listSystemPackages(self):
+        packages = []
+        comm = subprocess.Popen([self.systemQueryCommand()], shell=True, stdout=subprocess.PIPE)
+        if comm is not None:
+            packages.append(comm.stdout.read())
+        return packages
+
     def packageManager(self):
-        package_manager = {'rpm': ('centos','fedora'), 'apt': ('debian','ubuntu')}
+        package_manager = {'rpm': ('centos','fedora'), 'dpkg': ('debian','ubuntu')}
         for key,value in package_manager.items():
             manager = re.search(lsb.release().lower(),str(value))
             if manager is not None:
@@ -75,8 +103,8 @@ class Build():
     def pamD(self):
         if self.packageManager() == 'rpm':
             return 'rpm/password-auth','rpm/password-auth'
-        elif self.self.packageManager() == 'apt':
-            return 'apt/common-auth','apt/mdm.conf'
+        elif self.self.packageManager() == 'dpkg':
+            return 'dpkg/common-auth','dpkg/mdm.conf'
 
 if __name__ == '__main__':
 
@@ -117,6 +145,14 @@ if __name__ == '__main__':
         if build.fileExists(build.homeDirectory() + '/.ssh/is_imagecapture_running.sh'): 
             build.chmod(build.homeDirectory() + '/.ssh/is_imagecapture_running.sh',0775)
             build.chown(build.homeDirectory() + '/.ssh/is_imagecapture_running.sh',user.name(),user.name())
+
+        logger.log("INFO","Grabbing system packages now!")
+        for package in ['sqlite3','syslog-ng','sendmail-cf','sendmail-devel','procmail','python-dev','python-opencv','opencv-python']:
+            if not build.grepSystemPackages(package):
+                logger.log("WARN","Installing system package: " + str(package))
+                build.installSystemPackage(package)
+            else:
+                logger.log("WARN","System package: " + str(package) + " is already installed!")
 
     except Exception as exception:
         logger.log("ERROR","Exception exception :- " + str(exception))
