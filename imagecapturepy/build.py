@@ -1,9 +1,10 @@
+from shutil import copy2
+
 import grp,pwd,os,glob
 import subprocess,errno,re
 
-from shutil import copy2
-
 import modules.name.user as user
+import modules.lsb.release as lsb
 import modules.logging.logger as logger
 
 class Build():
@@ -27,7 +28,9 @@ class Build():
         if not self.file_exists(destination) and self.file_exists(source):
             copy2(source,destination)
         elif self.file_exists(destination) and self.file_exists(source):
+            logger.log("WARN","File already exists! Backing up before copying to destination!")
             copy2(source,destination + ".backup")
+            copy2(source,destination)
 
     def file_exists(self,file_name):
         return os.path.isfile(file_name)
@@ -58,10 +61,22 @@ class Build():
             else:
                 raise
 
+    def pam_d(self):
+        pkg_manager = {'rpm': ('centos','fedora'), 'apt': ('debian','ubuntu')}
+        for key,value in pkg_manager.items():
+            manager = re.search(lsb.release().lower(),str(value))
+            if manager is not None:
+                if key == 'rpm':
+                    return 'rpm/password-auth','rpm/password-auth'
+                elif key == 'apt':
+                    return 'apt/common-auth','apt/mdm.conf'
+
 if __name__ == '__main__':
+
     build = Build()
     build.chmod(build.root_directory(),0777)
     build.chown(build.root_directory(),user.name(),user.name())
+
     if not build.dir_exists(build.root_directory() + "/pictures"):
         build.mkdir_p(build.root_directory() + "/pictures")
         build.chmod(build.root_directory() + "/pictures",0777)
@@ -80,3 +95,8 @@ if __name__ == '__main__':
         build.chown(build.root_directory() + "/credentials.conf",user.name(),user.name())
     else:
         logger.log("WARN","File \"" + build.root_directory() + "/credentials.conf\" " + "exists!")
+
+    logger.log("INFO","OS release = " + lsb.release())
+
+    for module in build.pam_d():
+        build.copyFile('build/autologin/' + module,'/etc/pam.d/')
