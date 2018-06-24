@@ -143,6 +143,11 @@ class Build():
         elif self.packageManager() == 'eix':
             return 'eix/system-login','eix/system-login'
 
+    def pythonVersion(self):
+        python_version = re.search('\d\.\d', str(sys.version), re.I | re.M)
+        if python_version is not None:
+            return python_version.group()
+
 if __name__ == '__main__':
 
     build = Build()
@@ -153,6 +158,10 @@ if __name__ == '__main__':
 
         if not build.packageManager():
             logger.log("ERROR","Your system is not supported. You can add it yourself or submit a pull request via githib.")
+            sys.exit(1)
+
+        if not build.pythonVersion() == '2.7':
+            logger.log("Only python 2.7 is supported! Exiting now!")
             sys.exit(1)
 
         if not build.dirExists(build.pictureDirectory()):
