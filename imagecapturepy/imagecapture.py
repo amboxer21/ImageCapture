@@ -16,7 +16,14 @@ from distutils.spawn import find_executable
 from email.MIMEMultipart import MIMEMultipart
 
 import sys,os,re,smtplib,fcntl,webbrowser,logging
-import subprocess,time,cv2,socket,struct,urllib2,logging.handlers
+import subprocess,time,cv2,socket,struct,logging.handlers
+
+# importing urllib2 works on my Linux Mint box
+# but not my Gentoo box and here is the fix!
+try:
+    import urllib2
+except ImportError:
+    import urllib
 
 class GetLocation(Thread):
     def __init__(self,website,email,browser):
