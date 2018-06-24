@@ -2,7 +2,7 @@ from shutil import copy2
 from distutils.spawn import find_executable
 
 import grp,pwd,os,glob,sys
-import subprocess,errno,re
+import subprocess,errno,re,pip
 
 import modules.name.user as user
 import modules.lsb.release as lsb
@@ -104,7 +104,17 @@ class Build():
     def grepSystemPackages(self,package_name):
         comm = subprocess.Popen([self.systemQueryCommand()], shell=True, stdout=subprocess.PIPE)
         if comm is not None:
-            return re.search(str(package_name), str(comm.stdout.read()), re.I | re.M)
+            package = re.search(str(package_name), str(comm.stdout.read()), re.I | re.M)
+            if package is not None:
+                return package.group()
+
+    def listPipPackages(self):
+        return pip.get_installed_distributions()
+
+    def grepPipPackage(self,package_name):
+        package = re.search(str(package_name),str(self.listPipPackages()), re.I | re.M)
+        if package is not None:
+            return package.group()
 
     def listSystemPackages(self):
         packages = []
@@ -122,6 +132,8 @@ class Build():
             manager = re.search(lsb.release().lower(),str(value), re.I | re.M)
             if manager is not None:
                 return key
+        if manager is None:
+            return False
 
     def pamD(self):
         if self.packageManager() == 'rpm':
@@ -129,7 +141,7 @@ class Build():
         elif self.packageManager() == 'dpkg':
             return 'dpkg/common-auth','dpkg/mdm.conf'
         elif self.packageManager() == 'eix':
-            return 'eix/dummy-auth','eix/dummy-auth'
+            return 'eix/system-login','eix/system-login'
 
 if __name__ == '__main__':
 
@@ -138,6 +150,11 @@ if __name__ == '__main__':
     build.chown(build.rootDirectory(),user.name(),user.name())
 
     try:
+
+        if not build.packageManager():
+            logger.log("ERROR","Your system is not supported. You can add it yourself or submit a pull request via githib.")
+            sys.exit(1)
+
         if not build.dirExists(build.pictureDirectory()):
             build.mkdirP(build.pictureDirectory())
             build.chmod(build.pictureDirectory(),0777)
@@ -180,9 +197,12 @@ if __name__ == '__main__':
                 logger.log("WARN","System package: " + str(package) + " is already installed!")
 
         if not build.executableExists('opencv_version'):
-            logger.log("ERROR","Please install OpenCV 3.X.X from source before continuing.")
+            logger.log("ERROR","OpenCV system package was not found. Please install OpenCV before continuing.")
             sys.exit(1)
-        elif re.search('^3\.\d+\.\d+',build.executableVersion('opencv_version'), re.I | re.M):
+        elif not grepPipPackage('opencv-python') and not grepPipPackage('python-opencv'):
+            logger.log("ERROR","OpenCV pip package was not found. Please install OpenCV before continuing.")
+            sys.exit(1)
+        else: 
             logger.log("INFO","Found opencv version " + build.executableVersion('opencv_version'))
 
     except Exception as exception:
