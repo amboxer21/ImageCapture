@@ -86,6 +86,8 @@ class Build():
             system_query_command = 'rpm -qa'
         elif self.packageManager() == 'dpkg':
             system_query_command = 'dpkg --list'
+        elif self.packageManager() == 'eix':
+            system_query_command = 'eix --only-names'
         return system_query_command
 
     def installSystemPackage(self,package_name):
@@ -93,6 +95,8 @@ class Build():
             system_install_command = 'sudo yum --assumeyes install ' + str(package_name) + ' 2> /dev/null'
         elif self.packageManager() == 'dpkg':
             system_install_command = 'sudo apt-get --force-yes --yes install ' + str(package_name) + ' 2> /dev/null'
+        elif self.packageManager() == 'eix':
+            system_install_command = 'sudo emerge -v install ' + str(package_name) + ' 2> /dev/null'
         comm = subprocess.Popen([system_install_command], shell=True, stdout=subprocess.PIPE)
         if comm is not None:
             logger.log("INFO","Installed system package - " + str(package_name))
@@ -110,7 +114,10 @@ class Build():
         return packages
 
     def packageManager(self):
-        package_manager = {'rpm': ('centos','fedora'), 'dpkg': ('debian','ubuntu')}
+        package_manager = {
+            'rpm': ('centos','fedora','scientific','opensuse'),
+            'dpkg': ('debian','ubuntu','linuxmint')
+            'eix': ('gentoo')}
         for key,value in package_manager.items():
             manager = re.search(lsb.release().lower(),str(value), re.I | re.M)
             if manager is not None:
@@ -119,8 +126,10 @@ class Build():
     def pamD(self):
         if self.packageManager() == 'rpm':
             return 'rpm/password-auth','rpm/password-auth'
-        elif self.self.packageManager() == 'dpkg':
+        elif self.packageManager() == 'dpkg':
             return 'dpkg/common-auth','dpkg/mdm.conf'
+        elif self.packageManager() == 'eix':
+            return 'eix/dummy-auth','eix/dummy-auth'
 
 if __name__ == '__main__':
 
