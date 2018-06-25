@@ -148,6 +148,26 @@ class Build():
         if python_version is not None:
             return python_version.group()
 
+    def psAUX(self,regex):
+        process = subprocess.Popen(['ps','aux'], stdout=subprocess.PIPE)
+        if process is not None:
+            regex = re.search(str(regex), str(process.stdout.read()), re.I | re.M)
+            if regex is not None:
+                return regex.group()
+
+    def authName(self):
+        auth_list  = ('mdm','slim')
+        auth_regex = self.psAUX('/usr/bin/X.*\-auth.[0-9A-Za-z\/\.]*')
+        for a in auth_list:
+            auth = re.search(str(a), str(auth_regex), re.I | re.M)
+            if auth is not None:
+                logger.log("INFO","Using Login Manager \"" + str(auth.group() + "\""))
+        if auth is None:
+            logger.log("ERROR","Login Manager is not supported yet. Here is a list of supported Login Managers.")
+            for a in auth_list:
+                print("    -> " + str(i))
+            sys.exit(1)
+
 if __name__ == '__main__':
 
     build = Build()
@@ -163,6 +183,8 @@ if __name__ == '__main__':
         if not build.pythonVersion() == '2.7':
             logger.log("Only python 2.7 is supported! Exiting now!")
             sys.exit(1)
+
+        build.authName():
 
         if not build.dirExists(build.pictureDirectory()):
             build.mkdirP(build.pictureDirectory())
