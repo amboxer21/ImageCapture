@@ -156,8 +156,8 @@ class Build():
                 return regex.group()
 
     def authName(self):
-        auth_list  = ('mdm','slim')
-        auth_regex = self.psAUX('/(var|usr)/.*(X|Xorg).*\-auth.[0-9A-Za-z\/:\.]*')
+        auth_list  = ('gdm','mdm','slim')
+        auth_regex = self.psAUX('/(var|usr)/.*(X|Xorg).*\-auth.[0-9A-Za-z\/:\.\-]*')
         for a in auth_list:
             auth = re.search(str(a), str(auth_regex), re.I | re.M)
             if auth is not None:
