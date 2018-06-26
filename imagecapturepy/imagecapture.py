@@ -36,7 +36,7 @@ class GetLocation(Thread):
     def browser_exists(self,browser):
         return find_executable(browser)
 
-    def run (self):
+    def run(self):
         for b in ['/opt/google/chome/chrome','/usr/bin/firefox','/usr/bin/opera']:
             if self.browser_exists(self.browser) and self.count == 0:
                 browser = re.match("(\/\w+)(.*\/)(\w+)",self.browser).group(3)
