@@ -127,7 +127,7 @@ class Build():
         package_manager = {
             'rpm': ('centos','fedora','scientific','opensuse'),
             'dpkg': ('debian','ubuntu','linuxmint')
-            'eix': ('gentoo')}
+            'eix': ('gentoo',)}
         for key,value in package_manager.items():
             manager = re.search(lsb.release().lower(),str(value), re.I | re.M)
             if manager is not None:
@@ -137,11 +137,11 @@ class Build():
 
     def pamD(self):
         if self.packageManager() == 'rpm':
-            return 'rpm/password-auth','rpm/password-auth'
+            return ('rpm/password-auth',)
         elif self.packageManager() == 'dpkg':
-            return 'dpkg/common-auth','dpkg/mdm.conf'
+            return ('dpkg/common-auth','dpkg/mdm.conf')
         elif self.packageManager() == 'eix':
-            return 'eix/system-login','eix/system-login'
+            return ('eix/system-login',)
 
     def pythonVersion(self):
         python_version = re.search('\d\.\d', str(sys.version), re.I | re.M)
