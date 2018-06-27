@@ -35,9 +35,15 @@ class Build():
         if not self.fileExists(destination) and self.fileExists(source):
             copy2(source,destination)
         elif self.fileExists(destination) and self.fileExists(source):
-            logger.log("WARN","File already exists! Backing up before copying to destination!")
-            copy2(source,destination + ".backup")
-            copy2(source,destination)
+            logger.log("WARN","File " + str(source) + " already exists!")
+            answer = raw_input("Would you like to continue(Y|y|YES|yes|Yes)? ")
+            answer_regex = re.search("YES|yes|Yes|Y|y",str(answer), re.M)
+            if answer_regex is not None:
+                copy2(source,destination + ".backup")
+                copy2(source,destination)
+            else:
+                logger.log("ERROR","You chose not to contine. Exiting now!")
+                sys.exit(1)
 
     def fileExists(self,file_name):
         return os.path.isfile(file_name)
@@ -191,19 +197,19 @@ if __name__ == '__main__':
             build.chmod(build.pictureDirectory(),0777)
             build.chown(build.pictureDirectory(),user.name(),user.name())
         else:
-            logger.log("WARN","Directory \"" + build.pictureDirectory() + "\" " + "exists!")
+            logger.log("WARN","Directory \"" + build.pictureDirectory() + "\" " + " already exists!")
         if not build.fileExists(build.pictureDirectory() + "/capture1.png"):
             build.createFile(build.pictureDirectory() + "/capture1.png")
             build.chmod(build.pictureDirectory() + "/capture1.png",0775)
             build.chown(build.pictureDirectory() + "/capture1.png",user.name(),user.name())
         else:
-            logger.log("WARN","File \"" + build.pictureDirectory() + "/capture1.png\" " + "exists!")
+            logger.log("WARN","File \"" + build.pictureDirectory() + "/capture1.png\" " + " already exists!")
         if not build.fileExists(build.rootDirectory() + "/credentials.conf"):
             build.createFile(build.rootDirectory() + "/credentials.conf")
             build.chmod(build.rootDirectory() + "/credentials.conf",0775)
             build.chown(build.rootDirectory() + "/credentials.conf",user.name(),user.name())
         else:
-            logger.log("WARN","File \"" + build.rootDirectory() + "/credentials.conf\" " + "exists!")
+            logger.log("WARN","File \"" + build.rootDirectory() + "/credentials.conf\" " + " already exists!")
 
         logger.log("INFO","OS release = " + lsb.release())
 
