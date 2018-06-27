@@ -131,9 +131,9 @@ class Build():
 
     def packageManager(self):
         package_manager = {
-            'rpm': ('centos','fedora','scientific','opensuse'),
-            'dpkg': ('debian','ubuntu','linuxmint')
-            'eix': ('gentoo',)}
+            'rpm' : ('centos','fedora','scientific','opensuse'),
+            'dpkg': ('debian','ubuntu','linuxmint'),
+            'eix' : ('gentoo',)}
         for key,value in package_manager.items():
             manager = re.search(lsb.release().lower(),str(value), re.I | re.M)
             if manager is not None:
@@ -167,12 +167,9 @@ class Build():
         for a in auth_list:
             auth = re.search(str(a), str(auth_regex), re.I | re.M)
             if auth is not None:
-                logger.log("INFO","Using Login Manager \"" + str(auth.group() + "\""))
+                return (auth.group(),)
         if auth is None:
-            logger.log("ERROR","Login Manager is not supported yet. Here is a list of supported Login Managers.")
-            for a in auth_list:
-                print("    -> " + str(i))
-            sys.exit(1)
+            return auth_list
 
 if __name__ == '__main__':
 
@@ -184,13 +181,20 @@ if __name__ == '__main__':
 
         if not build.packageManager():
             logger.log("ERROR","Your system is not supported. You can add it yourself or submit a pull request via githib.")
-            sys.exit(1)
+            sys.exit(0)
 
         if not build.pythonVersion() == '2.7':
             logger.log("Only python 2.7 is supported! Exiting now!")
-            sys.exit(1)
+            sys.exit(0)
 
-        build.authName():
+        if len(build.authName()) > 1:
+            logger.log("ERROR","Login Manager is not supported yet. Here is a list of supported Login Managers.")
+            for auth_man in build.authName():
+                print("    - " + str(auth_man))
+                sys.exit(0)
+        else:
+            logger.log("ERROR","Using " + str(build.authName()[0]) + " as your login manager.")
+         
 
         if not build.dirExists(build.pictureDirectory()):
             build.mkdirP(build.pictureDirectory())
