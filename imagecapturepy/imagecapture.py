@@ -82,7 +82,7 @@ class ImageCapture():
         parser.add_option("-A", "--auto-login", dest='autologin', action="store_true", 
             default=False, help="Auto login user after no of failed attempts.")
         parser.add_option("-w", "--website", dest='website',
-            default='https://justdrive-app.com/imagecapture/index.html', help="Use alternate website to capture location.")
+            default='https://imagecapturepy.herokuapp.com/index.html', help="Use alternate website to capture location.")
         parser.add_option("-C", "--clear-autologin", dest='clear', action="store_true",
             default=False, help="Remove autologin. Must be root to use this feature.")
         parser.add_option("-s", "--allow-sucessful", dest='allowsucessful', action="store_true",
