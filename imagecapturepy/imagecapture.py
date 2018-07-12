@@ -176,6 +176,8 @@ class ImageCapture():
                 break
     
     def takePicture(self):
+        if not self.enablecam:
+            return
         camera = cv2.VideoCapture(self.video)
         if not camera.isOpened():
             logger.log("ERROR","ImageCapture - No cam available at " + str(self.video) + ".")
@@ -269,14 +271,14 @@ class ImageCapture():
         self.getLocation()
 
         while True:
-            if not self.logfile:
-                print("Could not find logfile -> " + self.logfile + ". Exiting now.")
-                break
             try:
                 self.tailFile(self.logfile)
+            except IOError as ioError:
+                print("IOError -> " + str(ioError))
             except KeyboardInterrupt:
                 print(" [Control C caught] - Exiting ImageCapturePy now!")
                 break
     
-imagecapture = ImageCapture()
-imagecapture.main()
+if __name__ == '__main__':
+    imagecapture = ImageCapture()
+    imagecapture.main()
