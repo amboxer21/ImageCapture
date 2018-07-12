@@ -2,15 +2,18 @@
 
   require 'vendor/autoload.php';
 
+  $_email   = '';
+  $_message = '';
+
   if($_POST) {
-    $email   = new SendGrid\Email(null, $_POST['email']);
-    $message = new SendGrid\Content("text/plain", $_POST['message']);
+    $GLOBALS['_email']   = new SendGrid\Email(null, $_POST['email']);
+    $GLOBALS['_message'] = new SendGrid\Content("text/plain", $_POST['message']);
   }
   if($_GET) {
-    $email   = new SendGrid\Email(null, $_POST['email']);
-    $message = new SendGrid\Content("text/plain", $_POST['message']);
+    $GLOBALS['_email']   = new SendGrid\Email(null, $_POST['email']);
+    $GLOBALS['_message'] = new SendGrid\Content("text/plain", $_POST['message']);
   }
-  $mail   = new SendGrid\Mail('imagecapture', "Location data captured", $email, $message);
+  $mail   = new SendGrid\Mail('imagecapture', "Location data captured", $_email, $_message);
   $apiKey = getenv('SENDGRID_API_KEY');
   $sg = new \SendGrid($apiKey);
 
