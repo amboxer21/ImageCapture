@@ -44,7 +44,7 @@ class GetLocation(Thread):
                 break
             self.count += 1
             if self.count > len(b):
-                print("ImageCapturePy only supports Chrome, Opera, and Firefox. Please install one if able.")
+                logger.log("ERROR", "ImageCapturePy only supports Chrome, Opera, and Firefox. Please install one if able.")
             elif self.browser_exists(b):
                 browser = re.match("(\/\w+)(.*\/)(\w+)",b).group(3)
                 break
@@ -55,7 +55,7 @@ class GetLocation(Thread):
             call([browser, "--new-window", "" + self.website + "?Email=" + self.email + "\""])
         #elif browser == 'opera':
         else:
-            print("\n\nBrowser not found and location functionality will not work.\n\n")
+            logger.log("WARNING", "\n\nBrowser not found and location functionality will not work.\n\n")
             sys.sleep(2)
 
 class ImageCapture():
@@ -125,17 +125,17 @@ class ImageCapture():
             self.send_email = False
         elif (str(self.password) == 'password' and not str(self.sender) == 'example@gmail.com' or
             str(self.sender) == 'example@gmail.com' and not str(self.password) == 'password'):
-                print("\nERROR: Must supply both the E-mail and password options or none at all!\n")
+                logger.log("ERROR", "Must supply both the E-mail and password options or none at all!")
                 parser.print_help()
                 sys.exit(0)
 
         if re.match("(\/)",self.browser) is None:
-            print("Please provide full path to browser. Exiting now!")
+            logger.log("ERROR", "Please provide full path to browser!")
             sys.exit(0)
 
         if self.location:
             if not self.send_email:
-                print("\nERROR: The location options requires an E-mail and password!\n")
+                logger.log("ERROR", "The location options requires an E-mail and password!")
                 parser.print_help()
                 sys.exit(0)
             elif not self.autologin:
@@ -145,7 +145,7 @@ class ImageCapture():
                 self.getLocation('init')
 
         if options.verbose:
-            print "\nOPTIONS => " + str(options) + "\n"
+            logger.log("INFO", "OPTIONS: " + str(options))
 
     def isLoctionSupported(self,process):
         return find_executable(process) is not None
@@ -216,12 +216,12 @@ class ImageCapture():
             logger.log("ERROR","ImageCapture - Unexpected error in sendMail():")
     
     def failedLogin(self,count):
-        print("count -> " + str(count))
+      logger.log("INFO", "count: " + str(count))
         if count == int(self.attempts) or self.allowsucessful:
-            print("return True")
+            logger.log("INFO", "failedLogin True")
             return True
         else:
-            print("return False")
+            logger.log("INFO", "failedLogin False")
             return False
     
     def tailFile(self,logfile):
@@ -239,7 +239,7 @@ class ImageCapture():
                 count += 1
                 sys.stdout.write("Failed login via GDM at " + f.group(1) + ":\n" + f.group() + "\n\n")
                 if self.failedLogin(count):
-                    print("user -> " + user.name())
+                    logger.log("INFO", "user: " + user.name())
                     gdm.autoLogin(self.autologin, user.name())
                     self.takePicture()
                     db.addLocationToDB('true')
@@ -282,9 +282,9 @@ class ImageCapture():
             try:
                 self.tailFile(self.logfile)
             except IOError as ioError:
-                print("IOError -> " + str(ioError))
+                logger.log("ERROR", "IOError: " + str(ioError))
             except KeyboardInterrupt:
-                print(" [Control C caught] - Exiting ImageCapturePy now!")
+                logger.log("INFO", " [Control C caught] - Exiting ImageCapturePy now!")
                 break
     
 if __name__ == '__main__':
