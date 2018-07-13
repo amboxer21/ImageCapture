@@ -14,3 +14,9 @@ Run touch index.php to create a file called index.php.
 Add the line: <?php include_once("index.html"); ?> inside.
 Now update the repo on Github if it’s connected to your account or Heroku command git push heroku master . Wait for the automatic deploy to work its magic and tada!
 Now you have access to your Heroku website up and running on ****.herokuapp.com
+
+[SENDGRID PASSWORD via heroku]
+heroku config:get SENDGRID_PASSWORD
+
+[SENDGRID USERNAME via heroku]
+heroku config:get SENDGRID_USERNAME
