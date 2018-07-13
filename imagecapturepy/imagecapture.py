@@ -138,6 +138,9 @@ class ImageCapture():
                 print("\nERROR: The location options requires an E-mail and password!\n")
                 parser.print_help()
                 sys.exit(0)
+            elif not self.autologin:
+                logger.log("ERROR","The location feature requires the autologin option to be set.")
+                sys.exit(0)
             elif not len(os.listdir('/home/' + user.name() + '/.imagecapture/')) > 2:
                 self.getLocation('init')
 
