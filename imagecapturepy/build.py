@@ -1,8 +1,8 @@
 from shutil import copy2
 from distutils.spawn import find_executable
 
-import grp,pwd,os,glob,sys
-import subprocess,errno,re,pip
+import grp,pwd,os,glob,sys,pip
+import subprocess,errno,re,fileinput
 
 import modules.name.user as user
 import modules.logging.logger as logger
@@ -83,7 +83,7 @@ class Build():
         if self.executableExists(executable_name):
             comm = subprocess.Popen([executable_name + ' --version'], shell=True, stdout=subprocess.PIPE)
             if comm is not None:
-                logger.log("INFO","" + str(comm.stdout.read()))
+                logger.log("INFO","" +str(comm.stdout.read()))
         else:
             logger.log("WARN","Executable does not exist!")
 
@@ -165,6 +165,10 @@ class Build():
                 return (auth.group(),)
         if auth is None:
             return auth_list
+
+    def sed(self,file_name,regex,replacement):
+        for i, line in enumerate(fileinput.input(str(file_name), inplace=1)):
+            sys.stdout.write(line.replace(str(regex),str(replacement)))
 
 if __name__ == '__main__':
 
