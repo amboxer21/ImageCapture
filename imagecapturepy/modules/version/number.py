@@ -1,8 +1,7 @@
 import re,sys
 
 def number():
-  regex   = "(major)=(\d),\s(minor)=(\d),\s(micro)=(\d)"
-  version = re.search(regex, str(sys.version_info), re.I | re.M)
-  if version is not None:
-      return str(version.group(2)) + "." + str(version.group(4)) + "." + str(version.group(6))
+  python_version = re.search('\d\.\d\.\d', str(sys.version), re.I | re.M)
+  if python_version is not None:
+      return python_version.group()
   return "None"

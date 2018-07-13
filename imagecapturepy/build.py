@@ -7,6 +7,7 @@ import subprocess,errno,re,pip
 import modules.name.user as user
 import modules.lsb.release as lsb
 import modules.logging.logger as logger
+import modules.version.number as version
 
 class Build():
 
@@ -149,11 +150,6 @@ class Build():
         elif self.packageManager() == 'eix':
             return ('eix/system-login',)
 
-    def pythonVersion(self):
-        python_version = re.search('\d\.\d', str(sys.version), re.I | re.M)
-        if python_version is not None:
-            return python_version.group()
-
     def psAUX(self,regex):
         process = subprocess.Popen(['ps','aux'], stdout=subprocess.PIPE)
         if process is not None:
@@ -183,14 +179,14 @@ if __name__ == '__main__':
             logger.log("ERROR","Your system is not supported. You can add it yourself or submit a pull request via githib.")
             sys.exit(0)
 
-        if not build.pythonVersion() == '2.7':
-            logger.log("Only python 2.7 is supported! Exiting now!")
+        if not version.number() == '2.7.5':
+            logger.log("Only python 2.7.5 is supported! Exiting now!")
             sys.exit(0)
 
         if len(build.authName()) > 1:
             logger.log("ERROR","Login Manager is not supported yet. Here is a list of supported Login Managers.")
             for auth_man in build.authName():
-                print("    - " + str(auth_man))
+              logger.log("INFO", "Login Manager: " + str(auth_man))
                 sys.exit(0)
         else:
             logger.log("ERROR","Using " + str(build.authName()[0]) + " as your login manager.")
