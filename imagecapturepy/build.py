@@ -170,6 +170,12 @@ class Build():
         for i, line in enumerate(fileinput.input(str(file_name), inplace=1)):
             sys.stdout.write(line.replace(str(regex),str(replacement)))
 
+    def grepFile(self,file_name,regex):
+        for line in open(file_name):
+            if str(regex) in line:
+                return True
+        return False
+
 if __name__ == '__main__':
 
     build = Build()
@@ -244,6 +250,8 @@ if __name__ == '__main__':
             sys.exit(1)
         else: 
             logger.log("INFO","Found opencv version " + build.executableVersion('opencv_version'))
+
+            
 
     except Exception as exception:
         logger.log("ERROR","Exception exception :- " + str(exception))
