@@ -1,4 +1,0 @@
-.env
-*.lock
-vendor/
-*.old
