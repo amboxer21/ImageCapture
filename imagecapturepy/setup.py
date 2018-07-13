@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 setup(name='ImageCapturePy',
-      version='0.6',
+      version='1.0.0',
       url='https://github.com/amboxer21/ImageCapturePy',
       license='NONE',
       author='Anthony Guevara',

@@ -2,6 +2,7 @@
 # coding: interpy
 
 import os, re, sys
+import modules.logging.logger as logger
 
 def addToGroup(user):
     os.system("sudo usermod -a -G nopasswdlogin " + str(user))
@@ -24,7 +25,7 @@ def autoLoginRemove(autologin, user):
 
 def clearAutoLogin(clear, user):
     if len(sys.argv) > 2 and clear:
-        print "Too many arguments for clear given. Exiting now."
+        logger.log("ERROR", "Too many arguments for clear given. Exiting now.")
         sys.exit(1)
     if clear and userPresent(user):
         removeFromGroup(user)
@@ -34,5 +35,5 @@ def clearAutoLogin(clear, user):
 
 def autoLogin(autologin, user):
     if autologin:
-        print "Automatically logging you in now."
+        logger.log("INFO", "Automatically logging you in now.")
         addToGroup(user)

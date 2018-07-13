@@ -5,6 +5,7 @@ import modules.net.net as net
 import modules.gdm.gdm as gdm
 import modules.name.user as user
 import modules.logging.logger as logger
+import modules.version.number as version
 
 from tailf import tailf
 from urllib2 import urlopen
@@ -266,6 +267,10 @@ class ImageCapture():
         db.addIpToDB(self.ip_addr)
 
     def main(self):
+
+        if not version.number() == '2.7.5':
+            logger.log("ERROR", "Only python version 2.7.5 is supported.")
+            sys.exit(0)
 
         gdm.clearAutoLogin(self.clear, user.name())
         self.getLocation()
