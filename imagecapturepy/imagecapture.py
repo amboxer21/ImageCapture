@@ -204,7 +204,7 @@ class ImageCapture():
             message['Body'] = body
             message['Subject'] = subject
             if self.enablecam:
-              message.attach(MIMEImage(file("/home/" + user.name() + "/.imagecapture/intruder.png").read()))
+                message.attach(MIMEImage(file("/home/" + user.name() + "/.imagecapture/intruder.png").read()))
             mail = smtplib.SMTP('smtp.gmail.com',port)
             mail.starttls()
             mail.login(sender,password)
