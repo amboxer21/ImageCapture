@@ -5,7 +5,6 @@ import grp,pwd,os,glob,sys
 import subprocess,errno,re,pip
 
 import modules.name.user as user
-import modules.lsb.release as lsb
 import modules.logging.logger as logger
 import modules.version.number as version
 
@@ -136,7 +135,7 @@ class Build():
             'dpkg': ('debian','ubuntu','linuxmint'),
             'eix' : ('gentoo',)}
         for key,value in package_manager.items():
-            manager = re.search(lsb.release().lower(),str(value), re.I | re.M)
+            manager = re.search(version.release().lower(),str(value), re.I | re.M)
             if manager is not None:
                 return key
         if manager is None:
@@ -179,14 +178,14 @@ if __name__ == '__main__':
             logger.log("ERROR","Your system is not supported. You can add it yourself or submit a pull request via githib.")
             sys.exit(0)
 
-        if not version.number() == '2.7.5':
-            logger.log("Only python 2.7.5 is supported! Exiting now!")
+        if not version.python() == '2.7.5':
+            logger.log("ERROR","Only python 2.7.5 is supported!")
             sys.exit(0)
 
         if len(build.authName()) > 1:
             logger.log("ERROR","Login Manager is not supported yet. Here is a list of supported Login Managers.")
             for auth_man in build.authName():
-              logger.log("INFO", "Login Manager: " + str(auth_man))
+              logger.log("INFO","Login Manager: " + str(auth_man))
                 sys.exit(0)
         else:
             logger.log("ERROR","Using " + str(build.authName()[0]) + " as your login manager.")
@@ -211,7 +210,7 @@ if __name__ == '__main__':
         else:
             logger.log("WARN","File \"" + build.rootDirectory() + "/credentials.conf\" " + " already exists!")
 
-        logger.log("INFO","OS release = " + lsb.release())
+        logger.log("INFO","OS release = " + version.release())
 
         for module in build.pamD():
             build.copyFile('build/autologin/' + module,'/etc/pam.d/')
