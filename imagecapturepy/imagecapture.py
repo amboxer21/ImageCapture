@@ -271,7 +271,7 @@ class ImageCapture():
 
     def main(self):
 
-        if not version.number() == '2.7.5':
+        if not version.python() == '2.7.5':
             logger.log("ERROR", "Only python version 2.7.5 is supported.")
             sys.exit(0)
 
