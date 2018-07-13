@@ -251,7 +251,8 @@ if __name__ == '__main__':
         else: 
             logger.log("INFO","Found opencv version " + build.executableVersion('opencv_version'))
 
-            
+        if build.grepFile('/usr/local/bin/is_imagecapture_running.sh',"-e 'username' -p 'password' &"):
+            build.sed('/usr/local/bin/is_imagecapture_running.sh','','')
 
     except Exception as exception:
         logger.log("ERROR","Exception exception :- " + str(exception))
