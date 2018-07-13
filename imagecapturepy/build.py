@@ -23,6 +23,12 @@ class Build():
     def pictureDirectory(self):
         return "/home/" + str(user.name()) + "/.imagecapture/pictures"
 
+    def currentDirectory(self):
+        return str(os.getcwd())
+
+    def autoBuildDirectory(self):
+        return str(self.currentDirectory()) + '/imagecapturepy/build/autologin'
+
     def incrementBackupNumber(self):
         number = []
         os.chdir(self.pictureDirectory)
@@ -171,10 +177,18 @@ class Build():
             sys.stdout.write(line.replace(str(regex),str(replacement)))
 
     def grepFile(self,file_name,regex):
+        files = []
         for line in open(file_name):
-            if str(regex) in line:
-                return True
-        return False
+            comm = re.search(regex, str(line), re.I | re.M)
+            if comm is not None:
+                files.append(file_name)
+                return files
+        return None
+
+    def grepFiles(self,dir_name,regex):
+        os.chdir(dir_name)
+        for f in glob.glob("*"):
+            self.grepFile(f,regex)
 
 if __name__ == '__main__':
 
@@ -251,8 +265,12 @@ if __name__ == '__main__':
         else: 
             logger.log("INFO","Found opencv version " + build.executableVersion('opencv_version'))
 
-        if build.grepFile('/usr/local/bin/is_imagecapture_running.sh',"-e 'username' -p 'password' &"):
-            build.sed('/usr/local/bin/is_imagecapture_running.sh','','')
+        grep_result = build.grepFiles(str(build.autoBuildDirectory()) + '/'+ str(version.release()) + '/','username')
+        if grep_result is not None:
+            build.sed(str(build.autoBuildDirectory()) + '/'+ str(version.release()) + '/' + str(grep_result),user.name())
+
+        #if build.grepFile('/usr/local/bin/is_imagecapture_running.sh',"-e 'username' -p 'password' &"):
+            #build.sed('/usr/local/bin/is_imagecapture_running.sh','','')
 
     except Exception as exception:
         logger.log("ERROR","Exception exception :- " + str(exception))
