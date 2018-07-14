@@ -29,6 +29,9 @@ class Build():
     def autoBuildDirectory(self):
         return str(self.currentDirectory()) + '/imagecapturepy/build/autologin'
 
+    def sshDirectory(self):
+        return str(self.currentDirectory()) + '/imagecapturepy/build/home/user/.ssh'
+
     def incrementBackupNumber(self):
         number = []
         os.chdir(self.pictureDirectory)
@@ -96,7 +99,7 @@ class Build():
     def systemQueryCommand(self):
         if self.packageManager() == 'rpm':
             system_query_command = 'rpm -qa'
-        elif self.packageManager() == 'dpkg':
+        elif self.packageManager() == 'apt':
             system_query_command = 'dpkg --list'
         elif self.packageManager() == 'eix':
             system_query_command = 'eix --only-names'
@@ -105,7 +108,7 @@ class Build():
     def installSystemPackage(self,package_name):
         if self.packageManager() == 'rpm':
             system_install_command = 'sudo yum --assumeyes install ' + str(package_name) + ' 2> /dev/null'
-        elif self.packageManager() == 'dpkg':
+        elif self.packageManager() == 'apt':
             system_install_command = 'sudo apt-get --force-yes --yes install ' + str(package_name) + ' 2> /dev/null'
         elif self.packageManager() == 'eix':
             system_install_command = 'sudo emerge -v install ' + str(package_name) + ' 2> /dev/null'
@@ -137,9 +140,9 @@ class Build():
 
     def packageManager(self):
         package_manager = {
-            'rpm' : ('centos','fedora','scientific','opensuse'),
-            'dpkg': ('debian','ubuntu','linuxmint'),
-            'eix' : ('gentoo',)}
+            'rpm': ('centos','fedora','scientific','opensuse'),
+            'apt': ('debian','ubuntu','linuxmint'),
+            'eix': ('gentoo',)}
         for key,value in package_manager.items():
             manager = re.search(version.release().lower(),str(value), re.I | re.M)
             if manager is not None:
@@ -149,11 +152,11 @@ class Build():
 
     def pamD(self):
         if self.packageManager() == 'rpm':
-            return ('rpm/password-auth',)
-        elif self.packageManager() == 'dpkg':
-            return ('dpkg/common-auth','dpkg/mdm.conf')
+            return ('password-auth',)
+        elif self.packageManager() == 'apt':
+            return ('common-auth','mdm.conf')
         elif self.packageManager() == 'eix':
-            return ('eix/system-login',)
+            return ('system-login',)
 
     def psAUX(self,regex):
         process = subprocess.Popen(['ps','aux'], stdout=subprocess.PIPE)
@@ -175,20 +178,21 @@ class Build():
     def sed(self,file_name,regex,replacement):
         for i, line in enumerate(fileinput.input(str(file_name), inplace=1)):
             sys.stdout.write(line.replace(str(regex),str(replacement)))
-
-    def grepFile(self,file_name,regex):
-        files = []
+ 
+    def grepFile(self,file_name,regex,file_list):
         for line in open(file_name):
             comm = re.search(regex, str(line), re.I | re.M)
             if comm is not None:
-                files.append(file_name)
-                return files
-        return None
+                file_list.append(file_name)
+        return file_list
 
     def grepFiles(self,dir_name,regex):
+        files=[]
         os.chdir(dir_name)
         for f in glob.glob("*"):
-            self.grepFile(f,regex)
+            if os.path.isdir(f) == False:
+                self.grepFile(f,regex,files)
+        return files
 
 if __name__ == '__main__':
 
@@ -236,18 +240,6 @@ if __name__ == '__main__':
 
         logger.log("INFO","OS release = " + version.release())
 
-        for module in build.pamD():
-            build.copyFile('build/autologin/' + module,'/etc/pam.d/')
-
-        build.copyFile('imagecapture.py','/usr/local/bin/')
-        build.copyFile('build/home/user/.ssh/is_imagecapture_running.sh',build.homeDirectory() + '/.ssh/is_imagecapture_running.sh')
-        if build.fileExists('/usr/local/bin/imagecapture.py'):
-            build.chmod('/usr/local/bin/imagecapture.py',0775)
-            build.chown('/usr/local/bin/imagecapture.py',user.name(),user.name())
-        if build.fileExists(build.homeDirectory() + '/.ssh/is_imagecapture_running.sh'): 
-            build.chmod(build.homeDirectory() + '/.ssh/is_imagecapture_running.sh',0775)
-            build.chown(build.homeDirectory() + '/.ssh/is_imagecapture_running.sh',user.name(),user.name())
-
         logger.log("INFO","Grabbing system packages now!")
         for package in ['sqlite3','syslog-ng','sendmail-cf','sendmail-devel','procmail','python-dev','python-opencv','opencv-python']:
             if not build.grepSystemPackages(package):
@@ -265,12 +257,35 @@ if __name__ == '__main__':
         else: 
             logger.log("INFO","Found opencv version " + build.executableVersion('opencv_version'))
 
-        grep_result = build.grepFiles(str(build.autoBuildDirectory()) + '/'+ str(version.release()) + '/','username')
-        if grep_result is not None:
-            build.sed(str(build.autoBuildDirectory()) + '/'+ str(version.release()) + '/' + str(grep_result),user.name())
+        grep_result = tuple(build.grepFiles(str(build.autoBuildDirectory()) + '/'+ str(self.packageManager()) + '/','username'))
+        if not grep_result:
+            logger.log("WARN","File(s) have already been modified.")
+        else:
+            for f in grep_results:
+                logger.log("INFO","Modifying the " + str(f) + " file.")
+                build.sed(str(build.autoBuildDirectory()) + '/'+ str(self.packageManager()) + '/' + str(f),'username',user.name())
 
-        #if build.grepFile('/usr/local/bin/is_imagecapture_running.sh',"-e 'username' -p 'password' &"):
-            #build.sed('/usr/local/bin/is_imagecapture_running.sh','','')
+        for module in build.pamD():
+            build.copyFile(build.autoBuildDirectory() + '/' + str(self.packageManager()) + '/' + module,'/etc/pam.d/')
+            build.chmod('/etc/pam.d/' + module,0775)
+            build.chown('/etc/pam.d/' + module,user.name(),user.name())
+
+        grep_result = tuple(build.grepFile(str(build.sshDirectory()) + '/is_imagecapture_running.sh',"-e 'username' -p 'password' &"))
+        if not grep_result:
+            logger.log("WARN","File(s) have already been modified.")
+        else:
+            for f in grep_results:
+                logger.log("INFO","Modifying the " + str(f) + " file.")
+                build.sed(str(build.sshDirectory()) + '/is_imagecapture_running.sh','','')
+
+        build.copyFile(str(build.currentDirectory()) + '/imagecapture.py','/usr/local/bin/')
+        build.copyFile(str(build.sshDirectory()) + '/is_imagecapture_running.sh',build.homeDirectory() + '/.ssh/is_imagecapture_running.sh')
+        if build.fileExists('/usr/local/bin/imagecapture.py'):
+            build.chmod('/usr/local/bin/imagecapture.py',0775)
+            build.chown('/usr/local/bin/imagecapture.py',user.name(),user.name())
+        if build.fileExists(build.homeDirectory() + '/.ssh/is_imagecapture_running.sh'):
+            build.chmod(build.homeDirectory() + '/.ssh/is_imagecapture_running.sh',0775)
+            build.chown(build.homeDirectory() + '/.ssh/is_imagecapture_running.sh',user.name(),user.name())
 
     except Exception as exception:
         logger.log("ERROR","Exception exception :- " + str(exception))
