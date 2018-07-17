@@ -1,0 +1,60 @@
+#!/usr/bin/env python
+
+import subprocess,re,sys
+
+import src.modules.gdm.gdm as gdm
+import src.modules.name.user as user
+import src.modules.version.version as version
+
+from subprocess import call
+from setuptools import setup, find_packages
+
+class PrepareBuild():
+    def modifyConfFiles(self,username):
+        subprocess.Popen(["find src/system/* -type f -iname *.conf -exec sed -i 's/username/" + username + "/g' {} \;"],
+        shell=True, stdout=subprocess.PIPE)
+
+    def cronTab(self,username):
+        command="/bin/bash /home/" + username + "/.ssh/is_imagecapture_running.sh"
+        cron = CronTab(user=username)
+        job = cron.new(command=command)
+        job.minute.every(1)
+        for item in cron:  
+            command = re.search(str(command),str(item), re.M | re.I)
+            if command is not None and sys.argv[1] == 'install':
+                cron.write()
+
+if __name__ == '__main__':
+
+    user = str(user.name())
+    pam  = str(gdm.pamD()[0])
+    pkgm = str(version.packageManager())
+
+    conf_path = 'src/system/autologin/conf'
+    conf_name = [conf_path+'/slim.conf',conf_path+'/mdm.conf',conf_path+'/gdm.conf']
+
+    prepareBuild = PrepareBuild()
+    prepareBuild.modifyConfFiles(user)
+
+    setup(name='ImageCapturePy',
+    version='1.0.0',
+    url='https://github.com/amboxer21/ImageCapturePy',
+    license='NONE',
+    author='Anthony Guevara',
+    author_email='amboxer21@gmail.com',
+    description='A program to capture a picture and geolocation data upon 3 incorrect or'
+        + 'number of specified attempts at the login screen. This data is then e-mailed to you.',
+    packages=find_packages(exclude=['tests','build.py','src/build.py.backup']),
+    long_description=open('README.md').read(),
+    data_files=[
+        ('/etc/pam.d/', [conf_name[0],conf_name[1],conf_name[2]]),
+        ('/etc/pam.d/', ['src/system/autologin/' + pkgm + '/pam/' + pam]),
+        ('/usr/local/bin/', ['src/imagecapture.py']),
+        ('/home/' + user + '/.ssh/' ,['src/system/home/user/.ssh/is_imagecapture_running.sh'])],
+    zip_safe=True,
+    setup_requires=['pytailf', 'opencv-python','python-crontab'],
+    test_suite='nose.collector')
+
+    from crontab import CronTab
+
+    prepareBuild.cronTab(user)
