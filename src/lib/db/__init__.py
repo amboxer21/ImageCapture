@@ -2,8 +2,8 @@
 # coding: interpy
 
 import sqlite3
-import modules.name.user as username
-import modules.logging.logger as logger
+import lib.name.user as username
+import lib.logging.logger as logger
 
 user    = username.name()
 DB_PATH = "/home/" + user + "/.imagecapture"

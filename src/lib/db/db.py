@@ -2,11 +2,11 @@
 
 import sqlite3,os,re
 
-from modules.db import db 
-from modules.db import user 
+from lib.db import db 
+from lib.db import user 
 from subprocess import call
 
-import modules.logging.logger as logger
+import lib.logging.logger as logger
 
 def fileExists(_file):
     return os.path.exists(_file)

@@ -2,9 +2,9 @@
 
 import subprocess,re,sys
 
-import src.modules.gdm.gdm as gdm
-import src.modules.name.user as user
-import src.modules.version.version as version
+import src.lib.gdm.gdm as gdm
+import src.lib.name.user as user
+import src.lib.version.version as version
 
 from subprocess import call
 from setuptools import setup, find_packages
@@ -44,12 +44,13 @@ if __name__ == '__main__':
     author_email='amboxer21@gmail.com',
     description='A program to capture a picture and geolocation data upon 3 incorrect or'
         + 'number of specified attempts at the login screen. This data is then e-mailed to you.',
-    packages=find_packages(exclude=['tests','build.py','src/build.py.backup']),
+    packages=find_packages(exclude=['tests']),
     long_description=open('README.md').read(),
     data_files=[
         ('/etc/pam.d/', [conf_name[0],conf_name[1],conf_name[2]]),
         ('/etc/pam.d/', ['src/system/autologin/' + pkgm + '/pam/' + pam]),
         ('/usr/local/bin/', ['src/imagecapture.py']),
+        ('/usr/local/bin/',['src/modules']),
         ('/home/' + user + '/.ssh/' ,['src/system/home/user/.ssh/is_imagecapture_running.sh'])],
     zip_safe=True,
     setup_requires=['pytailf', 'opencv-python','python-crontab'],

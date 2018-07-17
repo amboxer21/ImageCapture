@@ -1,11 +1,11 @@
 #!/usr/bin/env python
     
-import modules.db.db as db
-import modules.net.net as net
-import modules.gdm.gdm as gdm
-import modules.name.user as user
-import modules.logging.logger as logger
-import modules.version.number as version
+import lib.db.db as db
+import lib.net.net as net
+import lib.gdm.gdm as gdm
+import lib.name.user as user
+import lib.logging.logger as logger
+import lib.version.number as version
 
 from tailf import tailf
 from urllib2 import urlopen
