@@ -1,9 +1,12 @@
 # ImageCapturePy
 A program to capture a picture and geolocation data upon 3 incorrect attempts at login screen. This data is then e-mailed to you.
 
-**UPDATE**: I resctructured file tree so the build script needs updating!
+## [INSTALL]
+### run:
 
-Run the build script in the Build/Debian dir!
+>sudo python setup.py build
+
+>sudo python setup.py install
 
 ## IMPORTANT!
 You must enable less secure apps in your gmail settings or the app will not be able to send notifications!
