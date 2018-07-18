@@ -1,12 +1,11 @@
 #!/usr/bin/env python
-# coding: interpy
 
 import os, re, sys
 
 from subprocess import Popen, call
 
-import src.modules.logging.logger as logger
-import src.modules.version.version as version
+import src.lib.logging.logger as logger
+import src.lib.version.version as version
 
 def addToGroup(user):
     os.system("sudo usermod -a -G nopasswdlogin " + str(user))
