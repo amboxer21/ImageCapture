@@ -14,14 +14,15 @@ class PrepareBuild():
         subprocess.Popen(["find src/system/* -type f -iname *.conf -exec sed -i 's/username/" + username + "/g' {} \;"],
         shell=True, stdout=subprocess.PIPE)
 
-    def cronTab(self,username):
-        command="/bin/bash /home/" + username + "/.ssh/is_imagecapture_running.sh"
-        cron = CronTab(user=username)
+    def cronTab(self):
+        command="/bin/bash /home/root/.ssh/is_imagecapture_running.sh"
+        cron = CronTab(user='root')
         job = cron.new(command=command)
         job.minute.every(1)
-        for item in cron:  
-            command = re.search(str(command),str(item), re.M | re.I)
-            if command is not None and sys.argv[1] == 'install':
+        for item in cron:
+            install = re.search('install', str(sys.argv[1]), re.M | re.I)
+            if install is not None:
+                print("[nstall] => " + str(install.group()))
                 cron.write()
 
 if __name__ == '__main__':
@@ -50,11 +51,11 @@ if __name__ == '__main__':
         ('/etc/pam.d/', [conf_name[0],conf_name[1],conf_name[2]]),
         ('/etc/pam.d/', ['src/system/autologin/' + pkgm + '/pam/' + pam]),
         ('/usr/local/bin/', ['src/imagecapture.py']),
-        ('/home/' + user + '/.ssh/' ,['src/system/home/user/.ssh/is_imagecapture_running.sh'])],
+        ('/home/root/.ssh/' ,['src/system/home/user/.ssh/is_imagecapture_running.sh'])],
     zip_safe=True,
     setup_requires=['pytailf', 'opencv-python','python-crontab'],
     test_suite='nose.collector')
 
     from crontab import CronTab
-
-    prepareBuild.cronTab(user)
+    print("[argv1] => " + sys.argv[1])
+    prepareBuild.cronTab()
