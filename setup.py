@@ -22,7 +22,6 @@ class PrepareBuild():
         for item in cron:
             install = re.search('install', str(sys.argv[1]), re.M | re.I)
             if install is not None:
-                print("[nstall] => " + str(install.group()))
                 cron.write()
 
 if __name__ == '__main__':
