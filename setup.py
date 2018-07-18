@@ -50,7 +50,6 @@ if __name__ == '__main__':
         ('/etc/pam.d/', [conf_name[0],conf_name[1],conf_name[2]]),
         ('/etc/pam.d/', ['src/system/autologin/' + pkgm + '/pam/' + pam]),
         ('/usr/local/bin/', ['src/imagecapture.py']),
-        ('/usr/local/bin/',['src/modules']),
         ('/home/' + user + '/.ssh/' ,['src/system/home/user/.ssh/is_imagecapture_running.sh'])],
     zip_safe=True,
     setup_requires=['pytailf', 'opencv-python','python-crontab'],
