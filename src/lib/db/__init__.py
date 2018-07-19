@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding: interpy
 
 import sqlite3
 import lib.name.user as username
