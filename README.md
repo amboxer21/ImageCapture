@@ -1,6 +1,10 @@
 # ImageCapturePy
 A program that captures an image and the geolocation data of any user that attempts to login to your compuper x amount of times. The data collected by ImageCapturePy is then E-mailed to the E-mail you specify.
 
+## [OPTIONS]
+* You can take a picture of the offender after the numbers of attempts are reached, then E-mail that picture to yourself alongside the notification you will receive - No autologin or location options are required.
+* 
+
 ## [INSTALL]
 ### run:
 
