@@ -69,3 +69,48 @@ sudo python setup.py install
 ## IMPORTANT!
 You must enable less secure apps in your gmail settings or the app will not be able to send notifications!
 https://support.google.com/accounts/answer/6010255
+
+# Building a release for PyPi
+
+## Modify version in setup.py via vim/nano before building:
+**`BEFORE(vim/nano setup.py):`**
+```javascript
+    setup(
+        packages=[],
+        name='imagecapturepy',
+        version='0.0.6', # increment version number
+```
+**`AFTER:`**
+```javascript
+    setup(
+        packages=[],
+        name='imagecapturepy',
+        version='0.0.7', # increment version number
+```
+## Build package for PyPi:
+
+  **[anthony@ghost ImageCapturePy]$** `sudo python setup.py sdist`
+  
+  **[anthony@ghost ImageCapturePy]$** `twine upload dist/*`
+  
+**NOTE:** If twine does not work with the above command you can try,
+
+   `twine upload --repository-url 'https://upload.pypi.org/legacy/' dist/imagecapturepy-0.0.6.tar.gz`
+   
+   **NOTE:** `dist/imagecapturepy-0.0.6.tar.gz` will be the name of the file twine just created.
+   
+## Contents of ~/.pypirc:
+```javascript
+[distutils]
+index-servers =
+  pypi
+  pypitest
+[pypi]
+repository=https://pypi.python.org/pypi
+username=username
+password='password'
+[pypitest]
+repository=https://testpypi.python.org/pypi
+username=username
+password='password'
+```
