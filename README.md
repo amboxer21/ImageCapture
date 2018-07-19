@@ -1,13 +1,12 @@
 # ImageCapturePy
 A program that captures an image and the geolocation data of any user that attempts to login to your compuper x amount of times. The data collected by ImageCapturePy is then E-mailed to the E-mail you specify.
 
-## [OPTIONS]
+## - [OPTIONS]
 * You can take a picture of the offender after the numbers of attempts are reached, then E-mail that picture to yourself alongside the notification you will receive - No autologin or location options are required.
-* 
+* You can take a picture of the offender after the numbers of attempts are reached, then E-mail that picture to yourself alongside the notification you will receive as well as geolocation data.
+* You can automatically log the offender in whether they get the password wrong or right.
 
-## [INSTALL]
-### run:
-
+## - [INSTALLING]
 ```
 sudo python setup.py sdist 
 ```
@@ -18,7 +17,7 @@ sudo python setup.py build
 sudo python setup.py install
 ```
 
-## [SYSTEM DEPENDENCIES]
+## - [SYSTEM DEPENDENCIES]
 
 ### Debian Based Systems:
 
