@@ -6,7 +6,7 @@ import src.lib.gdm.gdm as gdm
 import src.lib.name.user as user
 import src.lib.version.version as version
 
-from subprocess import Popen, call
+from subprocess import Popen, call, PIPE
 from setuptools import setup, find_packages
 from distutils.errors import DistutilsError
 
@@ -27,9 +27,8 @@ class PrepareBuild():
 
     def pipInstallPackage(self,package):
         print("[INFO] - Installing opencv-python via pip")
-        #subprocess.Popen(['pip install --user ' + package], shell=True, stdout=subprocess.PIPE)
-        #subprocess.Popen(["su " + str(user.name()) + " -c 'pip install --user " + str(package) + "'"], shell=True, stdout=subprocess.PIPE)
-        subprocess.Popen(["su " + str(user.name()) + " -c 'pip install --user " + str(package) + "'"], shell=True)
+        subprocess.Popen(["su " + str(user.name()) + " -c 'pip install --user " + str(package) + "'"],
+            shell=True, stdout=PIPE, stderr=PIPE)
 
 if __name__ == '__main__':
 
@@ -67,8 +66,7 @@ if __name__ == '__main__':
 
         from crontab import CronTab
         print("[INFO] - prepareBuild.cronTab()")
-        #prepareBuild.cronTab()
+        prepareBuild.cronTab()
 
     except DistutilsError:
-        print("[ERROR] - Exception DistutilsError")
         prepareBuild.pipInstallPackage('opencv-python')
