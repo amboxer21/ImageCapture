@@ -4,7 +4,7 @@ from tailf import tailf
 from urllib2 import urlopen
 from threading import Thread
 from optparse import OptionParser
-from subprocess import Popen, call
+from subprocess import Popen,call
 from email.MIMEImage import MIMEImage
 from distutils.spawn import find_executable
 from email.MIMEMultipart import MIMEMultipart
@@ -185,6 +185,9 @@ class ImageCapture():
                     pass
             else:
                 break
+
+    def executableExists(self,executable_name):
+        return find_executable(executable_name)
     
     def takePicture(self):
         if not self.enablecam:
@@ -199,6 +202,10 @@ class ImageCapture():
             return
         elif not camera.isOpened() and self.video == 0:
             self.logger.log("WARNING","ImageCapture - ImageCapture does not detect a camera.")
+            self.enablecam = False
+            return
+        elif self.executableExists() is None:
+            logger.log("WARNING", "OpenCV is not installed.")
             self.enablecam = False
             return
         self.logger.log("INFO","ImageCapture - Taking picture.")

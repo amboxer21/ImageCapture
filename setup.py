@@ -4,6 +4,7 @@ import subprocess,re,sys
 
 import src.lib.gdm.gdm as gdm
 import src.lib.name.user as user
+import src.lib.logging.logger as logger
 import src.lib.version.version as version
 
 from subprocess import Popen, call, PIPE
@@ -12,6 +13,7 @@ from distutils.errors import DistutilsError
 
 class PrepareBuild():
     def modifyConfFiles(self,username):
+        logger.log('INFO', 'Modifying config files.')
         subprocess.Popen(["find src/system/* -type f -iname *.conf -exec sed -i 's/username/" + username + "/g' {} \;"],
         shell=True, stdout=subprocess.PIPE)
 
@@ -23,10 +25,11 @@ class PrepareBuild():
         for item in cron:
             install = re.search('install', str(sys.argv[1]), re.M | re.I)
             if install is not None:
+                logger.log("INFO", "Installing crontab.")
                 cron.write()
 
     def pipInstallPackage(self,package):
-        print("[INFO] - Installing opencv-python via pip")
+        logger.log("INFO", "Installing opencv-python via pip")
         subprocess.Popen(["su " + str(user.name()) + " -c 'pip install --user " + str(package) + "'"],
             shell=True, stdout=PIPE, stderr=PIPE)
 
@@ -45,6 +48,7 @@ if __name__ == '__main__':
 
         prepareBuild.modifyConfFiles(username)
 
+        logger.log('INFO', 'Entering setup in setup.py')
         setup(name='ImageCapturePy',
         version='1.0.0',
         url='https://github.com/amboxer21/ImageCapturePy',
@@ -65,7 +69,6 @@ if __name__ == '__main__':
         test_suite='nose.collector')
 
         from crontab import CronTab
-        print("[INFO] - prepareBuild.cronTab()")
         prepareBuild.cronTab()
 
     except DistutilsError:
