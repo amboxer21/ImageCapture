@@ -1,4 +1,4 @@
-#!/usr/bin/env pytho
+#!/usr/bin/env python
 
 import subprocess,re,sys,os,time
 
@@ -26,11 +26,11 @@ class Check():
             'eix': ('gentoo',)}
 
     def system_query_command(self):
-        if self.system_package_manager() == 'rpm':
+        if version.system_package_manager() == 'rpm':
             system_query_command = 'rpm -qa'
-        elif self.system_package_manager() == 'apt':
+        elif version.system_package_manager() == 'apt':
             system_query_command = 'dpkg --list'
-        elif self.system_package_manager() == 'eix':
+        elif version.system_package_manager() == 'eix':
             system_query_command = 'eix --only-names'
         return system_query_command
 
@@ -42,24 +42,9 @@ class Check():
         else:
             logger.log("ERROR", "Package " + str(comm.stdout.read()).strip() + " was not found.")
 
-    def list_system_packages(self):
-        packages = []
-        comm = subprocess.Popen([self.system_query_command()], shell=True, stdout=subprocess.PIPE)
-        if comm is not None:
-            packages.append(comm.stdout.read())
-        return packages
-
-    def system_package_manager(self):
-        for key,value in self.package_manager.items():
-            manager = re.search(version.release().lower(),str(value), re.I | re.M)
-            if manager is not None:
-                return key
-        if manager is None:
-            return False
-
     def main(self):
         try:
-            for item in self.sys_dependencies[self.system_package_manager()]:
+            for item in self.sys_dependencies[version.system_package_manager()]:
                 self.grep_system_packages(item)
         except DistutilsExecError as distutilsExecError:
             logger.log("ERROR", "Exception DistutilsExecError: " + str(distutilsExecError))
@@ -110,6 +95,7 @@ if __name__ == '__main__':
         prepareBuild.modify_conf_files(username)
 
         logger.log('INFO', 'Entering setup in setup.py')
+
         setup(name='ImageCapturePy',
         version='1.0.0',
         url='https://github.com/amboxer21/ImageCapturePy',

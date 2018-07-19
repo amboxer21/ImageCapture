@@ -19,5 +19,3 @@ def system_package_manager():
         manager = re.search(release().lower(),str(value), re.I | re.M)
         if manager is not None:
             return key
-    if manager is None:
-        return False
