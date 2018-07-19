@@ -4,6 +4,8 @@ A program to capture a picture and geolocation data upon 3 incorrect attempts at
 ## [INSTALL]
 ### run:
 
+>sudo python setup.py sdist 
+
 >sudo python setup.py build
 
 >sudo python setup.py install
