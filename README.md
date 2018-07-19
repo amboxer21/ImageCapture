@@ -4,13 +4,13 @@ A program to capture a picture and geolocation data upon 3 incorrect attempts at
 ## [INSTALL]
 ### run:
 
-```javascript
+```
 sudo python setup.py sdist 
 ```
-```javascript
+```
 sudo python setup.py build
 ```
-```javascript
+```
 sudo python setup.py install
 ```
 
