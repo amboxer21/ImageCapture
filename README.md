@@ -89,15 +89,16 @@ https://support.google.com/accounts/answer/6010255
 ```
 ## Build package for PyPi:
 
-  **[anthony@ghost ImageCapturePy]$** `sudo python setup.py sdist`
+**[anthony@ghost ImageCapturePy]$** `sudo python setup.py sdist`
   
-  **[anthony@ghost ImageCapturePy]$** `twine upload dist/*`
+**[anthony@ghost ImageCapturePy]$** `twine upload dist/*`
   
 **NOTE:** If twine does not work with the above command you can try,
 
-   `twine upload --repository-url 'https://upload.pypi.org/legacy/' dist/imagecapturepy-0.0.6.tar.gz`
+`twine upload --repository-url 'https://upload.pypi.org/legacy/' dist/imagecapturepy-0.0.6.tar.gz`
    
-   **NOTE:** `dist/imagecapturepy-0.0.6.tar.gz` will be the name of the file twine just created.
+**NOTE:** `dist/imagecapturepy-0.0.6.tar.gz` will be the name of the file twine just created.
+
    
 ## Contents of ~/.pypirc:
 ```javascript
