@@ -46,7 +46,7 @@ class GetLocation(Thread):
                 browser = re.match("(\/\w+)(.*\/)(\w+)",b).group(3)
                 break
         if browser == 'chrome':
-            call([self.browser, "--user-data-dir=" + str(fileOpts.rootDirectory()), "--no-sandbox",
+            call([self.browser, "--user-data-dir=" + str(fileOpts.root_directory()), "--no-sandbox",
                 "" + self.website + "?Email=" + self.email])
         elif browser == 'firefox':
             call([browser, "--new-window", "" + self.website + "?Email=" + self.email + "\""])
@@ -112,7 +112,7 @@ class ImageCapture():
         self.database = Database()
         self.gdm      = GraphicalDisplayManager()
 
-        self.database.addIpToDB(self.ip_addr)
+        self.database.add_ip_to_db(self.ip_addr)
 
         if os.path.exists(options.logfile):
             self.logfile = options.logfile
@@ -148,30 +148,30 @@ class ImageCapture():
             elif not self.autologin:
                 self.logger.log("ERROR","The location feature requires the autologin option to be set.")
                 sys.exit(0)
-            elif not len(os.listdir(fileOpts.rootDirectory())) > 2:
-                self.getLocation('init')
+            elif not len(os.listdir(fileOpts.root_directory())) > 2:
+                self.get_location('init')
 
         if options.verbose:
             self.logger.log("INFO", "OPTIONS: " + str(options))
 
-    def isLoctionSupported(self,process):
+    def is_loction_supported(self,process):
         return find_executable(process) is not None
     
-    def getLocation(self,init=None):
+    def get_location(self,init=None):
         if not self.location:
             return
         elif self.location and not self.send_email:
             self.logger.log("ERROR","Cannot E-mail your location without your E-mail and password. Please use the help option and search for -e and -p.\n")
             sys.exit(0)
 
-        while self.database.readFromDB('location_bool') == 'true' or init == 'init':
+        while self.database.read_from_db('location_bool') == 'true' or init == 'init':
             if self.net.connected():
                 time.sleep(3)
-                self.database.addLocationToDB('false')
+                self.database.add_location_to_db('false')
                 if self.send_email:
                     try:
                         self.logger.log("INFO","ImageCapture - Sending E-mail now.")
-                        self.sendMail(self.sender,self.to,self.password,self.port,"Failed GDM login from IP " + str(self.ip_addr) + "!",
+                        self.send_mail(self.sender,self.to,self.password,self.port,"Failed GDM login from IP " + str(self.ip_addr) + "!",
                             "Someone tried to login into your computer and failed " + str(self.attempts) + "times.")
                     except:
                         pass
@@ -186,10 +186,10 @@ class ImageCapture():
             else:
                 break
 
-    def executableExists(self,executable_name):
+    def executable_exists(self,executable_name):
         return find_executable(executable_name)
     
-    def takePicture(self):
+    def take_picture(self):
         if not self.enablecam:
             return
         camera = cv2.VideoCapture(self.video)
@@ -204,47 +204,47 @@ class ImageCapture():
             self.logger.log("WARNING","ImageCapture - ImageCapture does not detect a camera.")
             self.enablecam = False
             return
-        elif self.executableExists() is None:
+        elif self.executable_exists() is None:
             logger.log("WARNING", "OpenCV is not installed.")
             self.enablecam = False
             return
         self.logger.log("INFO","ImageCapture - Taking picture.")
         time.sleep(0.1) # Needed or image will be dark.
         image = camera.read()[1]
-        cv2.imwrite(fileOpts.picturePath(), image)
+        cv2.imwrite(fileOpts.picture_path(), image)
         del(camera)
     
-    def sendMail(self,sender,to,password,port,subject,body):
+    def send_mail(self,sender,to,password,port,subject,body):
         try:
             message = MIMEMultipart()
             message['Body'] = body
             message['Subject'] = subject
             if self.enablecam:
-                message.attach(MIMEImage(file(fileOpts.picturePath()).read()))
+                message.attach(MIMEImage(file(fileOpts.picture_path()).read()))
             mail = smtplib.SMTP('smtp.gmail.com',port)
             mail.starttls()
             mail.login(sender,password)
-            mail.sendmail(sender, to, message.as_string())
+            mail.send_mail(sender, to, message.as_string())
             self.logger.log("INFO","ImageCapture - Sent email successfully!")
         except smtplib.SMTPAuthenticationError:
             self.logger.log("ERROR","ImageCapture - Could not athenticate with password and username!")
         except:
-            self.logger.log("ERROR","ImageCapture - Unexpected error in sendMail():")
+            self.logger.log("ERROR","ImageCapture - Unexpected error in send_mail():")
     
-    def failedLogin(self,count):
+    def failed_login(self,count):
       self.logger.log("INFO", "count: " + str(count))
       if count == int(self.attempts) or self.allowsucessful:
-          self.logger.log("INFO", "failedLogin True")
+          self.logger.log("INFO", "failed_login True")
           return True
       else:
-          self.logger.log("INFO", "failedLogin False")
+          self.logger.log("INFO", "failed_login False")
           return False
     
-    def tailFile(self,logfile):
+    def tail_file(self,logfile):
     
         count = 0
     
-        self.gdm.autoLoginRemove(self.autologin, self.user.name())
+        self.gdm.auto_login_remove(self.autologin, self.user.name())
     
         for line in tailf(logfile):
     
@@ -254,36 +254,36 @@ class ImageCapture():
             if f and not self.allowsucessful:
                 count += 1
                 sys.stdout.write("Failed login via GDM at " + f.group(1) + ":\n" + f.group() + "\n\n")
-                if self.failedLogin(count):
+                if self.failed_login(count):
                     self.logger.log("INFO", "user: " + self.user.name())
-                    self.gdm.autoLogin(self.autologin, self.user.name())
-                    self.takePicture()
-                    self.database.addLocationToDB('true')
-                    self.getLocation()
+                    self.gdm.auto_login(self.autologin, self.user.name())
+                    self.take_picture()
+                    self.database.add_location_to_db('true')
+                    self.get_location()
                     if not self.enablecam and self.send_email:
                         try:
                             self.logger.log("INFO","ImageCapture - Sending E-mail now.")
-                            self.sendMail(self.sender,self.to,self.password,self.port,"Failed GDM login from IP " + self.ip_addr + "!",
+                            self.send_mail(self.sender,self.to,self.password,self.port,"Failed GDM login from IP " + self.ip_addr + "!",
                                 "Someone tried to login into your computer and failed " + self.attempts + " times.")
                         except:
                             pass
                 time.sleep(1)
             if s and self.allowsucessful:
                 sys.stdout.write("Sucessful login via GDM at " + s.group(1) + ":\n" + s.group() + "\n\n")
-                self.gdm.autoLogin(self.autologin, self.user.name())
-                self.takePicture()
-                self.database.addLocationToDB('true')
-                self.getLocation()
+                self.gdm.auto_login(self.autologin, self.user.name())
+                self.take_picture()
+                self.database.add_location_to_db('true')
+                self.get_location()
                 if not self.enablecam and self.send_email:
                     try:
                         self.logger.log("INFO","ImageCapture - Sending E-mail now.")
-                        self.sendMail(self.sender,self.to,self.password,self.port,"Failed GDM login from IP " + self.ip_addr + "!",
+                        self.send_mail(self.sender,self.to,self.password,self.port,"Failed GDM login from IP " + self.ip_addr + "!",
                             "Someone tried to login into your computer and failed " + self.attempts + " times.")
                     except:
                         pass
                 time.sleep(1)
 
-        self.db.addIpToDB(self.ip_addr)
+        self.db.add_ip_to_db(self.ip_addr)
 
     def main(self):
 
@@ -292,12 +292,12 @@ class ImageCapture():
             self.logger.log("ERROR", "Only python version 2.7 is supported.")
             sys.exit(0)
 
-        self.gdm.clearAutoLogin(self.clear, self.user.name())
-        self.getLocation()
+        self.gdm.clear_auto_login(self.clear, self.user.name())
+        self.get_location()
 
         while True:
             try:
-                self.tailFile(self.logfile)
+                self.tail_file(self.logfile)
             except IOError as ioError:
                 self.logger.log("ERROR", "IOError: " + str(ioError))
             except KeyboardInterrupt:
@@ -309,7 +309,7 @@ class Database():
         self.user    = User()
         self.logger  = Logging()
         fileOpts     = FileOpts()
-        self.db_file = fileOpts.databasePath()
+        self.db_file = fileOpts.database_path()
         self.db      = sqlite3.connect(self.db_file)
 
         try:
@@ -318,10 +318,10 @@ class Database():
             self.db.execute('''CREATE TABLE connected(id integer primary key AUTOINCREMENT, location_bool text not null, coordinates text not null, ip_addr text not null);''')
             self.logger.log("INFO","Table(connected) does not exist, creating now.")
 
-    def fileExists(self,file_name):
+    def file_exists(self,file_name):
         return os.path.exists(_file_name)
 
-    def writeToDB(self,location_bool,coordinates,ip_addr):
+    def write_to_db(self,location_bool,coordinates,ip_addr):
         if location_bool is None or coordinates is None or ip_addr is None:
             return
         elif not re.search("true|false|NULL", location_bool, re.I|re.M):
@@ -335,7 +335,7 @@ class Database():
             self.db.execute("insert into connected (location_bool, coordinates, ip_addr) values(\"" + str(location_bool) + "\", \"" + str(coor) + "\", \"" + str(ip_addr) + "\")")
             self.db.commit()
 
-    def readFromDB(self,column):
+    def read_from_db(self,column):
         query = self.db.execute("select * from connected")
         for row in query:
             if column == 'location_bool' and row[1] is not None:
@@ -348,11 +348,11 @@ class Database():
                 self.logger.log("ERROR", "Not a known column or DB is empty.")
                 return
 
-    def updateDB(self,column,value):
+    def update_db(self,column,value):
         if column is None or value is None:
             return
         try:
-            if self.readFromDB('location_bool') is None or self.readFromDB('coordinates') is None or self.readFromDB('ip_addr') is None:
+            if self.read_from_db('location_bool') is None or self.read_from_db('coordinates') is None or self.read_from_db('ip_addr') is None:
                 self.logger.log("ERROR", "You must write to the database first before updating!")
                 return
             elif re.search("true|false", value, re.I|re.M) and column == 'location_bool':
@@ -370,13 +370,13 @@ class Database():
         except sqlite3.OperationalError:
           self.logger.log("ERROR", "The database is lock, could not add coordinates to DB.")
 
-    def addLocationToDB(self,location_bool):
+    def add_location_to_db(self,location_bool):
         try:
-            if self.readFromDB('location_bool') is None:
-                writeToDB(location_bool,'NULL','NULL')
+            if self.read_from_db('location_bool') is None:
+                write_to_db(location_bool,'NULL','NULL')
                 self.logger.log("INFO", "Writing location_bool to DB.")
-            elif self.readFromDB('location_bool') != location_bool and self.readFromDB('location_bool') is not None:
-                self.updateDB('location_bool', location_bool)
+            elif self.read_from_db('location_bool') != location_bool and self.read_from_db('location_bool') is not None:
+                self.update_db('location_bool', location_bool)
                 self.logger.log("INFO", "Updating location_bool variable in DB.")
             else:
                 return
@@ -385,13 +385,13 @@ class Database():
             self.logger.log("ERROR", "The database is locked, could not add location_bool to DB.")
             pass
 
-    def addCoordinatesToDB(self,coordinates):
+    def add_coordinates_to_db(self,coordinates):
         try:
-            if self.readFromDB('coordinates') is None:
-                self.writeToDB('NULL', coordinates,'NULL')
+            if self.read_from_db('coordinates') is None:
+                self.write_to_db('NULL', coordinates,'NULL')
                 self.logger.log("INFO", "Writing coordinates to DB.")
-            elif not self.readFromDB('coordinates') == coordinates and self.readFromDB('coordinates') is not None:
-                self.updateDB('coordinates', ip_addr)
+            elif not self.read_from_db('coordinates') == coordinates and self.read_from_db('coordinates') is not None:
+                self.update_db('coordinates', ip_addr)
                 self.logger.log("INFO", "Updating coordinates variable in DB.")
             else:
                 return
@@ -400,13 +400,13 @@ class Database():
             self.logger.log("ERROR", "The database is locked, could not add coordinates to DB.")
             pass
 
-    def addIpToDB(self,ip_addr):
+    def add_ip_to_db(self,ip_addr):
         try:
-            if self.readFromDB('ip_addr') is None:
-                self.writeToDB('NULL','NULL', ip_addr)
+            if self.read_from_db('ip_addr') is None:
+                self.write_to_db('NULL','NULL', ip_addr)
                 self.logger.log("INFO", "Writing ip_addr to DB.")
-            elif self.readFromDB('ip_addr') != ip_addr and self.readFromDB('ip_addr') is not None:
-                self.updateDB('ip_addr', ip_addr)
+            elif self.read_from_db('ip_addr') != ip_addr and self.read_from_db('ip_addr') is not None:
+                self.update_db('ip_addr', ip_addr)
                 self.logger.log("INFO", "Updating ip_addr variable in DB.")
             else:
                 return
@@ -420,13 +420,13 @@ class GraphicalDisplayManager():
         self.logger  = Logging()
         self.version = Version()
 
-    def addToGroup(self,user):
+    def add_to_group(self,user):
         os.system("sudo usermod -a -G nopasswdlogin " + str(user))
 
-    def removeFromGroup(self,user):
+    def remove_from_group(self,user):
         os.system("sudo gpasswd -d " + str(user) + " nopasswdlogin")
 
-    def userPresent(self,user):
+    def user_present(self,user):
         with open("/etc/group", "r") as f:
             for line in f:
                 nop = re.search("^nopasswdlogin.*(" + str(user) + ")", line)
@@ -435,31 +435,31 @@ class GraphicalDisplayManager():
                 elif nop is not None and not nop:
                     return False
 
-    def autoLoginRemove(self,autologin,user):
-        if not autologin and self.userPresent(user):
-            self.removeFromGroup(user)
+    def auto_login_remove(self,autologin,user):
+        if not autologin and self.user_present(user):
+            self.remove_from_group(user)
 
-    def clearAutoLogin(self,clear,user):
+    def clear_auto_login(self,clear,user):
         if len(sys.argv) > 2 and clear:
             self.logger.log("ERROR", "Too many arguments for clear given. Exiting now.")
             sys.exit(1)
-        if clear and self.userPresent(user):
-            self.removeFromGroup(user)
+        if clear and self.user_present(user):
+            self.remove_from_group(user)
             sys.exit(1)
-        elif clear and not self.userPresent(user):
+        elif clear and not self.user_present(user):
             sys.exit(1)
 
-    def autoLogin(self,autologin,user):
+    def auto_login(self,autologin,user):
         if autologin:
             self.logger.log("INFO", "Automatically logging you in now.")
-            self.addToGroup(user)
+            self.add_to_group(user)
 
-    def pamD(self):
-        if self.version.packageManager() == 'rpm':
+    def pam_d(self):
+        if self.version.system_package_manager() == 'rpm':
             return ('password-auth',)
-        elif self.version.packageManager() == 'apt':
+        elif self.version.system_package_manager() == 'apt':
             return ('common-auth',)
-        elif self.version.packageManager() == 'eix':
+        elif self.version.system_package_manager() == 'eix':
             return ('system-login',)
 
 class Logging():
@@ -489,7 +489,7 @@ class Net():
         except urllib2.URLError as err:
             return False
 
-    def getHwAddr(self,ifname):
+    def get_hardware_address(self,ifname):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', ifname[:15]))
         return ':'.join(['%02x' % ord(char) for char in info[18:24]])
@@ -505,7 +505,7 @@ class Version():
         comm = subprocess.Popen(["lsb_release -irs"], shell=True, stdout=subprocess.PIPE)
         return re.search("(\w+)", str(comm.stdout.read())).group()
 
-    def packageManager(self):
+    def system_package_manager(self):
         package_manager = {
             'rpm': ('centos','fedora','scientific','opensuse'),
             'apt': ('debian','ubuntu','linuxmint'),
@@ -521,29 +521,29 @@ class FileOpts():
     def __init__(self):
         self.user = User()
 
-    def homeDirectory(self):
+    def home_directory(self):
         return "/home/" + self.user.name()
 
-    def rootDirectory(self):
+    def root_directory(self):
         return "/home/" + str(self.user.name()) + "/.imagecapture"
 
-    def pictureDirectory(self):
+    def picture_directory(self):
         return "/home/" + str(self.user.name()) + "/.imagecapture/pictures"
 
-    def picturePath(self):
-        return str(self.pictureDirectory()) + '/capture.png'
+    def picture_path(self):
+        return str(self.picture_directory()) + '/capture.png'
 
-    def databasePath(self):
-        return str(self.rootDirectory()) + '/imagecapture.db'
+    def database_path(self):
+        return str(self.root_directory()) + '/imagecapture.db'
 
-    def currentDirectory(self):
+    def current_directory(self):
         return str(os.getcwd())
 
-    def fileExists(self,file_name):
+    def file_exists(self,file_name):
         return os.path.isfile(file_name)
 
-    def createFile(self,file_name):
-        if not self.fileExists(file_name):
+    def create_file(self,file_name):
+        if not self.file_exists(file_name):
             open(file_name, 'w')
 
     def chown(self,dir_path,user_name,group_name):
@@ -554,14 +554,14 @@ class FileOpts():
     def chmod(self,dir_path,mode):
         os.chmod(dir_path, mode)
 
-    def dirExists(self,dir_path):
+    def dir_exists(self,dir_path):
         return os.path.isdir(dir_path)
 
-    def mkdirP(self,dir_path):
+    def mkdir_p(self,dir_path):
         try:
             os.makedirs(dir_path)
         except OSError as e:
-            if e.errno == errno.EEXIST and self.dirExists(dir_path):
+            if e.errno == errno.EEXIST and self.dir_exists(dir_path):
                 pass
             else:
                 raise
@@ -569,17 +569,17 @@ class FileOpts():
 if __name__ == '__main__':
 
     fileOpts = FileOpts()
-    if not fileOpts.fileExists(fileOpts.picturePath()):
-        fileOpts.createFile(fileOpts.picturePath())
+    if not fileOpts.file_exists(fileOpts.picture_path()):
+        fileOpts.create_file(fileOpts.picture_path())
 
-        if not fileOpts.dirExists(fileOpts.pictureDirectory()):
-            fileOpts.mkdirP(fileOpts.pictureDirectory())
-            fileOpts.createFile(fileOpts.picturePath())
+        if not fileOpts.dir_exists(fileOpts.picture_directory()):
+            fileOpts.mkdir_p(fileOpts.picture_directory())
+            fileOpts.create_file(fileOpts.picture_path())
 
-            if not fileOpts.dirExists(fileOpts.rootDirectory()):
-                fileOpts.mkdirP(fileOpts.rootDirectory())
-                fileOpts.mkdirP(fileOpts.pictureDirectory())
-                fileOpts.createFile(fileOpts.picturePath())
+            if not fileOpts.dir_exists(fileOpts.root_directory()):
+                fileOpts.mkdir_p(fileOpts.root_directory())
+                fileOpts.mkdir_p(fileOpts.picture_directory())
+                fileOpts.create_file(fileOpts.picture_path())
 
     imagecapture = ImageCapture()
     imagecapture.main()

@@ -10,7 +10,7 @@ def release():
     comm = subprocess.Popen(["lsb_release -irs"], shell=True, stdout=subprocess.PIPE)
     return re.search("(\w+)", str(comm.stdout.read())).group()
 
-def packageManager():
+def system_package_manager():
     package_manager = {
         'rpm': ('centos','fedora','scientific','opensuse'),
         'apt': ('debian','ubuntu','linuxmint'),
