@@ -4,11 +4,32 @@ A program to capture a picture and geolocation data upon 3 incorrect attempts at
 ## [INSTALL]
 ### run:
 
->sudo python setup.py sdist 
+```javascript
+sudo python setup.py sdist 
+```
+```javascript
+sudo python setup.py build
+```
+```javascript
+sudo python setup.py install
+```
 
->sudo python setup.py build
+## [SYSTEM DEPENDENCIES]
 
->sudo python setup.py install
+### Debian Based Systems:
+
+* libopencv-dev
+* python-opencv
+* python-dev
+* procmail
+* sendmail-base 
+* sendmail-bin
+* sendmail-cf
+* sensible-mda
+* syslog-ng
+* sqlite3
+
+   You can install these packages by running **sudo apt-get install package_name_above**
 
 ## IMPORTANT!
 You must enable less secure apps in your gmail settings or the app will not be able to send notifications!
