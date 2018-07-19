@@ -1,5 +1,5 @@
 # ImageCapturePy
-A program that captures an image and the geolocation data of any user that attempts to login to your compuper x amount of times. The data collected by ImageCapturePy is then E-mailed to the E-mail you specify.
+A program that captures an image and the geolocation data of any user that attempts to login to your compuper x amount of times. The data collected by ImageCapturePy is then E-mailed to the address you specify.
 
 ## [OPTIONS] (Highly configurable)
 >Most options are interchangeable, it's just a matter of what you wish to accomplish!
