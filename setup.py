@@ -99,7 +99,7 @@ if __name__ == '__main__':
         setup(name='ImageCapturePy',
         version='1.0.0',
         url='https://github.com/amboxer21/ImageCapturePy',
-        license='NONE',
+        license='GPL-3.0',
         author='Anthony Guevara',
         author_email='amboxer21@gmail.com',
         description='A program to capture a picture and geolocation data upon 3 incorrect or '
