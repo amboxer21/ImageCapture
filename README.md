@@ -11,7 +11,11 @@ More to come...
 
    * Number of attempts:
 
-      3
+      ```3```
+      
+   * Browser:
+   
+      ```/opt/google/chrome/chrome```
 
 
 ## [OPTIONS] (Highly configurable)
