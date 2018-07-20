@@ -38,7 +38,7 @@ Options:
                         Select the browser used to grab geolocation data.
 ```
 
-## [INSTALLING]
+## [IMAGECAPTUREPY INSTALLATION]
 ```
 sudo python setup.py sdist 
 ```
@@ -47,6 +47,11 @@ sudo python setup.py build
 ```
 ```
 sudo python setup.py install
+```
+
+## [IMAGECAPTUREPY SYSTEM DEPENDENCY CHECK]
+```
+sudo python setup.py check
 ```
 
 ## [SYSTEM DEPENDENCIES]
