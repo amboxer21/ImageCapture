@@ -9,7 +9,7 @@ A program that captures an image and the geolocation data of any user that attem
 
    ```sudo python imagecapture.py -c -e 'example@gmail.com' -p 'password'```
    
-2) You can take a picture of the offender after the numbers of attempts are reached. An E-mail of the picture captured will be sent to yourself alongside a notification. This notification will contain the devices geolocation data in the form of latitude/longitude coordinates. Alongside the location data, the E-mail will contain a notification that someone attempted to log into your device. When using the location feature of ImageCapturePy, you must allow the program to automatically log you in. This means that your device will no longer require a password to login.
+2) You can take a picture of the offender after the numbers of attempts are reached and an E-mail of the picture captured will be sent to yourself alongside a notification. This notification will contain the devices geolocation data in the form of latitude/longitude coordinates. Alongside the location data, the E-mail will contain a notification that someone attempted to log into your device. When using the location feature of ImageCapturePy, you must allow the program to automatically log you in. This means that your device will no longer require a password to login.
 
    ```sudo python imagecapture.py -ALc -e 'example@gmail.com' -p 'password'```
 
