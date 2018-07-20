@@ -78,10 +78,6 @@ Options:
    * Loation:
     
       ```false```
-     
-   * Number of attempts:
-
-      ```3```
     
    * E-mail port:
    
@@ -102,6 +98,11 @@ Options:
    * E-mail address:
    
       ```example@gmail.com```
+   
+   * Attempt count:
+   
+      ```3```
+      
 
 ## [IMAGECAPTUREPY INSTALLATION]
 ```
