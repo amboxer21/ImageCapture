@@ -1,19 +1,25 @@
 # ImageCapturePy
+### Description
 A program that captures an image and the geolocation data of any user that attempts to login to your compuper x amount of times. The data collected by ImageCapturePy is then E-mailed to the address you specify.
+
+### Details
+   ImageCapturePy allows you to take a picture of the offender after the numbers of attempts are reached. The number of attempts can be specified when starting the program. You can also grab the devices location in the form of geolocationdata. Both the picture and or the location data can then be E-mailed to you if you'd like. All you would need to do is pass an E-mail address and password to the program when starting it. E-mail credentials are needed because I am not providing an E-mail service so you have to be able to send the information someway - That way is through your own E-mail account. You should be able to see the outgoing E-mails in your sent box.
+
+
 
 ## [OPTIONS] (Highly configurable)
 >Most options are interchangeable, it's just a matter of what you wish to accomplish!
 
 ### Example use cases
-1) You can take a picture of the offender after the numbers of attempts are reached, then E-mail that picture to yourself alongside the notification ImageCapturePy will send - No autologin or location options are required.
+1) Capture an image of the offender only and E-mail that picture to yourself.
 
    ```sudo python imagecapture.py -c -e 'example@gmail.com' -p 'password'```
    
-2) You can take a picture of the offender after the numbers of attempts are reached and an E-mail of the picture captured will be sent to yourself alongside a notification. This notification will contain the devices geolocation data in the form of latitude/longitude coordinates. Alongside the location data, the E-mail will contain a notification that someone attempted to log into your device. When using the location feature of ImageCapturePy, you must allow the program to automatically log you in. This means that your device will no longer require a password to login.
+2) Capture an image of the offender, autolog them in, grab the devices location, and E-mail the resulting info to yourself.
 
    ```sudo python imagecapture.py -ALc -e 'example@gmail.com' -p 'password'```
 
-3) You can specify the location(index) of the camera, logs to monitor(Where your authentication attempts are logged), the browser used to grab your location(The autologin option is **required** in order for this to work like I stated above), as well as quite a few other configurable options.
+3) Capture an image of the offender, autolog them in, grab the devices location, specify the auth logs location, specify the browser, specify the camera index, and E-mail resulting info to yourself.
 
    ```sudo python imagecapture.py -AL -v 1 -l '/var/log/messages' -B '/opt/google/chrom/chrome' -e 'example@gmail.com' -p 'password'```
 
