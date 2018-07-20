@@ -383,9 +383,10 @@ class Database():
         if column is None or value is None:
             return
         try:
-            if self.read_from_db('location_bool') is None or self.read_from_db('coordinates') is None or self.read_from_db('ip_addr') is None:
-                self.logger.log("ERROR", "You must write to the database first before updating!")
-                return
+            if (self.read_from_db('location_bool') is None
+                or self.read_from_db('coordinates') is None or self.read_from_db('ip_addr') is None):
+                    self.logger.log("ERROR", "You must write to the database first before updating!")
+                    return
             elif re.search("true|false", value, re.I|re.M) and column == 'location_bool':
                 self.db.execute("update connected set location_bool = \"" + value + "\"")
                 self.db.commit()
