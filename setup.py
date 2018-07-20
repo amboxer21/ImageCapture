@@ -17,7 +17,8 @@ class Check():
         self.sys_dependencies = {
             'rpm': ('python-devel','sqlite3-dbf','syslog-ng','sendmail-cf',
                 'sendmail-devel','procmail','opencv-core','opencv-python'),
-            'eix': ('',),
+            'eix': ('mail-mta/sendmail','app-admin/syslog-ng','dev-lang/python',
+                'dev-python/sqlite3dbm','mail-filter/procmail','media-libs/opencv'),
             'apt': ('libopencv-dev','python-opencv','python-dev','procmail','sqlite3',
                 'sendmail-bin','sendmail-cf','sensible-mda','syslog-ng','sendmail-base')}
         self.package_manager  = {
@@ -31,7 +32,7 @@ class Check():
         elif version.system_package_manager() == 'apt':
             system_query_command = 'dpkg --list'
         elif version.system_package_manager() == 'eix':
-            system_query_command = 'eix --only-names'
+            system_query_command = 'eix -e --only-names'
         return system_query_command
 
     def grep_system_packages(self,package_name):
@@ -85,9 +86,9 @@ if __name__ == '__main__':
 
     try:
 
-        username = str(user.name())
-        pam      = str(gdm.pam_d()[0])
-        pkgm     = str(version.system_package_manager())
+        username  = str(user.name())
+        pam       = str(gdm.pam_d()[0])
+        pkgm      = str(version.system_package_manager())
 
         conf_path = 'src/system/autologin/conf'
         conf_name = [conf_path+'/slim.conf',conf_path+'/mdm.conf',conf_path+'/gdm.conf']
