@@ -9,9 +9,9 @@ More to come...
 
 ### ImageCapturePy's default values
 
-* Number of attempts:
+   * Number of attempts:
 
-   3
+      3
 
 
 ## [OPTIONS] (Highly configurable)
