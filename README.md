@@ -21,6 +21,39 @@ More to come...
    
       ```https://imagecapturepy.herokuapp.com/index.html```
 
+   * Autologin:
+   
+      ```false```
+      
+   * Capture image of offender:
+   
+      ```false```
+      
+   * Logfile:
+   
+      ```/var/log/auth.log```
+      
+   * Loation:
+    
+      ```false```
+     
+   * Number of attempts:
+
+      ```3```
+    
+   * E-mail port:
+   
+      ```587```
+      
+   * Print options passed(verbose):
+   
+      ```false```
+      
+   * Camera index:
+   
+      ```0```
+      
+   * 
 
 ## [OPTIONS] (Highly configurable)
 >Most options are interchangeable, it's just a matter of what you wish to accomplish!
