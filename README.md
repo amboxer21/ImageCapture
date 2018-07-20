@@ -5,7 +5,7 @@ A program that captures an image and the geolocation data of any user that attem
 >Most options are interchangeable, it's just a matter of what you wish to accomplish!
 
 ### Example use cases
-1) You can take a picture of the offender after the numbers of attempts are reached, then E-mail that picture to yourself alongside the notification you will receive - No autologin or location options are required.
+1) You can take a picture of the offender after the numbers of attempts are reached, then E-mail that picture to yourself alongside the notification ImageCapturePy will send - No autologin or location options are required.
 
    ```sudo python imagecapture.py -c -e 'example@gmail.com' -p 'password'```
    
