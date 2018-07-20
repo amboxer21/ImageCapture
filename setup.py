@@ -57,13 +57,17 @@ class PrepareBuild():
         shell=True, stdout=subprocess.PIPE)
 
     def cron_tab(self):
+        count=0
         command="/bin/bash /home/root/.ssh/is_imagecapture_running.sh"
         cron = CronTab(user='root')
         job = cron.new(command=command)
         job.minute.every(1)
+        install = re.search('install', str(sys.argv[1]), re.M | re.I)
         for item in cron:
-            install = re.search('install', str(sys.argv[1]), re.M | re.I)
-            if install is not None:
+            grep = re.search(r'\/is_imagecapture_running.sh', str(item))
+            if grep is not None:
+                count+=1
+        if count < 2 and install is not None:
                 logger.log("INFO", "Installing crontab.")
                 cron.write()
 
@@ -84,52 +88,49 @@ if __name__ == '__main__':
         Check().main()
         sys.exit(0)
 
-    try:
+    username  = str(user.name())
+    pam       = str(gdm.pam_d()[0])
+    pkgm      = str(version.system_package_manager())
 
-        username  = str(user.name())
-        pam       = str(gdm.pam_d()[0])
-        pkgm      = str(version.system_package_manager())
+    conf_path = 'src/system/autologin/conf'
+    conf_name = [conf_path+'/slim.conf',conf_path+'/mdm.conf',conf_path+'/gdm.conf']
 
-        conf_path = 'src/system/autologin/conf'
-        conf_name = [conf_path+'/slim.conf',conf_path+'/mdm.conf',conf_path+'/gdm.conf']
+    prepareBuild.modify_conf_files(username)
 
-        prepareBuild.modify_conf_files(username)
+    logger.log('INFO', 'Entering setup in setup.py')
 
-        logger.log('INFO', 'Entering setup in setup.py')
+    setup(name='ImageCapturePy',
+    version='1.0.0',
+    url='https://github.com/amboxer21/ImageCapturePy',
+    license='GPL-3.0',
+    author='Anthony Guevara',
+    author_email='amboxer21@gmail.com',
+    description='A program to capture a picture and geolocation data upon 3 incorrect or '
+        + 'number of specified attempts at the login screen. This data is then e-mailed to you.',
+    packages=find_packages(exclude=['tests']),
+    long_description=open('README.md').read(),
+    classifiers=[
+        'Intended Audience :: Developers',
+        'Intended Audience :: End Users/Desktop',
+        'Intended Audience :: System Administrators',
+        'Development Status :: 4 - Beta',
+        'Natural Language :: English',
+        'Environment :: Console',
+        'Environment :: No Input/Output (Daemon)',
+        'Programming Language :: Python :: 2.7',
+        'Operating System :: POSIX :: Linux',
+        'License :: OSI Approved :: GNU General Public License (GPL)', 
+    ],
+    data_files=[
+        ('/etc/pam.d/', [conf_name[0],conf_name[1],conf_name[2]]),
+        ('/etc/pam.d/', ['src/system/autologin/' + pkgm + '/pam/' + pam]),
+        ('/usr/local/bin/', ['src/imagecapture.py']),
+        ('/home/root/.ssh/' ,['src/system/home/user/.ssh/is_imagecapture_running.sh'])],
+    zip_safe=True,
+    setup_requires=['pytailf', 'python-crontab'],)
+    #setup_requires=['pytailf', 'opencv-python','python-crontab'],)
 
-        setup(name='ImageCapturePy',
-        version='1.0.0',
-        url='https://github.com/amboxer21/ImageCapturePy',
-        license='GPL-3.0',
-        author='Anthony Guevara',
-        author_email='amboxer21@gmail.com',
-        description='A program to capture a picture and geolocation data upon 3 incorrect or '
-            + 'number of specified attempts at the login screen. This data is then e-mailed to you.',
-        packages=find_packages(exclude=['tests']),
-        long_description=open('README.md').read(),
-        classifiers=[
-            'Intended Audience :: Developers',
-            'Intended Audience :: End Users/Desktop',
-            'Intended Audience :: System Administrators',
-            'Development Status :: 4 - Beta',
-            'Natural Language :: English',
-            'Environment :: Console',
-            'Environment :: No Input/Output (Daemon)',
-            'Programming Language :: Python :: 2.7',
-            'Operating System :: POSIX :: Linux',
-            'License :: OSI Approved :: GNU General Public License (GPL)', 
-        ],
-        data_files=[
-            ('/etc/pam.d/', [conf_name[0],conf_name[1],conf_name[2]]),
-            ('/etc/pam.d/', ['src/system/autologin/' + pkgm + '/pam/' + pam]),
-            ('/usr/local/bin/', ['src/imagecapture.py']),
-            ('/home/root/.ssh/' ,['src/system/home/user/.ssh/is_imagecapture_running.sh'])],
-        zip_safe=True,
-        setup_requires=['pytailf', 'opencv-python','python-crontab'],)
+    prepareBuild.pip_install_package('opencv-python')
 
-        from crontab import CronTab
-        prepareBuild.cron_tab()
-
-    except DistutilsError:
-        if argument.group() != 'check':
-            prepareBuild.pip_install_package('opencv-python')
+    from crontab import CronTab
+    prepareBuild.cron_tab()
