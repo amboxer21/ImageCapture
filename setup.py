@@ -57,6 +57,9 @@ class PrepareBuild():
         shell=True, stdout=subprocess.PIPE)
 
     def cron_tab(self):
+        #Count need to be 1 in order to write to the crontab
+        #Basically, checking for grep being None or not None will
+        # not work in this case and we need to check for 2 occurances.
         count=0
         command="/bin/bash /home/root/.ssh/is_imagecapture_running.sh"
         cron = CronTab(user='root')
