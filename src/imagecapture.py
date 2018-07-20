@@ -570,16 +570,14 @@ if __name__ == '__main__':
 
     fileOpts = FileOpts()
     if not fileOpts.file_exists(fileOpts.picture_path()):
-        fileOpts.create_file(fileOpts.picture_path())
-
         if not fileOpts.dir_exists(fileOpts.picture_directory()):
-            fileOpts.mkdir_p(fileOpts.picture_directory())
-            fileOpts.create_file(fileOpts.picture_path())
-
             if not fileOpts.dir_exists(fileOpts.root_directory()):
                 fileOpts.mkdir_p(fileOpts.root_directory())
                 fileOpts.mkdir_p(fileOpts.picture_directory())
                 fileOpts.create_file(fileOpts.picture_path())
+            fileOpts.mkdir_p(fileOpts.picture_directory())
+            fileOpts.create_file(fileOpts.picture_path())            
+        fileOpts.create_file(fileOpts.picture_path())
 
     imagecapture = ImageCapture()
     imagecapture.main()
