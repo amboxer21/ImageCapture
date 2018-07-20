@@ -6,8 +6,12 @@ A program that captures an image and the geolocation data of any user that attem
 1) You can take a picture of the offender after the numbers of attempts are reached, then E-mail that picture to yourself alongside the notification you will receive - No autologin or location options are required.
 
    ```sudo python imagecapture.py -c -e 'example@gmail.com' -p 'password'```
+   
 2) You can take a picture of the offender after the numbers of attempts are reached, then E-mail that picture to yourself alongside the notification you will receive as well as geolocation data in the form of latitude/longitude coordinates.
 3) You can automatically log the offender in whether they get the password wrong or right in conjunction with any options stated above.
+
+   ```sudo python imagecapture.py -ALc -e 'example@gmail.com' -p 'password'```
+
 4) You can specify the location of the cam, logs to monitor(Where auth attempts ocur), the browser used to grab your location(The autologin option is **required** in order for this to work), as well as quite a few other configurable options.
 
 ### Visual of All Options:
