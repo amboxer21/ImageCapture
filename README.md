@@ -13,7 +13,9 @@ A program that captures an image and the geolocation data of any user that attem
 
    ```sudo python imagecapture.py -ALc -e 'example@gmail.com' -p 'password'```
 
-3) You can specify the location of the cam, logs to monitor(Where auth attempts occur), the browser used to grab your location(The autologin option is **required** in order for this to work like I stated above), as well as quite a few other configurable options.
+3) You can specify the location(index) of the cam, logs to monitor(Where auth attempts occur), the browser used to grab your location(The autologin option is **required** in order for this to work like I stated above), as well as quite a few other configurable options.
+
+   ```sudo python imagecapture.py -AL -v 1 -l '/var/log/messages' -B '/opt/google/chrom/chrome' -e 'example@gmail.com' -p 'password'```
 
 ### Visual of All Options:
 ```
