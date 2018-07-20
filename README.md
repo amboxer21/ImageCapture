@@ -2,16 +2,16 @@
 ### Description
 &nbsp;&nbsp;&nbsp;&nbsp;A program that captures an image and the geolocation data of any user that attempts to login to your compuper x amount of times. The data collected by ImageCapturePy is then E-mailed to the address you specify.
 
-### Details
+### [Details]
 ##### Overview:
 <p>&nbsp;&nbsp;&nbsp;&nbsp;ImageCapturePy allows you to take a picture of the offender after the numbers of attempts are reached. The number of attempts can be specified when starting the program. You can also grab the devices location in the form of geolocationdata. Both the picture and or the location data can then be E-mailed to you if you'd like. All you would need to do is pass an E-mail address and password to the program when starting it. E-mail credentials are needed because I am not providing an E-mail service so you have to be able to send the information someway - That way is through your own E-mail account. You should be able to see the outgoing E-mails in your sent box.</p>
    
 More to come...
 
-## [OPTIONS] (Highly configurable)
+## OPTIONS (Highly configurable)
 >Most options are interchangeable, it's just a matter of what you wish to accomplish!
 
-### Example use cases
+### [Example use cases]
 1) Capture an image of the offender only and E-mail that picture to yourself.
 
    ```sudo python imagecapture.py -c -e 'example@gmail.com' -p 'password'```
@@ -24,7 +24,7 @@ More to come...
 
    ```sudo python imagecapture.py -AL -v 1 -l '/var/log/messages' -B '/opt/google/chrom/chrome' -e 'example@gmail.com' -p 'password'```
 
-### Visual of All Options:
+### [Visual of All Options]
 ```
 [anthony@ghost ImageCapturePy]$ sudo python src/imagecapture.py --help
 Usage: imagecapture.py [options]
@@ -54,7 +54,7 @@ Options:
                         Select the browser used to grab geolocation data.
 ```
 
-### ImageCapturePy's default values
+### [ImageCapturePy's default values]
       
    * Browser:
    
@@ -105,7 +105,7 @@ Options:
       ```3```
       
 
-## [IMAGECAPTUREPY INSTALLATION]
+## IMAGECAPTUREPY INSTALLATION
 ```
 sudo python setup.py sdist 
 ```
@@ -116,14 +116,14 @@ sudo python setup.py build
 sudo python setup.py install
 ```
 
-## [IMAGECAPTUREPY SYSTEM DEPENDENCY CHECK]
+## IMAGECAPTUREPY SYSTEM DEPENDENCY CHECK
 ```
 sudo python setup.py check
 ```
 
-## [SYSTEM DEPENDENCIES]
+## SYSTEM DEPENDENCIES
 
-### Debian Based Systems:
+### [Debian Based Systems]
 
 * libopencv-dev
 * python-opencv
@@ -144,7 +144,7 @@ https://support.google.com/accounts/answer/6010255
 
 # Building a release for PyPi
 
-## Modify version in setup.py via vim/nano before building:
+## Modify version in setup.py via vim/nano before building
 **`BEFORE(vim/nano setup.py):`**
 ```javascript
     setup(
@@ -159,7 +159,7 @@ https://support.google.com/accounts/answer/6010255
         name='imagecapturepy',
         version='0.0.7', # increment version number
 ```
-## Build package for PyPi:
+## Build package for PyPi
 
 **[anthony@ghost ImageCapturePy]$** `sudo python setup.py sdist`
   
@@ -172,7 +172,7 @@ https://support.google.com/accounts/answer/6010255
    
 **NOTE:** `dist/imagecapturepy-0.0.6.tar.gz` will be the name of the file twine just created.
 
-## Contents of ~/.pypirc:
+## Contents of ~/.pypirc
 ```javascript
 [distutils]
 index-servers =
