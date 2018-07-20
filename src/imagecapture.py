@@ -1,5 +1,20 @@
 #!/usr/bin/env python
-    
+
+import os
+import re
+import sys
+import cv2
+import time
+import fcntl
+import socket
+import struct
+import logging
+import sqlite3
+import smtplib
+import webbrowser
+import subprocess
+import logging.handlers
+ 
 from tailf import tailf
 from urllib2 import urlopen
 from threading import Thread
@@ -8,9 +23,6 @@ from subprocess import Popen,call
 from email.MIMEImage import MIMEImage
 from distutils.spawn import find_executable
 from email.MIMEMultipart import MIMEMultipart
-
-import sys,os,re,smtplib,fcntl,webbrowser,logging,sqlite3
-import subprocess,time,cv2,socket,struct,logging.handlers
 
 # importing urllib2 works on my Linux Mint box
 # but not my Gentoo box and here is the fix!
@@ -568,7 +580,11 @@ class FileOpts():
 
 if __name__ == '__main__':
 
+    # This will recursivley check for and or
+    # create the program's directory tree structure.
+
     fileOpts = FileOpts()
+
     if not fileOpts.file_exists(fileOpts.picture_path()):
         if not fileOpts.dir_exists(fileOpts.picture_directory()):
             if not fileOpts.dir_exists(fileOpts.root_directory()):
