@@ -7,54 +7,6 @@ A program that captures an image and the geolocation data of any user that attem
    
 More to come...
 
-### ImageCapturePy's default values
-
-   * Number of attempts:
-
-      ```3```
-      
-   * Browser:
-   
-      ```/opt/google/chrome/chrome```
-      
-   * Website to grab location data:
-   
-      ```https://imagecapturepy.herokuapp.com/index.html```
-
-   * Autologin:
-   
-      ```false```
-      
-   * Capture image of offender:
-   
-      ```false```
-      
-   * Logfile:
-   
-      ```/var/log/auth.log```
-      
-   * Loation:
-    
-      ```false```
-     
-   * Number of attempts:
-
-      ```3```
-    
-   * E-mail port:
-   
-      ```587```
-      
-   * Print options passed(verbose):
-   
-      ```false```
-      
-   * Camera index:
-   
-      ```0```
-      
-   * 
-
 ## [OPTIONS] (Highly configurable)
 >Most options are interchangeable, it's just a matter of what you wish to accomplish!
 
@@ -100,6 +52,56 @@ Options:
   -B BROWSER, --browser=BROWSER
                         Select the browser used to grab geolocation data.
 ```
+
+### ImageCapturePy's default values
+      
+   * Browser:
+   
+      ```/opt/google/chrome/chrome```
+      
+   * Website to grab location data:
+   
+      ```https://imagecapturepy.herokuapp.com/index.html```
+
+   * Autologin:
+   
+      ```false```
+      
+   * Capture image of offender:
+   
+      ```false```
+      
+   * Logfile:
+   
+      ```/var/log/auth.log```
+      
+   * Loation:
+    
+      ```false```
+     
+   * Number of attempts:
+
+      ```3```
+    
+   * E-mail port:
+   
+      ```587```
+      
+   * Print options passed(verbose):
+   
+      ```false```
+      
+   * Camera index:
+   
+      ```0```
+      
+   * Password:
+   
+      ```password```
+      
+   * E-mail address:
+   
+      ```example@gmail.com```
 
 ## [IMAGECAPTUREPY INSTALLATION]
 ```
