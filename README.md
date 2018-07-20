@@ -16,6 +16,10 @@ More to come...
    * Browser:
    
       ```/opt/google/chrome/chrome```
+      
+   * Website to grab location data:
+   
+      ```https://imagecapturepy.herokuapp.com/index.html```
 
 
 ## [OPTIONS] (Highly configurable)
