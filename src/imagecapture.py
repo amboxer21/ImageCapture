@@ -24,50 +24,15 @@ from email.MIMEImage import MIMEImage
 from distutils.spawn import find_executable
 from email.MIMEMultipart import MIMEMultipart
 
-# importing urllib2 works on my Linux Mint box
-# but not my Gentoo box and here is the fix!
+# importing urllib2 works on my Linux Mint
+# box but not my Gentoo box and here is the fix!
 try:
     import urllib2
 except ImportError:
     import urllib
 
-class GetLocation(Thread):
-    def __init__(self,website,email,browser):
-        Thread.__init__(self)
-        self.count    = 0
-        self.email    = email
-        self.website  = website
-        self.browser  = browser
-
-        self.user     = User()
-        self.logger   = Logging()
-        self.fileOpts = FileOpts()
-
-    def browser_exists(self,browser):
-        return find_executable(browser)
-
-    def run(self):
-        for b in ['/opt/google/chome/chrome','/usr/bin/firefox','/usr/bin/opera']:
-            if self.browser_exists(self.browser) and self.count == 0:
-                browser = re.match("(\/\w+)(.*\/)(\w+)",self.browser).group(3)
-                break
-            self.count += 1
-            if self.count > len(b):
-                self.logger.log("ERROR", "ImageCapturePy only supports Chrome, Opera, and Firefox. Please install one if able.")
-            elif self.browser_exists(b):
-                browser = re.match("(\/\w+)(.*\/)(\w+)",b).group(3)
-                break
-        if browser == 'chrome':
-            call([self.browser, "--user-data-dir=" + str(fileOpts.root_directory()), "--no-sandbox",
-                "" + self.website + "?Email=" + self.email])
-        elif browser == 'firefox':
-            call([browser, "--new-window", "" + self.website + "?Email=" + self.email + "\""])
-        #elif browser == 'opera':
-        else:
-            self.logger.log("WARNING", "\n\nBrowser not found and location functionality will not work.\n\n")
-            sys.sleep(2)
-
 class ImageCapture():
+
     def __init__(self):
         parser = OptionParser()
         parser.add_option("-e", "--email", dest='email',
@@ -98,24 +63,24 @@ class ImageCapture():
             default=False, help="Run ImageCapture even if login is sucessful.")
         parser.add_option("-B", "--browser", dest="browser",
             default="/opt/google/chrome/chrome", help="Select the browser used to grab geolocation data.")
-        (options, args) = parser.parse_args()
+        (self.options, args) = parser.parse_args()
 
-        self.port           = options.port
-        self.clear          = options.clear
-        self.email          = options.email
-        self.video          = options.video
-        self.website        = options.website
-        self.verbose        = options.verbose
-        self.browser        = options.browser
-        self.password       = options.password
-        self.attempts       = options.attempts
-        self.location       = options.location
-        self.enablecam      = options.enablecam
-        self.autologin      = options.autologin
-        self.allowsucessful = options.allowsucessful
+        self.port           = self.options.port
+        self.clear          = self.options.clear
+        self.email          = self.options.email
+        self.video          = self.options.video
+        self.website        = self.options.website
+        self.verbose        = self.options.verbose
+        self.browser        = self.options.browser
+        self.password       = self.options.password
+        self.attempts       = self.options.attempts
+        self.location       = self.options.location
+        self.enablecam      = self.options.enablecam
+        self.autologin      = self.options.autologin
+        self.allowsucessful = self.options.allowsucessful
         self.ip_addr        = urlopen('http://ip.42.pl/raw').read()
         self.send_email     = False
-        self.logfile        = options.logfile
+        self.logfile        = self.options.logfile
 
         self.net      = Net()
         self.user     = User()
@@ -124,19 +89,14 @@ class ImageCapture():
         self.database = Database()
         self.gdm      = GraphicalDisplayManager()
 
+        self.logfile_sanity_check(self.options.logfile)
         self.database.add_ip_to_db(self.ip_addr)
 
-        if os.path.exists(options.logfile):
-            self.logfile = options.logfile
-        else:
-            self.logger.log("ERROR","Log file " + options.logfile + " does not exist. Please specify which log to use.")
-            sys.exit(0)
+        if self.options.email is not None:
+            self.sender,self.to = self.options.email,self.options.email
 
-        if options.email is not None:
-            self.sender,self.to = options.email,options.email
-
-        if options.password is not None:
-            self.password = options.password
+        if self.options.password is not None:
+            self.password = self.options.password
 
         if not str(self.password) == 'password' and not str(self.sender) == 'example@gmail.com':
             self.send_email = True
@@ -163,8 +123,23 @@ class ImageCapture():
             elif not len(os.listdir(fileOpts.root_directory())) > 2:
                 self.get_location('init')
 
-        if options.verbose:
-            self.logger.log("INFO", "OPTIONS: " + str(options))
+        if self.options.verbose:
+            self.logger.log("INFO", "OPTIONS: " + str(self.options))
+
+    def logfile_sanity_check(self,logfile):
+        if os.path.exists(logfile):
+            self.logfile = logfile
+            self.logger.log("INFO", "logfile: " + str(self.options.logfile))
+        elif logfile == '/var/log/auth.log' and not os.path.exists(logfile):
+            for log_file in ['messages']:
+                if os.path.exists('/var/log/' + str(log_file)):
+                    self.logfile = '/var/log/' + str(log_file)
+                    self.options.logfile = '/var/log/' + str(log_file)
+                    self.logger.log("INFO", "logfile: " + str(self.logfile))
+                    return
+                else:
+                    self.logger.log("ERROR","Log file " + logfile + " does not exist. Please specify which log to use.")
+                    sys.exit(0)
 
     def is_loction_supported(self,process):
         return find_executable(process) is not None
@@ -173,7 +148,9 @@ class ImageCapture():
         if not self.location:
             return
         elif self.location and not self.send_email:
-            self.logger.log("ERROR","Cannot E-mail your location without your E-mail and password. Please use the help option and search for -e and -p.\n")
+            self.logger.log("ERROR",
+                "Cannot E-mail your location without your E-mail and password. "
+                + "Please use the help option and search for -e and -p.")
             sys.exit(0)
 
         while self.database.read_from_db('location_bool') == 'true' or init == 'init':
@@ -183,7 +160,8 @@ class ImageCapture():
                 if self.send_email:
                     try:
                         self.logger.log("INFO","ImageCapture - Sending E-mail now.")
-                        self.send_mail(self.sender,self.to,self.password,self.port,"Failed GDM login from IP " + str(self.ip_addr) + "!",
+                        self.send_mail(self.sender,self.to,self.password,self.port,
+                            "Failed GDM login from IP " + str(self.ip_addr) + "!",
                             "Someone tried to login into your computer and failed " + str(self.attempts) + "times.")
                     except:
                         pass
@@ -275,7 +253,8 @@ class ImageCapture():
                     if not self.enablecam and self.send_email:
                         try:
                             self.logger.log("INFO","ImageCapture - Sending E-mail now.")
-                            self.send_mail(self.sender,self.to,self.password,self.port,"Failed GDM login from IP " + self.ip_addr + "!",
+                            self.send_mail(self.sender,self.to,self.password,self.port,
+                                "Failed GDM login from IP " + self.ip_addr + "!",
                                 "Someone tried to login into your computer and failed " + self.attempts + " times.")
                         except:
                             pass
@@ -289,7 +268,8 @@ class ImageCapture():
                 if not self.enablecam and self.send_email:
                     try:
                         self.logger.log("INFO","ImageCapture - Sending E-mail now.")
-                        self.send_mail(self.sender,self.to,self.password,self.port,"Failed GDM login from IP " + self.ip_addr + "!",
+                        self.send_mail(self.sender,self.to,self.password,self.port,
+                            "Failed GDM login from IP " + self.ip_addr + "!",
                             "Someone tried to login into your computer and failed " + self.attempts + " times.")
                     except:
                         pass
@@ -316,7 +296,46 @@ class ImageCapture():
                 self.logger.log("INFO", " [Control C caught] - Exiting ImageCapturePy now!")
                 break
 
+class GetLocation(Thread):
+
+    def __init__(self,website,email,browser):
+        Thread.__init__(self)
+        self.count    = 0
+        self.email    = email
+        self.website  = website
+        self.browser  = browser
+
+        self.user     = User()
+        self.logger   = Logging()
+        self.fileOpts = FileOpts()
+
+    def browser_exists(self,browser):
+        return find_executable(browser)
+
+    def run(self):
+        for b in ['/opt/google/chome/chrome','/usr/bin/firefox','/usr/bin/opera']:
+            if self.browser_exists(self.browser) and self.count == 0:
+                browser = re.match("(\/\w+)(.*\/)(\w+)",self.browser).group(3)
+                break
+            self.count += 1
+            if self.count > len(b):
+                self.logger.log("ERROR",
+                    "Only the following browsers are supported: Chrome, Opera, and Firefox.")
+            elif self.browser_exists(b):
+                browser = re.match("(\/\w+)(.*\/)(\w+)",b).group(3)
+                break
+        if browser == 'chrome':
+            call([self.browser, "--user-data-dir=" + str(fileOpts.root_directory()), "--no-sandbox",
+                "" + self.website + "?Email=" + self.email])
+        elif browser == 'firefox':
+            call([browser, "--new-window", "" + self.website + "?Email=" + self.email + "\""])
+        #elif browser == 'opera':
+        else:
+            self.logger.log("WARNING", "\n\nBrowser not found and location functionality will not work.\n\n")
+            sys.sleep(2)
+
 class Database():
+
     def __init__(self):
         self.user    = User()
         self.logger  = Logging()
@@ -428,6 +447,7 @@ class Database():
             pass
 
 class GraphicalDisplayManager():
+
     def __init__(self):
         self.logger  = Logging()
         self.version = Version()
@@ -475,6 +495,7 @@ class GraphicalDisplayManager():
             return ('system-login',)
 
 class Logging():
+
     def log(self,level,message):
         handler = logging.handlers.WatchedFileHandler(
             os.environ.get("LOGFILE", "/var/log/messages"))
@@ -489,11 +510,13 @@ class Logging():
         return
 
 class User():
+
     def name(self):
         comm = subprocess.Popen(["users"], shell=True, stdout=subprocess.PIPE)
         return re.search("(\w+)", str(comm.stdout.read())).group()
     
 class Net():
+
     def connected(self):
         try:
             urllib2.urlopen('http://www.google.com', timeout=1)
@@ -507,6 +530,7 @@ class Net():
         return ':'.join(['%02x' % ord(char) for char in info[18:24]])
 
 class Version():
+
     def python(self):
         python_version = re.search('\d\.\d\.\d', str(sys.version), re.I | re.M)
         if python_version is not None:
@@ -530,6 +554,7 @@ class Version():
             return False
 
 class FileOpts():
+
     def __init__(self):
         self.user = User()
 
