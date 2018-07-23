@@ -296,6 +296,22 @@ class ImageCapture():
                 self.logger.log("INFO", " [Control C caught] - Exiting ImageCapturePy now!")
                 break
 
+class ConfigFile():
+    def __init__(self):
+        options = {
+            'email': '', 'password': '', 'video': '',
+            'verbose': '', 'port': '', 'attempts': '', 
+            'location': '', 'logfile': '', 'enablecam': '','autologin': '',
+            'website': '', 'clearautologin': '', 'allowsucessful': '', 'browser': ''}
+
+    def blah(self,file_name):
+        config_file = open(file_name,'r').read().splitlines()
+        for line in config_file:
+            comm = re.search(r'(^.*)=(.*)', str(line), re.M | re.I)
+            if comm is not None:
+                options[comm.group(1)] = comm.group(2)
+
+
 class GetLocation(Thread):
 
     def __init__(self,website,email,browser):
