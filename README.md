@@ -4,7 +4,7 @@
 
 ### [Details]
 ##### Overview:
-<p>&nbsp;&nbsp;&nbsp;&nbsp;ImageCapturePy allows you to take a picture of the offender after the numbers of attempts are reached. The number of attempts can be specified when starting the program. You can also grab the devices location in the form of geolocationdata. Both the picture and or the location data can then be E-mailed to you if you'd like. All you would need to do is pass an E-mail address and password to the program when starting it. E-mail credentials are needed because I am not providing an E-mail service so you have to be able to send the information someway - That way is through your own E-mail account. You should be able to see the outgoing E-mails in your sent box.</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;ImageCapturePy allows you to take a picture of the offender after the numbers of attempts of failed logins are reached. The number of attempts can be specified when starting the program. You can also grab the devices location in the form of geolocationdata. Both the picture and or the location data can then be E-mailed to you if you'd like. All you would need to do is pass an E-mail address and password to the program when starting it. E-mail credentials are needed because I am not providing an E-mail service so you have to be able to send the information someway - That way is through your own E-mail account. You should be able to see the outgoing E-mails in your sent box.</p>
    
 More to come...
 
