@@ -31,9 +31,9 @@ try:
 except ImportError:
     import urllib
 
-class ImageCapture():
+class ImageCapture(object):
 
-    def __init__(self):
+    def __init__(self,options_dict={}):
         parser = OptionParser()
         parser.add_option("-e", "--email", dest='email',
             default="example@gmail.com")
@@ -67,13 +67,15 @@ class ImageCapture():
             default="", help="Configuration file path.")
         (self.options, args) = parser.parse_args()
 
-        self.net        = Net()
-        self.user       = User()
-        self.logger     = Logging()
-        self.version    = Version()
-        self.database   = Database()
-        self.gdm        = GraphicalDisplayManager()
-        self.configFile = ConfigFile(self.options.configfile)
+        self.options_dict = options_dict
+
+        self.net          = Net()
+        self.user         = User()
+        self.logger       = Logging()
+        self.version      = Version()
+        self.database     = Database()
+        self.gdm          = GraphicalDisplayManager()
+        self.configFile   = ConfigFile(self.options.configfile)
 
         self.port           = self.options.port
         self.clear          = self.options.clear
@@ -302,13 +304,13 @@ class ImageCapture():
 class ConfigFile(object):
 
     def __init__(self,file_name):
-        #self.imageCapture = ImageCapture()
         self.options_dict = {
             'email': '', 'password': '', 'video': '',
             'verbose': '', 'port': '', 'attempts': '',
             'location': '', 'logfile': '', 'enablecam': '','autologin': '',
             'website': '', 'clearautologin': '', 'allowsucessful': '', 'browser': ''}
         self.config_options(file_name)
+        ImageCapture(self.options_dict)
 
     def config_options(self,file_name):
         if not os.path.exists(str(file_name)):
@@ -319,7 +321,6 @@ class ConfigFile(object):
             comm = re.search(r'(^.*)=(.*)', str(line), re.M | re.I)
             if comm is not None:
                 self.options_dict[comm.group(1)] = comm.group(2)
-        
 
 class GetLocation(Thread):
 
