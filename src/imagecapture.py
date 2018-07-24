@@ -298,19 +298,21 @@ class ImageCapture():
 
 class ConfigFile():
     def __init__(self):
-        options = {
+        self.options = {
             'email': '', 'password': '', 'video': '',
             'verbose': '', 'port': '', 'attempts': '', 
             'location': '', 'logfile': '', 'enablecam': '','autologin': '',
             'website': '', 'clearautologin': '', 'allowsucessful': '', 'browser': ''}
 
-    def blah(self,file_name):
+    def assign_values(self,file_name):
+        if not os.path.exists(file_name):
+            logger.log("ERROR","Config file does not exist.")
+            sys.exit(0)
         config_file = open(file_name,'r').read().splitlines()
         for line in config_file:
             comm = re.search(r'(^.*)=(.*)', str(line), re.M | re.I)
             if comm is not None:
-                options[comm.group(1)] = comm.group(2)
-
+                self.options[comm.group(1)] = comm.group(2)
 
 class GetLocation(Thread):
 
