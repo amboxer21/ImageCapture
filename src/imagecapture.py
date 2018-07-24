@@ -322,6 +322,12 @@ class ConfigFile(object):
             if comm is not None:
                 self.options_dict[comm.group(1)] = comm.group(2)
 
+    def command_line_options(self):
+        print('')
+
+    def default_options(self):
+        print('')
+
 class GetLocation(Thread):
 
     def __init__(self,website,email,browser):
