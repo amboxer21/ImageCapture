@@ -299,10 +299,10 @@ class ImageCapture():
                 self.logger.log("INFO", " [Control C caught] - Exiting ImageCapturePy now!")
                 break
 
-class ConfigFile(file_name):
+class ConfigFile(object):
 
     def __init__(self,file_name):
-        self.imageCapture = ImageCapture()
+        #self.imageCapture = ImageCapture()
         self.options_dict = {
             'email': '', 'password': '', 'video': '',
             'verbose': '', 'port': '', 'attempts': '',
