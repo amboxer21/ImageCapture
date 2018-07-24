@@ -63,7 +63,17 @@ class ImageCapture():
             default=False, help="Run ImageCapture even if login is sucessful.")
         parser.add_option("-B", "--browser", dest="browser",
             default="/opt/google/chrome/chrome", help="Select the browser used to grab geolocation data.")
+        parser.add_option("-C", "--config-file", dest="configfile",
+            default="", help="Configuration file path.")
         (self.options, args) = parser.parse_args()
+
+        self.net        = Net()
+        self.user       = User()
+        self.logger     = Logging()
+        self.version    = Version()
+        self.database   = Database()
+        self.gdm        = GraphicalDisplayManager()
+        self.configFile = ConfigFile(self.options.configfile)
 
         self.port           = self.options.port
         self.clear          = self.options.clear
@@ -81,13 +91,6 @@ class ImageCapture():
         self.ip_addr        = urlopen('http://ip.42.pl/raw').read()
         self.send_email     = False
         self.logfile        = self.options.logfile
-
-        self.net      = Net()
-        self.user     = User()
-        self.logger   = Logging()
-        self.version  = Version()
-        self.database = Database()
-        self.gdm      = GraphicalDisplayManager()
 
         self.logfile_sanity_check(self.options.logfile)
         self.database.add_ip_to_db(self.ip_addr)
@@ -279,8 +282,8 @@ class ImageCapture():
 
     def main(self):
 
-        v = re.search('2.7',str(self.version.python()), re.M | re.I)
-        if v is None:
+        version = re.search('2.7',str(self.version.python()), re.M | re.I)
+        if version is None:
             self.logger.log("ERROR", "Only python version 2.7 is supported.")
             sys.exit(0)
 
@@ -296,23 +299,27 @@ class ImageCapture():
                 self.logger.log("INFO", " [Control C caught] - Exiting ImageCapturePy now!")
                 break
 
-class ConfigFile():
-    def __init__(self):
-        self.options = {
+class ConfigFile(file_name):
+
+    def __init__(self,file_name):
+        self.imageCapture = ImageCapture()
+        self.options_dict = {
             'email': '', 'password': '', 'video': '',
-            'verbose': '', 'port': '', 'attempts': '', 
+            'verbose': '', 'port': '', 'attempts': '',
             'location': '', 'logfile': '', 'enablecam': '','autologin': '',
             'website': '', 'clearautologin': '', 'allowsucessful': '', 'browser': ''}
+        self.config_options(file_name)
 
-    def assign_values(self,file_name):
-        if not os.path.exists(file_name):
+    def config_options(self,file_name):
+        if not os.path.exists(str(file_name)):
             logger.log("ERROR","Config file does not exist.")
             sys.exit(0)
         config_file = open(file_name,'r').read().splitlines()
         for line in config_file:
             comm = re.search(r'(^.*)=(.*)', str(line), re.M | re.I)
             if comm is not None:
-                self.options[comm.group(1)] = comm.group(2)
+                self.options_dict[comm.group(1)] = comm.group(2)
+        
 
 class GetLocation(Thread):
 
