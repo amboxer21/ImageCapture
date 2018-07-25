@@ -36,7 +36,7 @@ class ImageCapture(ConfigFile):
 
     def __init__(self,config_dict={}):
         super(ImageCapture, self).__init__()
-        parser = OptionParser()
+        self.parser = parser
         parser.add_option("-e", "--email", dest='email',
             default="example@gmail.com")
         parser.add_option("-p", "--password", dest='password',
@@ -69,7 +69,8 @@ class ImageCapture(ConfigFile):
             default="", help="Configuration file path.")
         (self.options, args) = parser.parse_args()
 
-        configFile = ConfigFile()
+        self.parser = parser
+        configFile  = ConfigFile()
         configFile.config_options('test.conf')
 
         self.net          = Net()
@@ -100,39 +101,40 @@ class ImageCapture(ConfigFile):
         self.logfile_sanity_check(self.options.logfile)
         self.database.add_ip_to_db(self.ip_addr)
 
-        if self.options.email is not None:
-            self.sender,self.to = self.options.email,self.options.email
+        self.credential_sanity_check()
+        self.broswer_path_sanity_check()
+        self.location_sanity_check()
 
-        if self.options.password is not None:
-            self.password = self.options.password
+        if self.options.verbose:
+            self.logger.log("INFO", "OPTIONS: " + str(self.options))
 
-        if not str(self.password) == 'password' and not str(self.sender) == 'example@gmail.com':
-            self.send_email = True
-        elif str(self.password) == 'password' and str(self.sender) == 'example@gmail.com':
-            self.send_email = False
-        elif (str(self.password) == 'password' and not str(self.sender) == 'example@gmail.com' or
-            str(self.sender) == 'example@gmail.com' and not str(self.password) == 'password'):
-                self.logger.log("ERROR", "Must supply both the E-mail and password options or none at all!")
-                parser.print_help()
-                sys.exit(0)
-
-        if re.match("(\/)",self.browser) is None:
+    def broswer_path_sanity_check(self):
+        if re.match("(\/)",self.options.browser) is None:
             self.logger.log("ERROR", "Please provide full path to browser!")
             sys.exit(0)
 
-        if self.location:
+    def location_sanity_check(self):
+        if self.options.location:
             if not self.send_email:
                 self.logger.log("ERROR", "The location options requires an E-mail and password!")
-                parser.print_help()
+                self.parser.print_help()
                 sys.exit(0)
-            elif not self.autologin:
+            elif not self.options.autologin:
                 self.logger.log("ERROR","The location feature requires the autologin option to be set.")
                 sys.exit(0)
             elif not len(os.listdir(fileOpts.root_directory())) > 2:
                 self.get_location('init')
 
-        if self.options.verbose:
-            self.logger.log("INFO", "OPTIONS: " + str(self.options))
+    def credential_sanity_check(self):
+        if not str(self.options.password) == 'password' and not str(self.options.email) == 'example@gmail.com':
+            self.send_email = True
+        elif str(self.options.password) == 'password' and str(self.options.email) == 'example@gmail.com':
+            self.send_email = False
+        elif (str(self.options.password) == 'password' and not str(self.options.email) == 'example@gmail.com' or
+            str(self.options.email) == 'example@gmail.com' and not str(self.options.password) == 'password'):
+                self.logger.log("ERROR", "Must supply both the E-mail and password options or none at all!")
+                self.parser.print_help()
+                sys.exit(0)
 
     def logfile_sanity_check(self,logfile):
         if os.path.exists(logfile):
