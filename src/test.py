@@ -6,7 +6,7 @@ from optparse import OptionParser
 class ConfigFile(object):
 
     def __init__(self):
-        pass
+        self.args_list = []
 
     def config_options(self,file_name):
         if not os.path.exists(str(file_name)):
@@ -16,8 +16,6 @@ class ConfigFile(object):
             comm = re.search(r'(^.*)=(.*)', str(line), re.M | re.I)
             if comm is not None:
                 config_dict[comm.group(1)] = comm.group(2)
-        print("sys.argv => " + str(sys.argv[1:]))
-        print("argv len = " + str(self.number_of_args_passed()))
         return config_dict
 
     def config_file_supplied(self):
@@ -25,8 +23,16 @@ class ConfigFile(object):
             return False
         return True
 
+    # This method is written this way instead of just returning
+    # len(sys.argv[1:] because this method only grabs the command
+    # line switches and not its counterpart. So this method grabs
+    # the -v and not the 0 here -> -v 0, making the count 1 and not 2.
     def number_of_args_passed(self):
-        return len(sys.argv[1:])
+        for arg in sys.argv[1:]:
+            comm = re.search('(\-[a-z])', str(arg), re.M | re.I)
+            if comm is not None:
+                self.args_list.append(comm.group())
+        return len(self.args_list)
 
 class ImageCapture(ConfigFile):
     def __init__(self,config_dict={}):
