@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+# PEP8 compliant import structure.
 import os
 import re
 import sys
@@ -652,6 +653,7 @@ if __name__ == '__main__':
 
     # Easiest way to share variables between clases without wanting to 
     # chop my computer up with an fucking axe!
+
     config_dict = {
         'email': '', 'password': '', 'video': '',
         'verbose': '', 'port': '', 'attempts': '',
