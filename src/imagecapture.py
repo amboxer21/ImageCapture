@@ -31,9 +31,10 @@ try:
 except ImportError:
     import urllib
 
-class ImageCapture(object):
+class ImageCapture(ConfigFile):
 
-    def __init__(self,options_dict={}):
+    def __init__(self,config_dict={}):
+        super(ImageCapture, self).__init__()
         parser = OptionParser()
         parser.add_option("-e", "--email", dest='email',
             default="example@gmail.com")
@@ -67,7 +68,8 @@ class ImageCapture(object):
             default="", help="Configuration file path.")
         (self.options, args) = parser.parse_args()
 
-        self.options_dict = options_dict
+        configFile = ConfigFile()
+        configFile.config_options('test.conf')
 
         self.net          = Net()
         self.user         = User()
@@ -303,30 +305,40 @@ class ImageCapture(object):
 
 class ConfigFile(object):
 
-    def __init__(self,file_name):
-        self.options_dict = {
-            'email': '', 'password': '', 'video': '',
-            'verbose': '', 'port': '', 'attempts': '',
-            'location': '', 'logfile': '', 'enablecam': '','autologin': '',
-            'website': '', 'clearautologin': '', 'allowsucessful': '', 'browser': ''}
-        self.config_options(file_name)
-        ImageCapture(self.options_dict)
+    def __init__(self):
+        self.args_list = []
 
     def config_options(self,file_name):
         if not os.path.exists(str(file_name)):
-            logger.log("ERROR","Config file does not exist.")
-            sys.exit(0)
+            print("Config file does not exist.")
         config_file = open(file_name,'r').read().splitlines()
         for line in config_file:
             comm = re.search(r'(^.*)=(.*)', str(line), re.M | re.I)
             if comm is not None:
-                self.options_dict[comm.group(1)] = comm.group(2)
+                config_dict[comm.group(1)] = comm.group(2)
+        return config_dict
+
+    def config_file_supplied(self):
+        if re.search(r'(\-C|\-\-config\-file)',str(sys.argv[1:]), re.M) is None:
+            return False
+        return True
+
+    # This method is written this way instead of just returning
+    # len(sys.argv[1:] because this method only grabs the command
+    # line switches and not its counterpart. So this method grabs
+    # the -v and not the 0 here -> -v 0, making the count 1 and not 2.
+    def number_of_args_passed(self):
+        for arg in sys.argv[1:]:
+            comm = re.search('(\-[a-z])', str(arg), re.M | re.I)
+            if comm is not None:
+                self.args_list.append(comm.group())
+        return len(self.args_list)
 
     def command_line_options(self):
-        print('')
+        pass
 
     def default_options(self):
-        print('')
+        pass
 
 class GetLocation(Thread):
 
@@ -638,6 +650,14 @@ class FileOpts():
 
 if __name__ == '__main__':
 
+    # Easiest way to share variables between clases without wanting to 
+    # chop my computer up with an fucking axe!
+    config_dict = {
+        'email': '', 'password': '', 'video': '',
+        'verbose': '', 'port': '', 'attempts': '',
+        'location': '', 'logfile': '', 'enablecam': '','autologin': '',
+        'website': '', 'clearautologin': '', 'allowsucessful': '', 'browser': ''}
+
     # This will recursivley check for and or
     # create the program's directory tree structure.
 
@@ -653,5 +673,5 @@ if __name__ == '__main__':
             fileOpts.create_file(fileOpts.picture_path())            
         fileOpts.create_file(fileOpts.picture_path())
 
-    imagecapture = ImageCapture()
+    imagecapture = ImageCapture(config_dict)
     imagecapture.main()
