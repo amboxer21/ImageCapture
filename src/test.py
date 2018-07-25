@@ -17,7 +17,7 @@ class ConfigFile(object):
             if comm is not None:
                 config_dict[comm.group(1)] = comm.group(2)
         print("sys.argv => " + str(sys.argv[1:]))
-        print("argv len = " + str(self.number_of_args_passed))
+        print("argv len = " + str(self.number_of_args_passed()))
         return config_dict
 
     def config_file_supplied(self):
