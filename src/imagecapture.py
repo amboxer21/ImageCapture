@@ -32,11 +32,50 @@ try:
 except ImportError:
     import urllib
 
+class ConfigFile(object):
+
+    def __init__(self):
+        self.args_list = []
+
+    def config_options(self,file_name):
+        if not os.path.exists(str(file_name)):
+            print("Config file does not exist.")
+        config_file = open(file_name,'r').read().splitlines()
+        for line in config_file:
+            comm = re.search(r'(^.*)=(.*)', str(line), re.M | re.I)
+            if comm is not None:
+                if not comm.group(2):
+                    config_dict[1].append(comm.group(1))
+                config_dict[0][comm.group(1)] = comm.group(2)
+        return config_dict
+
+    def config_file_supplied(self):
+        if re.search(r'(\-C|\-\-config\-file)',str(sys.argv[1:]), re.M) is None:
+            return False
+        return True
+
+    # This method is written this way instead of just returning
+    # len(sys.argv[1:] because this method only grabs the command
+    # line switches and not its counterpart. So this method grabs
+    # the -v and not the 0 here -> -v 0, making the count 1 and not 2.
+    def number_of_args_passed(self):
+        for arg in sys.argv[1:]:
+            comm = re.search('(\-[a-z])', str(arg), re.M | re.I)
+            if comm is not None:
+                self.args_list.append(comm.group())
+        return len(self.args_list)
+
+    def command_line_options(self):
+        pass
+
+    def default_options(self):
+        pass
+
 class ImageCapture(ConfigFile):
 
     def __init__(self,config_dict={}):
         super(ImageCapture, self).__init__()
-        self.parser = parser
+        parser = OptionParser()
         parser.add_option("-e", "--email", dest='email',
             default="example@gmail.com")
         parser.add_option("-p", "--password", dest='password',
@@ -59,7 +98,7 @@ class ImageCapture(ConfigFile):
             default=False, help="Auto login user after no of failed attempts.")
         parser.add_option("-w", "--website", dest='website',
             default='https://imagecapturepy.herokuapp.com/index.html', help="Use alternate website to capture location.")
-        parser.add_option("-C", "--clear-autologin", dest='clear', action="store_true",
+        parser.add_option("-X", "--clear-autologin", dest='clear', action="store_true",
             default=False, help="Remove autologin. Must be root to use this feature.")
         parser.add_option("-s", "--allow-sucessful", dest='allowsucessful', action="store_true",
             default=False, help="Run ImageCapture even if login is sucessful.")
@@ -79,7 +118,7 @@ class ImageCapture(ConfigFile):
         self.version      = Version()
         self.database     = Database()
         self.gdm          = GraphicalDisplayManager()
-        self.configFile   = ConfigFile(self.options.configfile)
+        #self.configFile   = ConfigFile(self.options.configfile)
 
         self.port           = self.options.port
         self.clear          = self.options.clear
@@ -305,45 +344,6 @@ class ImageCapture(ConfigFile):
             except KeyboardInterrupt:
                 self.logger.log("INFO", " [Control C caught] - Exiting ImageCapturePy now!")
                 break
-
-class ConfigFile(object):
-
-    def __init__(self):
-        self.args_list = []
-
-    def config_options(self,file_name):
-        if not os.path.exists(str(file_name)):
-            print("Config file does not exist.")
-        config_file = open(file_name,'r').read().splitlines()
-        for line in config_file:
-            comm = re.search(r'(^.*)=(.*)', str(line), re.M | re.I)
-            if comm is not None:
-                if not comm.group(2):
-                    config_dict[1].append(comm.group(1))
-                config_dict[0][comm.group(1)] = comm.group(2)
-        return config_dict
-
-    def config_file_supplied(self):
-        if re.search(r'(\-C|\-\-config\-file)',str(sys.argv[1:]), re.M) is None:
-            return False
-        return True
-
-    # This method is written this way instead of just returning
-    # len(sys.argv[1:] because this method only grabs the command
-    # line switches and not its counterpart. So this method grabs
-    # the -v and not the 0 here -> -v 0, making the count 1 and not 2.
-    def number_of_args_passed(self):
-        for arg in sys.argv[1:]:
-            comm = re.search('(\-[a-z])', str(arg), re.M | re.I)
-            if comm is not None:
-                self.args_list.append(comm.group())
-        return len(self.args_list)
-
-    def command_line_options(self):
-        pass
-
-    def default_options(self):
-        pass
 
 class GetLocation(Thread):
 
