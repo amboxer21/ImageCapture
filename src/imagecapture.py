@@ -318,7 +318,9 @@ class ConfigFile(object):
         for line in config_file:
             comm = re.search(r'(^.*)=(.*)', str(line), re.M | re.I)
             if comm is not None:
-                config_dict[comm.group(1)] = comm.group(2)
+                if not comm.group(2):
+                    config_dict[1].append(comm.group(1))
+                config_dict[0][comm.group(1)] = comm.group(2)
         return config_dict
 
     def config_file_supplied(self):
@@ -656,11 +658,11 @@ if __name__ == '__main__':
     # Easiest way to share variables between clases without wanting to 
     # chop my computer up with an fucking axe!
 
-    config_dict = {
+    config_dict = [{
         'email': '', 'password': '', 'video': '',
         'verbose': '', 'port': '', 'attempts': '',
         'location': '', 'logfile': '', 'enablecam': '','autologin': '',
-        'website': '', 'clearautologin': '', 'allowsucessful': '', 'browser': ''}
+        'website': '', 'clearautologin': '', 'allowsucessful': '', 'browser': ''}, []]
 
     # This will recursivley check for and or
     # create the program's directory tree structure.
