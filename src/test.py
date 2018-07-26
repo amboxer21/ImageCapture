@@ -5,16 +5,17 @@ from optparse import OptionParser
 
 class ConfigFile(object):
 
-    def __init__(self):
+    def __init__(self, file_name):
         self.args_list = []
+        self.file_name = file_name
 
-    def config_options(self,file_name):
-        if not file_name:
+    def config_options(self):
+        if not self.file_name:
             return
-        elif not os.path.exists(str(file_name)):
+        elif not os.path.exists(str(self.file_name)):
             print("Config file does not exist.")
             sys.exit(0)
-        config_file = open(file_name,'r').read().splitlines()
+        config_file = open(self.file_name,'r').read().splitlines()
         for line in config_file:
             comm = re.search(r'(^.*)=(.*)', str(line), re.M | re.I)
             if comm is not None:
@@ -22,6 +23,9 @@ class ConfigFile(object):
                     config_dict[1].append(comm.group(1))
                 config_dict[0][comm.group(1)] = comm.group(2)
         return config_dict
+
+    def override_config_options(self):
+        pass
 
     def config_file_supplied(self):
         if re.search(r'(\-C|\-\-config\-file)',str(sys.argv[1:]), re.M) is None:
@@ -40,9 +44,10 @@ class ConfigFile(object):
         return len(self.args_list)
 
 class ImageCapture(ConfigFile):
-    def __init__(self,config_dict={}):
-        super(ImageCapture, self).__init__()
-        ConfigFile().config_options(options.configfile) 
+    def __init__(self,config_dict={},file_name=''):
+        super(ImageCapture, self).__init__(self,file_name)
+        configFile = configFile(options.configfile)
+        configFile.config_options() 
         print("config_dict[1] => " + str(config_dict[1]))
         print("config_dict[0][email] => " + str(config_dict[0]['email']))
 
