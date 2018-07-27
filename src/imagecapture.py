@@ -129,6 +129,8 @@ class ImageCapture(ConfigFile):
             elif not len(os.listdir(fileOpts.root_directory())) > 2:
                 self.get_location('init')
 
+    # PEP8 states lines should not be over 80 characters line so I
+    # wrote mulitline if/else statements enclosed in parenthesis.
     def credential_sanity_check(self):
         if (not str(config_dict[0]['password'][0]) == 'password' and
             not str(config_dict[0]['email'][0]) == 'example@gmail.com'):
@@ -690,7 +692,12 @@ if __name__ == '__main__':
     (options, args) = parser.parse_args()
 
     # Easiest way to share variables between clases without wanting to 
-    # chop my computer up with an fucking axe!
+    # chop my computer up with an fucking axe! The key is used for reference
+    # while the first value is reserved for config files values and if they 
+    # are blank then they are filled in with the 2nd values value. The array 
+    # inside the array after the dictionary declaration is reserved for when 
+    # the config file option is passed but an option has no value. That key
+    # name is stored in this array.
 
     config_dict = [{
         'email': ['', options.email], 'password': ['', options.password],
