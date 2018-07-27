@@ -21,11 +21,13 @@ class ConfigFile(object):
             if comm is not None:
                 if not comm.group(2):
                     config_dict[1].append(comm.group(1))
-                config_dict[0][comm.group(1)] = comm.group(2)
+                config_dict[0][comm.group(1)][0] = comm.group(2)
         return config_dict
 
     def override_config_options(self):
-        pass
+        if config_dict[1]:
+            for opt in config_dict[1]:
+                config_dict[0][opt][0] = config_dict[0][opt][1]
 
     def config_file_supplied(self):
         if re.search(r'(\-C|\-\-config\-file)',str(sys.argv[1:]), re.M) is None:
@@ -45,12 +47,12 @@ class ConfigFile(object):
 
 class ImageCapture(ConfigFile):
     def __init__(self,config_dict={},file_name=''):
-        super(ImageCapture, self).__init__(self,file_name)
-        configFile = configFile(options.configfile)
+        super(ImageCapture, self).__init__(file_name)
+        configFile = ConfigFile(options.configfile)
         configFile.config_options() 
-        print("config_dict[1] => " + str(config_dict[1]))
-        print("config_dict[0][email] => " + str(config_dict[0]['email']))
-
+        configFile.override_config_options()
+        print config_dict[0]['email'][0]
+    
 if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option("-e", "--email",
@@ -87,7 +89,7 @@ if __name__ == '__main__':
         dest='website', default='https://imagecapturepy.herokuapp.com/index.html',      
         help="Use alternate website to capture location.")
     parser.add_option("-X", "--clear-autologin",
-        dest='clear', action="store_true", default=False,
+        dest='clearautologin', action="store_true", default=False,
         help="Remove autologin. Must be root to use this feature.")
     parser.add_option("-s", "--allow-sucessful",
         dest='allowsucessful', action="store_true", default=False,
@@ -100,10 +102,13 @@ if __name__ == '__main__':
         help="Configuration file path.")
     (options, args) = parser.parse_args()
 
-    config_dict  = [{
-        'email': '', 'password': '', 'video': '',
-        'verbose': '', 'port': '', 'attempts': '',
-        'location': '', 'logfile': '', 'enablecam': '','autologin': '',
-        'website': '', 'clearautologin': '', 'allowsucessful': '', 'browser': ''}, []]
+    config_dict = [{
+        'email': ['', options.email], 'password': ['', options.password],
+        'video': ['', options.video], 'verbose': ['', options.verbose],
+        'port': ['', options.port], 'attempts': ['', options.attempts],
+        'location': ['', options.location], 'logfile': ['', options.logfile],
+        'enablecam': ['', options.enablecam], 'autologin': ['', options.autologin],
+        'website': ['', options.website], 'clearautologin': ['', options.clearautologin],
+        'allowsucessful': ['', options.allowsucessful], 'browser': ['', options.browser]}, []]
 
     ImageCapture(config_dict)
