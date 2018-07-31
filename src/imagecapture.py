@@ -183,6 +183,7 @@ class ImageCapture(ConfigFile):
     
     def get_location(self,init=None):
         if not config_dict[0]['location'][0]:
+            logger.log("INFO", "Location option is not enabled.")
             return
         elif config_dict[0]['location'][0] and not self.send_email:
             logger.log("ERROR",
@@ -289,7 +290,7 @@ class ImageCapture(ConfigFile):
     
             if f and not config_dict[0]['allowsucessful'][0]:
                 count += 1
-                sys.stdout.write("Failed login via GDM at " + f.group(1) + ":\n" + f.group() + "\n\n")
+                logger.log("INFO", "Failed login via GDM at " + f.group(1) + ":\n" + f.group() + "\n\n")
                 if self.failed_login(count):
                     logger.log("INFO", "user: " + user.name())
                     gdm.auto_login(config_dict[0]['autologin'][0], user.name())
@@ -305,7 +306,8 @@ class ImageCapture(ConfigFile):
                                 config_dict[0]['password'][0],
                                 config_dict[0]['port'][0],
                                 "Failed GDM login from IP " + self.ip_addr + "!",
-                                "Someone tried to login into your computer and failed " + config_dict[0]['attempts'][0] + " times.")
+                                "Someone tried to login into your computer and failed "
+                                + config_dict[0]['attempts'][0] + " times.")
                         except:
                             pass
                 time.sleep(1)
@@ -543,8 +545,8 @@ class GraphicalDisplayManager():
             logger.log("ERROR", "Too many arguments for clear given. Exiting now.")
             sys.exit(0)
         if clear and self.user_present(user):
-            self.remove_from_group(user)
             logger.log("INFO", "Removing user " + str(user) + " from group nopasswdlogin")
+            self.remove_from_group(user)
             sys.exit(0)
         elif clear and not self.user_present(user):
             logger.log("WARN", "Username " + str(user) + " is not in nopasswdlogin group.")
@@ -737,8 +739,6 @@ if __name__ == '__main__':
 
     # This will recursivley check for and or
     # create the program's directory tree structure.
-
-    fileOpts = FileOpts()
 
     if not fileOpts.file_exists(fileOpts.picture_path()):
         if not fileOpts.dir_exists(fileOpts.picture_directory()):
