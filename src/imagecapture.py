@@ -42,17 +42,17 @@ class Logging():
             print(level + " is not a level. Use: WARN, ERROR, or INFO!")
             return
         try:
-            handler = logging.handlers.WatchedFileHandler(os.environ.get("LOGFILE","/var/log/messages"))
+            handler = logging.handlers.WatchedFileHandler(
+                os.environ.get("LOGFILE","/var/log/imagecapture.log"))
             formatter = logging.Formatter(logging.BASIC_FORMAT)
             handler.setFormatter(formatter)
-
             root = logging.getLogger()
             root.setLevel(os.environ.get("LOGLEVEL", str(level)))
             root.addHandler(handler)
             logging.exception("(" + str(level) + ") " + "ImageCapture - " + str(message))
             print("(" + str(level) + ") " + "ImageCapture - " + str(message))
         except Exception as e:
-            print("Logging error => " + str(e))
+            print("Error in Logging class => " + str(e))
             pass
         return
 
@@ -82,7 +82,10 @@ class ConfigFile(object):
         return config_dict
 
     def override_config_options(self):
-        pass
+        for default_opt in config_dict[0].keys():
+            comm = re.search(config_dict[0][default_opt][2], str(sys.argv[1:]), re.M)
+            if comm is not None:
+                config_dict[0][default_opt][0] = config_dict[0][default_opt][1]
 
     def populate_empty_options(self):
         if config_dict[1] and self.config_file_supplied():
@@ -546,6 +549,8 @@ class GraphicalDisplayManager():
                     return False
 
     def auto_login_remove(self,autologin,user):
+        if not autologin:
+            return
         if not autologin and self.user_present(user):
             logger.log("INFO", "Removing user " + str(user) + " from nopasswdlogin group.")
             self.remove_from_group(user)
@@ -558,24 +563,20 @@ class GraphicalDisplayManager():
             logger.log("WARN", "Cannot remove user " + str(user)
                 + " from nopasswdlogin group while using the location feature.")
             sys.exit(0)
-        else:
-            print("Test")
-            sys.exit(0)
 
     def clear_auto_login(self,clear,user):
-        if len(sys.argv) > 2 and clear:
+        if not clear:
+            return
+        elif len(sys.argv) > 2 and clear:
             logger.log("ERROR", "Too many arguments for clear given. Exiting now.")
             sys.exit(0)
-        if clear and self.user_present(user):
+        elif clear and self.user_present(user):
             logger.log("INFO", "Removing user " + str(user) + " from group nopasswdlogin")
             self.remove_from_group(user)
             sys.exit(0)
         elif clear and not self.user_present(user):
             logger.log("WARN", "Username " + str(user) + " is not in nopasswdlogin group.")
             sys.exit(0)
-        else:
-            print("clear => " + str(clear))
-            print("self.user_present(user) => " + str(self.user_present(user)))
 
     def auto_login(self,autologin,user):
         if autologin:
@@ -759,14 +760,36 @@ if __name__ == '__main__':
     # the config file option is passed but an option has no value. That key
     # name is stored in this array.
 
+    email          = '(-e|--email)'
+    password       = '(-p|--password)'
+    video          = '(-V|--video)'
+    verbose        = '(-v|--verbose)'
+    port           = '(-P|--port)'
+    attempts       = '(-a|--attempts)'
+    location       = '(-L|--location)'
+    logfile        = '(-l|--log-file)'
+    enablecam      = '(-c|--enable-cam)'
+    autologin      = '(-A|--auto-login)'
+    website        = '(-w|--website)'
+    clearautologin = '(-X|--clear-autologin)'
+    allowsucessful = '(-s|--allow-sucessful)'
+    browser        = '(-B|--browser)'
+
     config_dict = [{
-        'email': ['', options.email], 'password': ['', options.password],
-        'video': ['', options.video], 'verbose': ['', options.verbose],
-        'port': ['', options.port], 'attempts': ['', options.attempts],
-        'location': ['', options.location], 'logfile': ['', options.logfile],
-        'enablecam': ['', options.enablecam], 'autologin': ['', options.autologin],
-        'website': ['', options.website], 'clearautologin': ['', options.clearautologin],
-        'allowsucessful': ['', options.allowsucessful], 'browser': ['', options.browser]}, []]
+        'email': ['', options.email, email],
+        'password': ['', options.password, password],
+        'video': ['', options.video, video],
+        'verbose': ['', options.verbose, verbose],
+        'port': ['', options.port, port],
+        'attempts': ['', options.attempts, attempts],
+        'location': ['', options.location, location],
+        'logfile': ['', options.logfile, logfile],
+        'enablecam': ['', options.enablecam, enablecam],
+        'autologin': ['', options.autologin, autologin],
+        'website': ['', options.website, website],
+        'clearautologin': ['', options.clearautologin, clearautologin],
+        'allowsucessful': ['', options.allowsucessful, allowsucessful],
+        'browser': ['', options.browser, browser]}, []]
 
     # This will recursivley check for and or
     # create the program's directory tree structure.
@@ -780,5 +803,8 @@ if __name__ == '__main__':
             fileOpts.mkdir_p(fileOpts.picture_directory())
             fileOpts.create_file(fileOpts.picture_path())            
         fileOpts.create_file(fileOpts.picture_path())
+
+    if not fileOpts.file_exists('/var/log/imagecapture.log'):
+        fileOpts.create_file('/var/log/imagecapture.log')
 
     ImageCapture(config_dict).main()
