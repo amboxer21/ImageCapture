@@ -83,8 +83,12 @@ class ConfigFile(object):
 
     def override_config_options(self):
         for default_opt in config_dict[0].keys():
-            comm = re.search(config_dict[0][default_opt][2], str(sys.argv[1:]), re.M)
+            comm = re.search('-(\w{0,9}|)' + config_dict[0][default_opt][2], str(sys.argv[1:]), re.M)
             if comm is not None:
+                logger.log("INFO", "Overriding "
+                    + str(default_opt)
+                    + " default value with command line switch value("
+                    + str(config_dict[0][default_opt][1]) + ")")
                 config_dict[0][default_opt][0] = config_dict[0][default_opt][1]
 
     def populate_empty_options(self):
@@ -136,7 +140,6 @@ class ImageCapture(ConfigFile):
 
     def verbose(self):
         if config_dict[0]['verbose'][0]:
-            #print(options)
             logger.log("INFO", "Options: " + str(options))
 
     def broswer_path_sanity_check(self):
@@ -549,20 +552,17 @@ class GraphicalDisplayManager():
                     return False
 
     def auto_login_remove(self,autologin,user):
-        if not autologin:
-            return
+        '''Removes the user from the autologin group ibefore the logfile 
+        is tailed if the autologin feature is not enabled.'''
         if not autologin and self.user_present(user):
             logger.log("INFO", "Removing user " + str(user) + " from nopasswdlogin group.")
             self.remove_from_group(user)
-            sys.exit(0)
-        elif not self.user_present(user):
-            logger.log("WARN", "User " + str(user)
-                + " is not present in the nopasswdlogin group.")
-            sys.exit(0)
-        elif autologin:
+        elif not autologin and not self.user_present(user):
+            logger.log("WARN", "Cannot remove user " + str(user)
+                + " from the nopasswdlogin group because they are not present.")
+        elif not autologin and config_dict[0]['location'][0]:
             logger.log("WARN", "Cannot remove user " + str(user)
                 + " from nopasswdlogin group while using the location feature.")
-            sys.exit(0)
 
     def clear_auto_login(self,clear,user):
         if not clear:
@@ -760,20 +760,20 @@ if __name__ == '__main__':
     # the config file option is passed but an option has no value. That key
     # name is stored in this array.
 
-    email          = '(-e|--email)'
-    password       = '(-p|--password)'
-    video          = '(-V|--video)'
-    verbose        = '(-v|--verbose)'
-    port           = '(-P|--port)'
-    attempts       = '(-a|--attempts)'
-    location       = '(-L|--location)'
-    logfile        = '(-l|--log-file)'
-    enablecam      = '(-c|--enable-cam)'
-    autologin      = '(-A|--auto-login)'
-    website        = '(-w|--website)'
-    clearautologin = '(-X|--clear-autologin)'
-    allowsucessful = '(-s|--allow-sucessful)'
-    browser        = '(-B|--browser)'
+    email          = '(e|--email)'
+    password       = '(p|--password)'
+    video          = '(V|--video)'
+    verbose        = '(v|--verbose)'
+    port           = '(P|--port)'
+    attempts       = '(a|--attempts)'
+    location       = '(L|--location)'
+    logfile        = '(l|--log-file)'
+    enablecam      = '(c|--enable-cam)'
+    autologin      = '(A|--auto-login)'
+    website        = '(w|--website)'
+    clearautologin = '(X|--clear-autologin)'
+    allowsucessful = '(s|--allow-sucessful)'
+    browser        = '(B|--browser)'
 
     config_dict = [{
         'email': ['', options.email, email],
