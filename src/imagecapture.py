@@ -139,8 +139,11 @@ class ImageCapture(ConfigFile):
         self.verbose()
 
     def verbose(self):
+        opts = {}
         if config_dict[0]['verbose'][0]:
-            logger.log("INFO", "Options: " + str(options))
+            for opt in config_dict[0].keys():
+                opts[opt] = config_dict[0][opt][0]
+            logger.log("INFO", "Options: " + str(opts))
 
     def broswer_path_sanity_check(self):
         if (re.match("(\/)",config_dict[0]['browser'][0]) is None and
@@ -552,8 +555,6 @@ class GraphicalDisplayManager():
                     return False
 
     def auto_login_remove(self,autologin,user):
-        '''Removes the user from the autologin group ibefore the logfile 
-        is tailed if the autologin feature is not enabled.'''
         if not autologin and self.user_present(user):
             logger.log("INFO", "Removing user " + str(user) + " from nopasswdlogin group.")
             self.remove_from_group(user)
