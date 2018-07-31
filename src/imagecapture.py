@@ -34,18 +34,26 @@ except ImportError:
 
 class Logging():
 
+    def __init__(self):
+        pass
+
     def log(self,level,message):
         if re.search("(WARN|INFO|ERROR)", str(level), re.M) is None:
             print(level + " is not a level. Use: WARN, ERROR, or INFO!")
             return
-        handler = logging.handlers.WatchedFileHandler(os.environ.get("LOGFILE","/var/log/messages"))
-        formatter = logging.Formatter(logging.BASIC_FORMAT)
-        handler.setFormatter(formatter)
+        try:
+            handler = logging.handlers.WatchedFileHandler(os.environ.get("LOGFILE","/var/log/messages"))
+            formatter = logging.Formatter(logging.BASIC_FORMAT)
+            handler.setFormatter(formatter)
 
-        root = logging.getLogger()
-        root.setLevel(os.environ.get("LOGLEVEL", str(level)))
-        root.addHandler(handler)
-        logging.exception("(" + str(level) + ") " + "ImageCapture - " + str(message))
+            root = logging.getLogger()
+            root.setLevel(os.environ.get("LOGLEVEL", str(level)))
+            root.addHandler(handler)
+            logging.exception("(" + str(level) + ") " + "ImageCapture - " + str(message))
+            print("(" + str(level) + ") " + "ImageCapture - " + str(message))
+        except Exception as e:
+            print("Logging error => " + str(e))
+            pass
         return
 
 class ConfigFile(object):
@@ -129,9 +137,10 @@ class ImageCapture(ConfigFile):
             logger.log("INFO", "Options: " + str(options))
 
     def broswer_path_sanity_check(self):
-        if re.match("(\/)",config_dict[0]['browser'][0]) is None and config_dict[0]['location'][0]:
-            logger.log("ERROR", "Please provide full path to browser!")
-            sys.exit(0)
+        if (re.match("(\/)",config_dict[0]['browser'][0]) is None and
+            config_dict[0]['location'][0]):
+                logger.log("ERROR", "Please provide full path to browser!")
+                sys.exit(0)
 
     def location_sanity_check(self):
         if config_dict[0]['location'][0]:
@@ -140,7 +149,7 @@ class ImageCapture(ConfigFile):
                 parser.print_help()
                 sys.exit(0)
             elif not config_dict[0]['autologin'][0]:
-                logger.log("ERROR","The location feature requires the autologin option to be set.")
+                logger.log("ERROR","The location feature requires the autologin option(-A).")
                 sys.exit(0)
             elif not len(os.listdir(fileOpts.root_directory())) > 2:
                 self.get_location('init')
@@ -158,7 +167,8 @@ class ImageCapture(ConfigFile):
             not str(config_dict[0]['email'][0]) == 'example@gmail.com' or
             str(config_dict[0]['email'][0]) == 'example@gmail.com' and
             not str(config_dict[0]['password'][0]) == 'password'):
-                logger.log("ERROR", "Must supply both the E-mail and password options or none at all!")
+                logger.log("ERROR",
+                    "Both the E-mail and password options must be supplied or none at all!")
                 parser.print_help()
                 sys.exit(0)
 
@@ -170,7 +180,6 @@ class ImageCapture(ConfigFile):
             for log_file in ['messages']:
                 if os.path.exists('/var/log/' + str(log_file)):
                     config_dict[0]['logfile'][0] = '/var/log/' + str(log_file)
-                    #config_dict[0]['logfile'][0] = '/var/log/' + str(log_file)
                     logger.log("INFO", "logfile(2): " + str(config_dict[0]['logfile'][0]))
                     break
                 else:
@@ -264,15 +273,17 @@ class ImageCapture(ConfigFile):
             mail.send_mail(sender, to, message.as_string())
             logger.log("INFO","ImageCapture - Sent email successfully!")
         except smtplib.SMTPAuthenticationError:
-            logger.log("ERROR","ImageCapture - Could not athenticate with password and username!")
+            logger.log("ERROR",
+                "ImageCapture - Could not athenticate with password and username!")
         except:
             logger.log("ERROR","ImageCapture - Unexpected error in send_mail():")
     
     def failed_login(self,count):
       logger.log("INFO", "count: " + str(count))
-      if count == int(config_dict[0]['attempts'][0]) or config_dict[0]['allowsucessful'][0]:
-          logger.log("INFO", "failed_login True")
-          return True
+      if (count == int(config_dict[0]['attempts'][0]) or
+          config_dict[0]['allowsucessful'][0]):
+              logger.log("INFO", "failed_login True")
+              return True
       else:
           logger.log("INFO", "failed_login False")
           return False
@@ -285,12 +296,16 @@ class ImageCapture(ConfigFile):
     
         for line in tailf(logfile):
     
-            s = re.search("(^.*\d+:\d+:\d+).*password.*pam: unlocked login keyring", line, re.I | re.M)
-            f = re.search("(^.*\d+:\d+:\d+).*pam_unix.*:auth\): authentication failure", line, re.I | re.M)
+            s_regex = '(^.*\d+:\d+:\d+).*password.*pam: unlocked login keyring'
+            f_regex = '(^.*\d+:\d+:\d+).*pam_unix.*:auth\): authentication failure'
+
+            s = re.search(s_regex, line, re.I | re.M)
+            f = re.search(f_regex, line, re.I | re.M)
     
             if f and not config_dict[0]['allowsucessful'][0]:
                 count += 1
-                logger.log("INFO", "Failed login via GDM at " + f.group(1) + ":\n" + f.group() + "\n\n")
+                logger.log("INFO",
+                    "Failed login via GDM at " + f.group(1) + ":\n" + f.group() + "\n\n")
                 if self.failed_login(count):
                     logger.log("INFO", "user: " + user.name())
                     gdm.auto_login(config_dict[0]['autologin'][0], user.name())
@@ -312,7 +327,7 @@ class ImageCapture(ConfigFile):
                             pass
                 time.sleep(1)
             if s and config_dict[0]['allowsucessful'][0]:
-                sys.stdout.write("Sucessful login via GDM at " + s.group(1) + ":\n" + s.group() + "\n\n")
+                logger.log("Sucessful login via GDM at " + s.group(1) + ":\n" + s.group() + "\n\n")
                 gdm.auto_login(config_dict[0]['autologin'][0], user.name())
                 self.take_picture()
                 database.add_location_to_db('true')
@@ -340,6 +355,7 @@ class ImageCapture(ConfigFile):
         if _version_ is None:
             logger.log("ERROR", "Only python version 2.7 is supported.")
             sys.exit(0)
+        logger.log("INFO", "Python version set to 2.7.")
 
         gdm.clear_auto_login(config_dict[0]['clearautologin'][0], user.name())
         self.get_location()
@@ -441,19 +457,22 @@ class Database():
             if (self.read_from_db('location_bool') is None or
                 self.read_from_db('coordinates') is None or 
                 self.read_from_db('ip_addr') is None):
-                    self.logger.log("ERROR", "You must write to the database first before updating!")
+                    logger.log("ERROR", "You must write to the database first before updating!")
                     return
             elif re.search("true|false", value, re.I|re.M) and column == 'location_bool':
                 self.db.execute("update connected set location_bool = \"" + value + "\"")
                 self.db.commit()
-            elif re.search("\A(\d|\-\d)+\.\d+,\s(\d|\-\d)+\.\d+", value, re.M | re.I) and column == 'coordinates':
-                self.db.execute("update connected set coordinates = \"" + value + "\"")
-                self.db.commit()
-            elif re.search("\A\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}$", value, re.M|re.I) and column == 'ip_addr':
-                self.db.execute("update connected set ip_addr = \"" + value + "\"")
-                self.db.commit()
+            elif (re.search("\A(\d|\-\d)+\.\d+,\s(\d|\-\d)+\.\d+", value, re.M | re.I) and
+                column == 'coordinates'):
+                    self.db.execute("update connected set coordinates = \"" + value + "\"")
+                    self.db.commit()
+            elif (re.search("\A\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}$", value, re.M|re.I) and
+                column == 'ip_addr'):
+                    self.db.execute("update connected set ip_addr = \"" + value + "\"")
+                    self.db.commit()
             else:
-                logger.log("ERROR", str(column) + " is not a known column for the connected table in the imagecapture db.")
+                logger.log("ERROR", str(column)
+                    + " is not a known column for the connected table in the imagecapture db.")
                 return
         except sqlite3.OperationalError:
             logger.log("ERROR", "The database is lock, could not add coordinates to DB.")
@@ -463,9 +482,10 @@ class Database():
             if self.read_from_db('location_bool') is None:
                 write_to_db(location_bool,'NULL','NULL')
                 logger.log("INFO", "Writing location_bool to DB.")
-            elif self.read_from_db('location_bool') != location_bool and self.read_from_db('location_bool') is not None:
-                self.update_db('location_bool', location_bool)
-                logger.log("INFO", "Updating location_bool variable in DB.")
+            elif (self.read_from_db('location_bool') != location_bool and
+                self.read_from_db('location_bool') is not None):
+                    self.update_db('location_bool', location_bool)
+                    logger.log("INFO", "Updating location_bool variable in DB.")
             else:
                 return
         except sqlite3.OperationalError:
@@ -478,9 +498,10 @@ class Database():
             if self.read_from_db('coordinates') is None:
                 self.write_to_db('NULL', coordinates,'NULL')
                 logger.log("INFO", "Writing coordinates to DB.")
-            elif not self.read_from_db('coordinates') == coordinates and self.read_from_db('coordinates') is not None:
-                self.update_db('coordinates', ip_addr)
-                logger.log("INFO", "Updating coordinates variable in DB.")
+            elif (not self.read_from_db('coordinates') == coordinates
+                and self.read_from_db('coordinates') is not None):
+                    self.update_db('coordinates', ip_addr)
+                    logger.log("INFO", "Updating coordinates variable in DB.")
             else:
                 return
         except sqlite3.OperationalError:
@@ -493,9 +514,10 @@ class Database():
             if self.read_from_db('ip_addr') is None:
                 self.write_to_db('NULL','NULL', ip_addr)
                 logger.log("INFO", "Writing ip_addr to DB.")
-            elif self.read_from_db('ip_addr') != ip_addr and self.read_from_db('ip_addr') is not None:
-                self.update_db('ip_addr', ip_addr)
-                logger.log("INFO", "Updating ip_addr variable in DB.")
+            elif (self.read_from_db('ip_addr') != ip_addr and
+                self.read_from_db('ip_addr') is not None):
+                    self.update_db('ip_addr', ip_addr)
+                    logger.log("INFO", "Updating ip_addr variable in DB.")
             else:
                 return
         except sqlite3.OperationalError:
@@ -570,11 +592,17 @@ class GraphicalDisplayManager():
 
 class User():
 
+    def __init__(self):
+        pass
+
     def name(self):
         comm = subprocess.Popen(["users"], shell=True, stdout=subprocess.PIPE)
         return re.search("(\w+)", str(comm.stdout.read())).group()
     
 class Net():
+
+    def __init__(self):
+        pass
 
     def connected(self):
         try:
@@ -589,6 +617,9 @@ class Net():
         return ':'.join(['%02x' % ord(char) for char in info[18:24]])
 
 class Version():
+
+    def __init__(self):
+        pass
 
     def python(self):
         python_version = re.search('\d\.\d\.\d', str(sys.version), re.I | re.M)
@@ -750,5 +781,4 @@ if __name__ == '__main__':
             fileOpts.create_file(fileOpts.picture_path())            
         fileOpts.create_file(fileOpts.picture_path())
 
-    imagecapture = ImageCapture(config_dict)
-    imagecapture.main()
+    ImageCapture(config_dict).main()
