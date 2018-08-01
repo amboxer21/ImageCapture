@@ -310,6 +310,7 @@ class ImageCapture(ConfigFile):
     
         print("(INFO) ImageCapture - ImageCapture is ready!")
         print("(INFO) ImageCapture - Tailing logfile " + str(logfile))
+
         for line in tailf(logfile):
     
             success_regex = '(^.*\d+:\d+:\d+).*password.*pam: unlocked login keyring'
