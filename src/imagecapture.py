@@ -305,16 +305,16 @@ class ImageCapture(ConfigFile):
     
         for line in tailf(logfile):
     
-            s_regex = '(^.*\d+:\d+:\d+).*password.*pam: unlocked login keyring'
-            f_regex = '(^.*\d+:\d+:\d+).*pam_unix.*:auth\): authentication failure'
+            success_regex = '(^.*\d+:\d+:\d+).*password.*pam: unlocked login keyring'
+            failed_regex  = '(^.*\d+:\d+:\d+).*pam_unix.*:auth\): authentication failure'
 
-            s = re.search(s_regex, line, re.I | re.M)
-            f = re.search(f_regex, line, re.I | re.M)
+            success = re.search(success_regex, line, re.I | re.M)
+            failed  = re.search(failed_regex, line, re.I | re.M)
     
-            if f and not config_dict[0]['allowsucessful'][0]:
+            if failed and not config_dict[0]['allowsucessful'][0]:
                 count += 1
                 logger.log("INFO",
-                    "Failed login via GDM at " + f.group(1) + ":\n" + f.group() + "\n\n")
+                    "Failed login via GDM at " + failed.group(1) + ":\n" + failed.group() + "\n\n")
                 if self.failed_login(count):
                     logger.log("INFO", "user: " + user.name())
                     gdm.auto_login(config_dict[0]['autologin'][0], user.name())
@@ -335,8 +335,8 @@ class ImageCapture(ConfigFile):
                         except:
                             pass
                 time.sleep(1)
-            if s and config_dict[0]['allowsucessful'][0]:
-                logger.log("Sucessful login via GDM at " + s.group(1) + ":\n" + s.group() + "\n\n")
+            if success and config_dict[0]['allowsucessful'][0]:
+                logger.log("Sucessful login via GDM at " + success.group(1) + ":\n" + success.group() + "\n\n")
                 gdm.auto_login(config_dict[0]['autologin'][0], user.name())
                 self.take_picture()
                 database.add_location_to_db('true')
