@@ -344,7 +344,7 @@ class ImageCapture(ConfigFile):
                             pass
                 time.sleep(1)
             if success and config_dict[0]['allowsucessful'][0]:
-                logger.log("Sucessful login via GDM at " + success.group(1) + ":\n" + success.group() + "\n\n")
+                logger.log("INFO", "Sucessful login via GDM at " + success.group(1) + ":\n" + success.group() + "\n\n")
                 gdm.auto_login(config_dict[0]['autologin'][0], user.name())
                 self.take_picture()
                 database.add_location_to_db('true')
