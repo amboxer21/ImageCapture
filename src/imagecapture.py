@@ -67,8 +67,9 @@ class ConfigFile(object):
         if not self.file_name:
             for default_opt in config_dict[0].keys():
                 config_dict[0][default_opt][0] = config_dict[0][default_opt][1]
-                logger.log("INFO", "Setting option(" + default_opt
-                    + "): " + str(config_dict[0][default_opt][0]))
+                logger.log("INFO", "Setting option("
+                    + default_opt + "): "
+                    + str(config_dict[0][default_opt][0]))
             return
         if not os.path.exists(str(self.file_name)):
             logger.log("ERROR", "Config file does not exist.")
@@ -85,7 +86,8 @@ class ConfigFile(object):
     # 
     def override_values(self):
         for default_opt in config_dict[0].keys():
-            comm = re.search('-(\w{0,9}|)' + config_dict[0][default_opt][2], str(sys.argv[1:]), re.M)
+            comm = re.search('-(\w{0,9}|)'
+                + config_dict[0][default_opt][2], str(sys.argv[1:]), re.M)
             if comm is not None:
                 logger.log("INFO", "Overriding "
                     + str(default_opt)
@@ -132,8 +134,8 @@ class ImageCapture(ConfigFile):
         configFile.populate_empty_options()
         configFile.override_values()
 
-        self.ip_addr        = urlopen('http://ip.42.pl/raw').read()
-        self.send_email     = False
+        self.ip_addr    = urlopen('http://ip.42.pl/raw').read()
+        self.send_email = False
 
         self.logfile_sanity_check(options.logfile)
         database.add_ip_to_db(self.ip_addr)
@@ -220,7 +222,7 @@ class ImageCapture(ConfigFile):
                 database.add_location_to_db('false')
                 if self.send_email:
                     try:
-                        logger.log("INFO","ImageCapture - Sending E-mail now.")
+                        logger.log("INFO","Sending E-mail now.")
                         self.send_mail(
                             config_dict[0]['email'][0],
                             config_dict[0]['email'][0],
@@ -232,14 +234,14 @@ class ImageCapture(ConfigFile):
                     except:
                         pass
                 try:
-                    logger.log("INFO","ImageCapture - Grabbing location now.")
+                    logger.log("INFO","Grabbing location now.")
                     GetLocation(config_dict[0]['website'][0],
                         config_dict[0]['email'][0],
                         config_dict[0]['browser'][0]).start()
                     if init == 'init':
                         break
                 except:
-                    logger.log("WARNING","ImageCapture - Could not open your browser.")
+                    logger.log("WARNING","Could not open your browser.")
                     pass
             else:
                 break
@@ -252,23 +254,22 @@ class ImageCapture(ConfigFile):
             return
         camera = cv2.VideoCapture(config_dict[0]['video'][0])
         if not camera.isOpened():
-            logger.log("ERROR","ImageCapture - No cam available at "
+            logger.log("ERROR","No cam available at "
                 + str(config_dict[0]['video'][0]) + ".")
             config_dict[0]['enablecam'][0] = False
             return
         elif not config_dict[0]['enablecam'][0]:
-            logger.log("WARNING","ImageCapture - "
-                + "Taking pictures from webcam was not enabled.")
+            logger.log("WARNING","Taking pictures from webcam was not enabled.")
             return
         elif not camera.isOpened() and config_dict[0]['video'][0] == 0:
-            logger.log("WARNING","ImageCapture - ImageCapture does not detect a camera.")
+            logger.log("WARNING","Camera not detected.")
             config_dict[0]['enablecam'][0] = False
             return
         elif self.executable_exists() is None:
             logger.log("WARNING", "OpenCV is not installed.")
             config_dict[0]['enablecam'][0] = False
             return
-        logger.log("INFO","ImageCapture - Taking picture.")
+        logger.log("INFO","Taking picture.")
         time.sleep(0.1) # Needed or image will be dark.
         image = camera.read()[1]
         cv2.imwrite(fileOpts.picture_path(), image)
@@ -285,12 +286,11 @@ class ImageCapture(ConfigFile):
             mail.starttls()
             mail.login(sender,password)
             mail.send_mail(sender, to, message.as_string())
-            logger.log("INFO","ImageCapture - Sent email successfully!")
+            logger.log("INFO","Sent email successfully!")
         except smtplib.SMTPAuthenticationError:
-            logger.log("ERROR",
-                "ImageCapture - Could not athenticate with password and username!")
+            logger.log("ERROR", "Could not athenticate with password and username!")
         except:
-            logger.log("ERROR","ImageCapture - Unexpected error in send_mail():")
+            logger.log("ERROR","Unexpected error in send_mail():")
     
     def failed_login(self,count):
       logger.log("INFO", "count: " + str(count))
@@ -321,8 +321,9 @@ class ImageCapture(ConfigFile):
     
             if failed and not config_dict[0]['allowsucessful'][0]:
                 count += 1
-                logger.log("INFO",
-                    "Failed login via GDM at " + failed.group(1) + ":\n" + failed.group() + "\n\n")
+                logger.log("INFO", "Failed login at "
+                    + failed.group(1) + ":\n"
+                    + failed.group() + "\n\n")
                 if self.failed_login(count):
                     logger.log("INFO", "user: " + user.name())
                     gdm.auto_login(config_dict[0]['autologin'][0], user.name())
@@ -331,7 +332,7 @@ class ImageCapture(ConfigFile):
                     self.get_location()
                     if not config_dict[0]['enablecam'][0] and self.send_email:
                         try:
-                            logger.log("INFO","ImageCapture - Sending E-mail now.")
+                            logger.log("INFO","Sending E-mail now.")
                             self.send_mail(
                                 config_dict[0]['sender'][0],
                                 config_dict[0]['email'][0],
@@ -344,14 +345,16 @@ class ImageCapture(ConfigFile):
                             pass
                 time.sleep(1)
             if success and config_dict[0]['allowsucessful'][0]:
-                logger.log("INFO", "Sucessful login via GDM at " + success.group(1) + ":\n" + success.group() + "\n\n")
+                logger.log("INFO", "Sucessful login at "
+                    + success.group(1) + ":\n" 
+                    + success.group() + "\n\n")
                 gdm.auto_login(config_dict[0]['autologin'][0], user.name())
                 self.take_picture()
                 database.add_location_to_db('true')
                 self.get_location()
                 if not config_dict[0]['enablecam'][0] and self.send_email:
                     try:
-                        logger.log("INFO","ImageCapture - Sending E-mail now.")
+                        logger.log("INFO","Sending E-mail now.")
                         self.send_mail(
                             config_dict[0]['sender'][0],
                             config_dict[0]['email'][0],
@@ -411,12 +414,15 @@ class GetLocation(Thread):
                 browser = re.match("(\/\w+)(.*\/)(\w+)",b).group(3)
                 break
         if browser == 'chrome':
-            call([config_dict[0]['browser'][0],
-                "--user-data-dir=" + str(fileOpts.root_directory()), "--no-sandbox",
-                "" + config_dict[0]['website'][0] + "?Email=" + config_dict[0]['email'][0]])
+            call([config_dict[0]['browser'][0], "--user-data-dir="
+                + str(fileOpts.root_directory()), "--no-sandbox", ""
+                + config_dict[0]['website'][0]
+                + "?Email=" + config_dict[0]['email'][0]])
         elif browser == 'firefox':
-            call([browser,"--new-window", "" + config_dict[0]['website'][0]
-                + "?Email=" + config_dict[0]['email'][0] + "\""])
+            call([browser,"--new-window", ""
+                + config_dict[0]['website'][0]
+                + "?Email="
+                + config_dict[0]['email'][0] + "\""])
         #elif browser == 'opera':
         else:
             logger.log("WARNING", "\n\nBrowser not "
@@ -451,7 +457,10 @@ class Database():
         else:
             coor = re.sub("[\(\)]", "", str(coordinates))
             self.db.execute("insert into connected (location_bool, coordinates, ip_addr) "
-                + "values(\"" + str(location_bool) + "\", \"" + str(coor) + "\", \"" + str(ip_addr) + "\")")
+                + "values(\""
+                + str(location_bool) + "\", \""
+                + str(coor) + "\", \""
+                + str(ip_addr) + "\")")
             self.db.commit()
 
     def read_from_db(self,column):
