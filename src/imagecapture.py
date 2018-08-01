@@ -50,7 +50,8 @@ class Logging():
             root.setLevel(os.environ.get("LOGLEVEL", str(level)))
             root.addHandler(handler)
             logging.exception("(" + str(level) + ") " + "ImageCapture - " + str(message))
-            print("(" + str(level) + ") " + "ImageCapture - " + str(message))
+            if config_dict[0]['verbose'][0]:
+                print("(" + str(level) + ") " + "ImageCapture - " + str(message))
         except Exception as e:
             print("Error in Logging class => " + str(e))
             pass
@@ -81,7 +82,8 @@ class ConfigFile(object):
                 config_dict[0][comm.group(1)][0] = comm.group(2)
         return config_dict
 
-    def override_config_options(self):
+    # 
+    def override_values(self):
         for default_opt in config_dict[0].keys():
             comm = re.search('-(\w{0,9}|)' + config_dict[0][default_opt][2], str(sys.argv[1:]), re.M)
             if comm is not None:
@@ -91,6 +93,9 @@ class ConfigFile(object):
                     + str(config_dict[0][default_opt][1]) + ")")
                 config_dict[0][default_opt][0] = config_dict[0][default_opt][1]
 
+    # If a configuration file is supplied then this method will use the default options
+    # in optparser if the config option has no value. So if the password option in the
+    # config file looks like this -> password= then it will be populated by this method.
     def populate_empty_options(self):
         if config_dict[1] and self.config_file_supplied():
             for opt in config_dict[1]:
@@ -125,7 +130,7 @@ class ImageCapture(ConfigFile):
         configFile = ConfigFile(options.configfile)
         configFile.config_options()
         configFile.populate_empty_options()
-        configFile.override_config_options()
+        configFile.override_values()
 
         self.ip_addr        = urlopen('http://ip.42.pl/raw').read()
         self.send_email     = False
@@ -303,6 +308,8 @@ class ImageCapture(ConfigFile):
     
         gdm.auto_login_remove(config_dict[0]['autologin'][0], user.name())
     
+        print("(INFO) ImageCapture - ImageCapture is ready!")
+        print("(INFO) ImageCapture - Tailing logfile " + str(logfile))
         for line in tailf(logfile):
     
             success_regex = '(^.*\d+:\d+:\d+).*password.*pam: unlocked login keyring'
@@ -753,13 +760,10 @@ if __name__ == '__main__':
     database = Database()
     gdm      = GraphicalDisplayManager()
 
-    # Easiest way to share variables between clases without wanting to 
-    # chop my computer up with an fucking axe! The key is used for reference
-    # while the first value is reserved for config files values and if they 
-    # are blank then they are filled in with the 2nd values value. The array 
-    # inside the array after the dictionary declaration is reserved for when 
-    # the config file option is passed but an option has no value. That key
-    # name is stored in this array.
+    # These strings are used to compare against the command line args passed.
+    # It could have been done with an action but default values were used instead.
+    # These strings are coupled with their respective counterpart in the config_dist
+    # data structure declared below.
 
     email          = '(e|--email)'
     password       = '(p|--password)'
@@ -775,6 +779,14 @@ if __name__ == '__main__':
     clearautologin = '(X|--clear-autologin)'
     allowsucessful = '(s|--allow-sucessful)'
     browser        = '(B|--browser)'
+
+    # Easiest way to share variables between clases without wanting to 
+    # chop my computer up with an fucking axe! The key is used for reference
+    # while the first value is reserved for config files values and if they 
+    # are blank then they are filled in with the 2nd values value. The array 
+    # inside the array after the dictionary declaration is reserved for when 
+    # the config file option is passed but an option has no value. That key
+    # name is stored in this array.
 
     config_dict = [{
         'email': ['', options.email, email],
@@ -794,6 +806,7 @@ if __name__ == '__main__':
 
     # This will recursivley check for and or
     # create the program's directory tree structure.
+    # home/user/.imagecapture/pictures/capture.png
 
     if not fileOpts.file_exists(fileOpts.picture_path()):
         if not fileOpts.dir_exists(fileOpts.picture_directory()):
