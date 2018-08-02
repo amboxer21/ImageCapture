@@ -38,7 +38,8 @@ class Logging():
         pass
 
     def log(self,level,message):
-        if re.search("(WARN|INFO|ERROR)", str(level), re.M) is None:
+        comm = re.search("(WARN|INFO|ERROR)", str(level), re.M)
+        if comm is None:
             print(level + " is not a level. Use: WARN, ERROR, or INFO!")
             return
         try:
@@ -52,7 +53,7 @@ class Logging():
             # Log all calls to this class in the logfile no matter what.
             logging.exception("(" + str(level) + ") " + "ImageCapture - " + str(message))
             # echo calls to this class to stdout only if the verbose option is enabled.
-            if options.verbose:
+            if options.verbose or comm.group() == 'ERROR':
                 print("(" + str(level) + ") " + "ImageCapture - " + str(message))
         except Exception as e:
             print("Error in Logging class => " + str(e))
