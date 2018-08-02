@@ -160,11 +160,11 @@ class ImageCapture(ConfigFile):
         self.verbose()
 
     def verbose(self):
-        opts = {}
+        verbose = {}
         if config_dict[0]['verbose'][0]:
-            for opt in config_dict[0].keys():
-                opts[opt] = config_dict[0][opt][0]
-            logger.log("INFO", "Options: " + str(opts))
+            for option in config_dict[0].keys():
+                verbose[option] = config_dict[0][option][0]
+            logger.log("INFO", "Options: " + str(verbose))
 
     def broswer_path_sanity_check(self):
         if (re.match("(\/)",config_dict[0]['browser'][0]) is None and
@@ -184,7 +184,7 @@ class ImageCapture(ConfigFile):
             elif not len(os.listdir(fileOpts.root_directory())) > 2:
                 self.get_location('init')
 
-    # PEP8 states lines should not be over 80 characters line so I
+    # PEP8 states lines should not be over 80 characters long so I
     # wrote mulitline if/else statements enclosed in parenthesis.
     def credential_sanity_check(self):
         if (not str(config_dict[0]['password'][0]) == 'password' and
