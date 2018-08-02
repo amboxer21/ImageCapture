@@ -427,16 +427,16 @@ class GetLocation(Thread):
             '/usr/bin/firefox',
             '/usr/bin/opera']
 
-        for browser in browsers: 
+        for b in browsers: 
             if self.browser_exists(self._browser_) and self.count == 0:
                 _browser_ = re.match("(\/\w+)(.*\/)(\w+)",self._browser_).group(3)
                 break
             self.count += 1
-            if self.count > len(browser):
+            if self.count > len(b):
                 logger.log("ERROR",
                     "Only the following browsers are supported: Chrome, Opera, and Firefox.")
-            elif self.browser_exists(browser):
-                _browser_ = re.match("(\/\w+)(.*\/)(\w+)",browser).group(3)
+            elif self.browser_exists(b):
+                _browser_ = re.match("(\/\w+)(.*\/)(\w+)",b).group(3)
                 break
         if _browser_ == 'chrome':
             call([self._browser_, "--user-data-dir="
