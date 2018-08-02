@@ -52,7 +52,7 @@ class Logging():
             root.addHandler(handler)
             # Log all calls to this class in the logfile no matter what.
             logging.exception("(" + str(level) + ") " + "ImageCapture - " + str(message))
-            # echo calls to this class to stdout only if the verbose option is enabled.
+            # Print to stdout only if the verbose option is passed or log level = ERROR.
             if options.verbose or comm.group() == 'ERROR':
                 print("(" + str(level) + ") " + "ImageCapture - " + str(message))
         except Exception as e:
