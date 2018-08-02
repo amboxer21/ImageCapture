@@ -52,21 +52,31 @@ class Logging():
             # Log all calls to this class in the logfile no matter what.
             logging.exception("(" + str(level) + ") " + "ImageCapture - " + str(message))
             # echo calls to this class to stdout only if the verbose option is enabled.
-            if config_dict[0]['verbose'][0]:
+            if options.verbose:
                 print("(" + str(level) + ") " + "ImageCapture - " + str(message))
         except Exception as e:
             print("Error in Logging class => " + str(e))
             pass
         return
 
+# The config filename is passed to this class in the ImageCapture classes __init__ method.
+# The option is the default value set in optparser and is blank by default. See the 
+# optparser declaration at the bottom in the if __name__ == '__main__' check.
 class ConfigFile(object):
 
     def __init__(self, file_name):
         self.args_list = []
         self.file_name = file_name
+        if file_name:
+            try:
+                self.config_file = open(file_name,'r')
+                self.config_file_syntax_sanity_check()
+            except IOError:
+                logger.log("ERROR","Config file does not exist.")
+                sys.exit(0)
 
     # If a config file is 'NOT' passed via command line then this method will set the global
-    # base variables for the config_dict data structure using the optparsers default values
+    # base variables for the config_dict data structure using the optparsers default values.
     # ---
     # If a config file 'IS' passed via command line then this method will read in the options
     # values and set the base options for the global config_dict data structure. If the config
@@ -74,6 +84,7 @@ class ConfigFile(object):
     # of the config_dict data structure. Which will later be used as a reference against the 
     # config_data structure so it knows to use optparsers default values for these options.
     def config_options(self):
+        # If config file is 'NOT' supplied use optparsers default values.
         if not self.file_name:
             for default_opt in config_dict[0].keys():
                 config_dict[0][default_opt][0] = config_dict[0][default_opt][1]
@@ -81,20 +92,15 @@ class ConfigFile(object):
                     + default_opt + "): "
                     + str(config_dict[0][default_opt][0]))
             return
-        if not os.path.exists(str(self.file_name)):
-            logger.log("ERROR", "Config file does not exist.")
-            sys.exit(0)
-        config_file = open(self.file_name,'r').read().splitlines()
-        for line in config_file:
+        for line in self.config_file.read().splitlines():
             comm = re.search(r'(^.*)=(.*)', str(line), re.M | re.I)
             if comm is not None:
                 if not comm.group(2):
                     config_dict[1].append(comm.group(1))
                 config_dict[0][comm.group(1)][0] = comm.group(2)
-        print()
         return config_dict
 
-    # If command lline options 'ARE' passed via optparser/command line then this method
+    # If command line options 'ARE' passed via optparser/command line then this method
     # will override the default values set with optparser as well as override the options
     # in the config file that was passed.
     def override_values(self):
@@ -133,6 +139,16 @@ class ConfigFile(object):
                 self.args_list.append(comm.group())
         return len(self.args_list)
 
+    def config_file_syntax_sanity_check(self):
+        for line in self.config_file.read().splitlines():
+            comm = re.search(r'(^.*)=(.*)', str(line), re.M | re.I)
+            if comm is not None:
+                try:
+                    config_dict[0][comm.group(1)]
+                except KeyError:
+                    logger.log("ERROR", comm.group(1) + " is not a recognized option!")
+                    sys.exit(0)
+
     def command_line_options(self):
         pass
 
@@ -143,6 +159,7 @@ class ImageCapture(ConfigFile):
 
     def __init__(self,config_dict={},file_name=''):
         super(ImageCapture, self).__init__(file_name)
+        # The order of these calls are important!
         configFile = ConfigFile(options.configfile)
         configFile.config_options()
         configFile.populate_empty_options()
@@ -151,7 +168,7 @@ class ImageCapture(ConfigFile):
         self.ip_addr    = urlopen('http://ip.42.pl/raw').read()
         self.send_email = False
 
-        self.logfile_sanity_check(options.logfile)
+        self.logfile_sanity_check(config_dict[0]['logfile'][0])
         database.add_ip_to_db(self.ip_addr)
 
         self.credential_sanity_check()
@@ -159,6 +176,7 @@ class ImageCapture(ConfigFile):
         self.location_sanity_check()
         self.display_options()
 
+    # Display the final base options that the app has set and is using.
     def display_options(self):
         verbose = {}
         if config_dict[0]['verbose'][0]:
@@ -186,6 +204,11 @@ class ImageCapture(ConfigFile):
 
     # PEP8 states lines should not be over 80 characters long so I
     # wrote mulitline if/else statements enclosed in parenthesis.
+    # ---
+    # This method checks to see if you are passing both the E-mail
+    # and password options together or not at all. If you do 'NOT' 
+    # supply them both then the E-mail features will not work. It
+    # sets the send_email variable to a bool value.
     def credential_sanity_check(self):
         if (not str(config_dict[0]['password'][0]) == 'password' and
             not str(config_dict[0]['email'][0]) == 'example@gmail.com'):
@@ -442,7 +465,7 @@ class GetLocation(Thread):
             call([self._browser_, "--user-data-dir="
                 + str(fileOpts.root_directory()), "--no-sandbox", ""
                 + self._website_
-                + "?Email=" + self._email_)
+                + "?Email=" + self._email_])
         elif _browser_ == 'firefox':
             call([self._browser_,"--new-window", ""
                 + self._website_
@@ -794,7 +817,7 @@ if __name__ == '__main__':
         dest="browser", default="/opt/google/chrome/chrome",
         help="Select the browser used to grab geolocation data.")
     parser.add_option("-C", "--config-file",
-        dest="configfile", default="",
+        dest="configfile", default='',
         help="Configuration file path.")
     (options, args) = parser.parse_args()
 
