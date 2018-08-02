@@ -49,7 +49,9 @@ class Logging():
             root = logging.getLogger()
             root.setLevel(os.environ.get("LOGLEVEL", str(level)))
             root.addHandler(handler)
+            # Log all calls to this class in the logfile no matter what.
             logging.exception("(" + str(level) + ") " + "ImageCapture - " + str(message))
+            # echo calls to this class to stdout only if the verbose option is enabled.
             if config_dict[0]['verbose'][0]:
                 print("(" + str(level) + ") " + "ImageCapture - " + str(message))
         except Exception as e:
@@ -63,6 +65,14 @@ class ConfigFile(object):
         self.args_list = []
         self.file_name = file_name
 
+    # If a config file is 'NOT' passed via command line then this method will set the global
+    # base variables for the config_dict data structure using the optparsers default values
+    # ---
+    # If a config file 'IS' passed via command line then this method will read in the options
+    # values and set the base options for the global config_dict data structure. If the config
+    # files options have empty values then those options are loaded into an array nested inside
+    # of the config_dict data structure. Which will later be used as a reference against the 
+    # config_data structure so it knows to use optparsers default values for these options.
     def config_options(self):
         if not self.file_name:
             for default_opt in config_dict[0].keys():
@@ -81,9 +91,12 @@ class ConfigFile(object):
                 if not comm.group(2):
                     config_dict[1].append(comm.group(1))
                 config_dict[0][comm.group(1)][0] = comm.group(2)
+        print()
         return config_dict
 
-    # 
+    # If command lline options 'ARE' passed via optparser/command line then this method
+    # will override the default values set with optparser as well as override the options
+    # in the config file that was passed.
     def override_values(self):
         for default_opt in config_dict[0].keys():
             comm = re.search('-(\w{0,9}|)'
@@ -95,9 +108,10 @@ class ConfigFile(object):
                     + str(config_dict[0][default_opt][1]) + ")")
                 config_dict[0][default_opt][0] = config_dict[0][default_opt][1]
 
-    # If a configuration file is supplied then this method will use the default options
-    # in optparser if the config option has no value. So if the password option in the
-    # config file looks like this -> password= then it will be populated by this method.
+    # If a config file is supplied then this method will use the default options
+    # in optparser if the option in the config file has no value. So if the password 
+    # option in the config file looks like this -> password= then it will be populated 
+    # by this method.
     def populate_empty_options(self):
         if config_dict[1] and self.config_file_supplied():
             for opt in config_dict[1]:
@@ -389,41 +403,52 @@ class ImageCapture(ConfigFile):
                 logger.log("INFO", " [Control C caught] - Exiting ImageCapturePy now!")
                 break
 
+# This class is used to grab the location of the laptop. The loacation data
+# is in the form of longitude/latitude coordinates and is E-mailed to you.
+# This is done through a website I wrote in PHP/HTML, and Javascript/JQuery 
+# using a post request and is hosted on heroku.
 class GetLocation(Thread):
 
     def __init__(self,website,email,browser):
         Thread.__init__(self)
         self.count = 0
-        config_dict[0]['email'][0]   = email
-        config_dict[0]['website'][0] = website
-        config_dict[0]['browser'][0] = browser
+        self._email_,config_dict[0]['email'][0]   = (email,email)
+        self._website_,config_dict[0]['website'][0] = (website,website)
+        self._browser_,config_dict[0]['browser'][0] = (browser,browser)
 
     def browser_exists(self,browser):
         return find_executable(browser)
 
     def run(self):
-        for b in ['/opt/google/chome/chrome','/usr/bin/firefox','/usr/bin/opera']:
-            if self.browser_exists(config_dict[0]['browser'][0]) and self.count == 0:
-                browser = re.match("(\/\w+)(.*\/)(\w+)",config_dict[0]['browser'][0]).group(3)
+
+        # This is the supported browser list
+        browsers = [
+            '/opt/google/chome/chrome',
+            '/usr/bin/firefox',
+            '/usr/bin/opera']
+
+        for browser in browsers: 
+            if self.browser_exists(self._browser_) and self.count == 0:
+                _browser_ = re.match("(\/\w+)(.*\/)(\w+)",self._browser_).group(3)
                 break
             self.count += 1
-            if self.count > len(b):
+            if self.count > len(browser):
                 logger.log("ERROR",
                     "Only the following browsers are supported: Chrome, Opera, and Firefox.")
-            elif self.browser_exists(b):
-                browser = re.match("(\/\w+)(.*\/)(\w+)",b).group(3)
+            elif self.browser_exists(browser):
+                _browser_ = re.match("(\/\w+)(.*\/)(\w+)",browser).group(3)
                 break
-        if browser == 'chrome':
-            call([config_dict[0]['browser'][0], "--user-data-dir="
+        if _browser_ == 'chrome':
+            call([self._browser_, "--user-data-dir="
                 + str(fileOpts.root_directory()), "--no-sandbox", ""
-                + config_dict[0]['website'][0]
-                + "?Email=" + config_dict[0]['email'][0]])
-        elif browser == 'firefox':
-            call([browser,"--new-window", ""
-                + config_dict[0]['website'][0]
+                + self._website_
+                + "?Email=" + self._email_)
+        elif _browser_ == 'firefox':
+            call([self._browser_,"--new-window", ""
+                + self._website_
                 + "?Email="
-                + config_dict[0]['email'][0] + "\""])
-        #elif browser == 'opera':
+                + self._email_ + "\""])
+        #elif _browser_ == 'opera':
         else:
             logger.log("WARNING", "\n\nBrowser not "
                 + "found and location functionality will not work.\n\n")
