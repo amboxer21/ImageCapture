@@ -157,9 +157,9 @@ class ImageCapture(ConfigFile):
         self.credential_sanity_check()
         self.broswer_path_sanity_check()
         self.location_sanity_check()
-        self.verbose()
+        self.display_options()
 
-    def verbose(self):
+    def display_options(self):
         verbose = {}
         if config_dict[0]['verbose'][0]:
             for option in config_dict[0].keys():
@@ -405,8 +405,8 @@ class ImageCapture(ConfigFile):
 
 # This class is used to grab the location of the laptop. The loacation data
 # is in the form of longitude/latitude coordinates and is E-mailed to you.
-# This is done through a website I wrote in PHP/HTML, and Javascript/JQuery 
-# using a post request and is hosted on heroku.
+# This is done through a website I wrote in PHP/HTML, Javascript, and JQuery 
+# using a post request that is sent to heroku.
 class GetLocation(Thread):
 
     def __init__(self,website,email,browser):
@@ -421,7 +421,7 @@ class GetLocation(Thread):
 
     def run(self):
 
-        # This is the supported browser list
+        # This is the supported browser list and can be added to.
         browsers = [
             '/opt/google/chome/chrome',
             '/usr/bin/firefox',
@@ -576,6 +576,11 @@ class Database():
             logger.log("ERROR", "The database is locked, could not add IP address to DB.")
             pass
 
+# This class is used to add/remove your username to/from the nopasswdlogin group.
+# This group is looked at by the included pam modules that were custom tailored
+# for this program. So if the user is in this group then your auth screen will
+# automatically log you in. This is an optional feature that must be specified
+# in the optparser via command line option.
 class GraphicalDisplayManager():
 
     def __init__(self):
@@ -634,6 +639,11 @@ class GraphicalDisplayManager():
         elif self.version.system_package_manager() == 'eix':
             return ('system-login',)
 
+
+# This class returns user name you logged in with. This is used a lot in 
+# this program especially in the GraphicalDisplayManager class. In that class 
+# it allows this program to add/remove your username from the nopasswordlogin 
+# group. See the GraphicalDisplayManager class for further explaination.
 class User():
 
     def __init__(self):
@@ -655,6 +665,7 @@ class Net():
         except urllib2.URLError as err:
             return False
 
+    # Returns your mac address.
     def get_hardware_address(self,ifname):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', ifname[:15]))
