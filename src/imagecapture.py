@@ -152,7 +152,7 @@ class ConfigFile(object):
                 try:
                     config_dict[0][comm.group(1)]
                 except KeyError:
-                    logger.log("ERROR", comm.group(1) + " is not a recognized option!")
+                    logger.log("ERROR", "Config file option(" + comm.group(1) + ") is not a recognized option!")
                     sys.exit(0)
 
     def command_line_options(self):
