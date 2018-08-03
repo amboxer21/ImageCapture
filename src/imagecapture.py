@@ -93,6 +93,9 @@ class ConfigFile(object):
                     + default_opt + "): "
                     + str(config_dict[0][default_opt][0]))
             return
+        # If the config file exists and the syntax is correct we will have to convert the
+        # 'bool' values in the file which are being loaded in as strings to actual bool values.
+        # The same applies for integers otehrwise load the values in as is.
         for line in self.config_file:
             comm = re.search(r'(^.*)=(.*)', str(line), re.M | re.I)
             if comm is not None:
@@ -102,6 +105,8 @@ class ConfigFile(object):
                     config_dict[0][comm.group(1)][0] = True
                 elif re.search('false', comm.group(2), re.I) is not None:
                     config_dict[0][comm.group(1)][0] = False
+                elif re.search('([0-9]{1,6})', comm.group(2)) is not None:
+                    config_dict[0][comm.group(1)][0] = int(comm.group(2))
                 else:
                     config_dict[0][comm.group(1)][0] = comm.group(2)
         return config_dict
