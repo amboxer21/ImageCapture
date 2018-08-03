@@ -70,7 +70,7 @@ class ConfigFile(object):
         self.file_name = file_name
         if file_name:
             try:
-                self.config_file = open(file_name,'r')
+                self.config_file = open(file_name,'r').read().splitlines()
                 self.config_file_syntax_sanity_check()
             except IOError:
                 logger.log("ERROR","Config file does not exist.")
@@ -93,12 +93,17 @@ class ConfigFile(object):
                     + default_opt + "): "
                     + str(config_dict[0][default_opt][0]))
             return
-        for line in self.config_file.read().splitlines():
+        for line in self.config_file:
             comm = re.search(r'(^.*)=(.*)', str(line), re.M | re.I)
             if comm is not None:
                 if not comm.group(2):
                     config_dict[1].append(comm.group(1))
-                config_dict[0][comm.group(1)][0] = comm.group(2)
+                elif re.search('true', comm.group(2), re.I) is not None:
+                    config_dict[0][comm.group(1)][0] = True
+                elif re.search('false', comm.group(2), re.I) is not None:
+                    config_dict[0][comm.group(1)][0] = False
+                else:
+                    config_dict[0][comm.group(1)][0] = comm.group(2)
         return config_dict
 
     # If command line options 'ARE' passed via optparser/command line then this method
@@ -141,7 +146,7 @@ class ConfigFile(object):
         return len(self.args_list)
 
     def config_file_syntax_sanity_check(self):
-        for line in self.config_file.read().splitlines():
+        for line in self.config_file:
             comm = re.search(r'(^.*)=(.*)', str(line), re.M | re.I)
             if comm is not None:
                 try:
