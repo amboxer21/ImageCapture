@@ -53,7 +53,7 @@ class Logging():
             # Log all calls to this class in the logfile no matter what.
             logging.exception("(" + str(level) + ") " + "ImageCapture - " + str(message))
             # Print to stdout only if the verbose option is passed or log level = ERROR.
-            if options.verbose or comm.group() == 'ERROR':
+            if options.verbose or str(level) == 'ERROR':
                 print("(" + str(level) + ") " + "ImageCapture - " + str(message))
         except Exception as e:
             print("Error in Logging class => " + str(e))
