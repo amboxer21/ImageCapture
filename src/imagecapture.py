@@ -39,22 +39,27 @@ class Logging():
 
     def log(self,level,message):
         comm = re.search("(WARN|INFO|ERROR)", str(level), re.M)
-        if comm is None:
-            print(level + " is not a level. Use: WARN, ERROR, or INFO!")
-            return
         try:
             handler = logging.handlers.WatchedFileHandler(
-                os.environ.get("LOGFILE","/var/log/imagecapture.log"))
+                os.environ.get("LOGFILE","/var/log/sshmonitor.log"))
             formatter = logging.Formatter(logging.BASIC_FORMAT)
             handler.setFormatter(formatter)
             root = logging.getLogger()
             root.setLevel(os.environ.get("LOGLEVEL", str(level)))
             root.addHandler(handler)
             # Log all calls to this class in the logfile no matter what.
-            logging.exception("(" + str(level) + ") " + "ImageCapture - " + str(message))
+            if comm is None:
+                print(level + " is not a level. Use: WARN, ERROR, or INFO!")
+                return
+            elif comm.group() == 'ERROR':
+                logging.error("(" + str(level) + ") " + "SSHMonitor - " + str(message))
+            elif comm.group() == 'INFO':
+                logging.info("(" + str(level) + ") " + "SSHMonitor - " + str(message))
+            elif comm.group() == 'WARN':
+                logging.warn("(" + str(level) + ") " + "SSHMonitor - " + str(message))
             # Print to stdout only if the verbose option is passed or log level = ERROR.
             if options.verbose or str(level) == 'ERROR':
-                print("(" + str(level) + ") " + "ImageCapture - " + str(message))
+                print("(" + str(level) + ") " + "SSHMonitor - " + str(message))
         except Exception as e:
             print("Error in Logging class => " + str(e))
             pass
@@ -711,7 +716,7 @@ class Version():
         pass
 
     def python(self):
-        python_version = re.search('\d\.\d\.\d', str(sys.version), re.I | re.M)
+        python_version = re.search('\d\.\d', str(sys.version), re.I | re.M)
         if python_version is not None:
             return python_version.group()
         return "None"
