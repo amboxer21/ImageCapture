@@ -68,7 +68,7 @@ class Logging():
 # The config filename is passed to this class in the ImageCapture classes __init__ method.
 # The option is the default value set in optparser and is blank by default. See the 
 # optparser declaration at the bottom in the if __name__ == '__main__' check.
-class ConfigFile(object):
+class ConfigFile():
 
     def __init__(self, file_name):
         self.args_list = []
@@ -162,7 +162,9 @@ class ConfigFile(object):
                 try:
                     config_dict[0][comm.group(1)]
                 except KeyError:
-                    logger.log("ERROR", "Config file option(" + comm.group(1) + ") is not a recognized option!")
+                    logger.log("ERROR", "Config file option("
+                        + comm.group(1)
+                        + ") is not a recognized option!")
                     sys.exit(0)
 
     def command_line_options(self):
@@ -171,10 +173,9 @@ class ConfigFile(object):
     def default_options(self):
         pass
 
-class ImageCapture(ConfigFile):
+class ImageCapture():
 
     def __init__(self,config_dict={},file_name=''):
-        super(ImageCapture, self).__init__(file_name)
         # The order of these calls are important!
         configFile = ConfigFile(options.configfile)
         configFile.config_options()
@@ -266,7 +267,7 @@ class ImageCapture(ConfigFile):
         elif config_dict[0]['location'][0] and not self.send_email:
             logger.log("ERROR",
                 "Cannot E-mail your location without your E-mail and password. "
-                + "Please use the help option and search for -e and -p.")
+                + "Please use the --help option and search for -e and -p.")
             sys.exit(0)
 
         while database.read_from_db('location_bool') == 'true' or init == 'init':
@@ -281,7 +282,7 @@ class ImageCapture(ConfigFile):
                             config_dict[0]['email'][0],
                             config_dict[0]['password'][0],
                             config_dict[0]['port'][0],
-                            "Failed GDM login from IP " + str(self.ip_addr) + "!",
+                            "Failed login from IP " + str(self.ip_addr) + "!",
                             "Someone tried to login into your computer and failed "
                             + str(config_dict[0]['attempts'][0]) + "times.")
                     except:
@@ -391,7 +392,7 @@ class ImageCapture(ConfigFile):
                                 config_dict[0]['email'][0],
                                 config_dict[0]['password'][0],
                                 config_dict[0]['port'][0],
-                                "Failed GDM login from IP " + self.ip_addr + "!",
+                                "Failed login from IP " + self.ip_addr + "!",
                                 "Someone tried to login into your computer and failed "
                                 + config_dict[0]['attempts'][0] + " times.")
                         except:

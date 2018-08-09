@@ -71,8 +71,8 @@ class PrepareBuild():
             if grep is not None:
                 count+=1
         if count < 2 and install is not None:
-                logger.log("INFO", "Installing crontab.")
-                cron.write()
+            logger.log("INFO", "Installing crontab.")
+            cron.write()
 
     def pip_install_package(self,package):
         logger.log("INFO", "Installing opencv-python via pip")
