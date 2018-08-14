@@ -1,0 +1,29 @@
+
+1) Use __getattr__ to clean up config_dict calls.
+Python has these things called magic methods and I wanted to implement some. That's what led me to the __getattr__ method and it looks pretty cool!
+
+>>> class ConfigList():
+...     def __init__(self):
+...         self.data = {'one': '1', 'two': '2'}
+...     def __getattr__(self,attr):
+...         return self.data[attr]
+... 
+>>> ConfigList().one
+'1'
+so I could probably use that to clean up the config_dict calls!!!!!!
+what do you think?
+Should have called it ConfigDict
+
+----------
+
+>>> class TestClass:
+...     def __init__(self):
+...         self.data = {'one': '1', 'two': '2', 'five': '5'}
+...     def __setattr__(self, name, value):
+...         print("" + self.data.__dict__[name])
+...         self.data.__dict__[name] = value.upper()
+... 
+>>> f = TestClass
+>>> f.one = '9'
+>>> f.one
+'9'
