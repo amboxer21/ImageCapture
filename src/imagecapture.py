@@ -91,7 +91,7 @@ class ConfigFile(object):
         allowsucessful = '(s|--allow-sucessful)'
         browser        = '(B|--browser)'
 
-        self.config_dict = [{
+        super(ConfigFile, self).__setattr__('config_dict', {
             'email': ['', options.email, email],
             'password': ['', options.password, password],
             'video': ['', options.video, video],
@@ -105,10 +105,11 @@ class ConfigFile(object):
             'website': ['', options.website, website],
             'clearautologin': ['', options.clearautologin, clearautologin],
             'allowsucessful': ['', options.allowsucessful, allowsucessful],
-            'browser': ['', options.browser, browser]}, []]
+            'browser': ['', options.browser, browser]})
 
         self.args_list = []
         self.file_name = file_name
+        self.empty_config_option = []
         if file_name:
             try:
                 self.config_file = open(file_name,'r').read().splitlines()
@@ -132,11 +133,11 @@ class ConfigFile(object):
     def config_options(self):
         # If config file is 'NOT' supplied use optparsers default values.
         if not self.file_name:
-            for default_opt in self.config_dict[0].keys():
-                self.config_dict[0][default_opt][0] = self.config_dict[0][default_opt][1]
+            for default_opt in self.config_dict.keys():
+                self.config_dict[default_opt][0] = self.config_dict[default_opt][1]
                 logger.log("INFO", "Setting option("
                     + default_opt + "): "
-                    + str(self.config_dict[0][default_opt][0]))
+                    + str(self.config_dict[default_opt][0]))
             return
         # If the config file exists and the syntax is correct we will have to convert the
         # 'bool' values in the file which are being loaded in as strings to actual bool values.
@@ -145,39 +146,39 @@ class ConfigFile(object):
             comm = re.search(r'(^.*)=(.*)', str(line), re.M | re.I)
             if comm is not None:
                 if not comm.group(2):
-                    self.config_dict[1].append(comm.group(1))
+                    self.empty_config_option.append(comm.group(1))
                 elif re.search('true', comm.group(2), re.I) is not None:
-                    self.config_dict[0][comm.group(1)][0] = True
+                    self.config_dict[comm.group(1)][0] = True
                 elif re.search('false', comm.group(2), re.I) is not None:
-                    self.config_dict[0][comm.group(1)][0] = False
+                    self.config_dict[comm.group(1)][0] = False
                 elif re.search('([0-9]{1,6})', comm.group(2)) is not None:
-                    self.config_dict[0][comm.group(1)][0] = int(comm.group(2))
+                    self.config_dict[comm.group(1)][0] = int(comm.group(2))
                 else:
-                    self.config_dict[0][comm.group(1)][0] = comm.group(2)
+                    self.config_dict[comm.group(1)][0] = comm.group(2)
         return config_dict
 
     # If command line options 'ARE' passed via optparser/command line then this method
     # will override the default values set with optparser as well as override the options
     # in the config file that was passed.
     def override_values(self):
-        for default_opt in self.config_dict[0].keys():
+        for default_opt in self.config_dict.keys():
             comm = re.search('-(\w{0,9}|)'
-                + self.config_dict[0][default_opt][2], str(sys.argv[1:]), re.M)
+                + self.config_dict[default_opt][2], str(sys.argv[1:]), re.M)
             if comm is not None:
                 logger.log("INFO", "Overriding "
                     + str(default_opt)
                     + " default value with command line switch value("
-                    + str(self.config_dict[0][default_opt][1]) + ")")
-                self.config_dict[0][default_opt][0] = self.config_dict[0][default_opt][1]
+                    + str(self.config_dict[default_opt][1]) + ")")
+                self.config_dict[default_opt][0] = self.config_dict[default_opt][1]
 
     # If a config file is supplied then this method will use the default options
     # in optparser if the option in the config file has no value. So if the password 
     # option in the config file looks like this -> password= then it will be populated 
     # by this method.
     def populate_empty_options(self):
-        if self.config_dict[1] and self.config_file_supplied():
-            for opt in self.config_dict[1]:
-                self.config_dict[0][opt][0] = self.config_dict[0][opt][1]
+        if self.empty_config_option.append and self.config_file_supplied():
+            for opt in self.empty_config_option:
+                self.config_dict[opt][0] = self.config_dict[opt][1]
 
     def config_file_supplied(self):
         if re.search(r'(\-C|\-\-config\-file)',str(sys.argv[1:]), re.M) is None:
@@ -189,7 +190,7 @@ class ConfigFile(object):
             comm = re.search(r'(^.*)=(.*)', str(line), re.M | re.I)
             if comm is not None:
                 try:
-                    self.config_dict[0][comm.group(1)]
+                    self.config_dict[comm.group(1)]
                 except KeyError:
                     logger.log("ERROR", "Config file option("
                         + comm.group(1)
@@ -197,10 +198,10 @@ class ConfigFile(object):
                     sys.exit(0)
 
     def __getattr__(self, key):
-        return self.opt[key]
+        return self.config_dict[key]
 
     def __setattr__(self, key, val):
-        self.opt[key] = val
+        self.config_dict[key] = val
 
 class ImageCapture():
 
