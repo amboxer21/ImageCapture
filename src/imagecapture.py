@@ -69,8 +69,6 @@ class ConfigFile(object):
 
     def __init__(self, file_name):
 
-        object.__setattr__(self, 'opt', {})
-
         # These strings are used to compare against the command line args passed.
         # It could have been done with an action but default values were used instead.
         # These strings are coupled with their respective counterpart in the config_dist
@@ -133,7 +131,11 @@ class ConfigFile(object):
     def config_options(self):
         # If config file is 'NOT' supplied use optparsers default values.
         if not self.file_name:
+            print("debugging - " + str(self.config_dict))
             for default_opt in self.config_dict.keys():
+                print("debugging - default_opt => " + str(default_opt))
+                print("debugging - self.config_dict[default_opt][0] => " + str(self.config_dict[default_opt][0]))
+                print("debugging - self.config_dict[default_opt][1] => " + str(self.config_dict[default_opt][1]))
                 self.config_dict[default_opt][0] = self.config_dict[default_opt][1]
                 logger.log("INFO", "Setting option("
                     + default_opt + "): "
@@ -176,7 +178,7 @@ class ConfigFile(object):
     # option in the config file looks like this -> password= then it will be populated 
     # by this method.
     def populate_empty_options(self):
-        if self.empty_config_option.append and self.config_file_supplied():
+        if self.empty_config_option and self.config_file_supplied():
             for opt in self.empty_config_option:
                 self.config_dict[opt][0] = self.config_dict[opt][1]
 
