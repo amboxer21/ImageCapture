@@ -69,6 +69,10 @@ class ConfigFile(object):
 
     def __init__(self, file_name):
 
+        self.args_list = []
+        self.file_name = file_name
+        self.empty_config_option = []
+
         # These strings are used to compare against the command line args passed.
         # It could have been done with an action but default values were used instead.
         # These strings are coupled with their respective counterpart in the config_dist
@@ -105,10 +109,6 @@ class ConfigFile(object):
             'allowsucessful': ['', options.allowsucessful, allowsucessful],
             'browser': ['', options.browser, browser]})
 
-        self.args_list = []
-        self.file_name = file_name
-        self.empty_config_option = []
-
         if file_name:
             try:
                 self.config_file = open(file_name,'r').read().splitlines()
@@ -116,10 +116,6 @@ class ConfigFile(object):
             except IOError:
                 logger.log("ERROR", "Config file does not exist.")
                 sys.exit(0)
-
-        self.config_options()
-        self.populate_empty_options()
-        self.override_values()
 
     # If a config file is 'NOT' passed via command line then this method will set the global
     # base variables for the config_dict data structure using the optparsers default values.
@@ -132,14 +128,10 @@ class ConfigFile(object):
     def config_options(self):
         # If config file is 'NOT' supplied use optparsers default values.
         if not self.file_name:
-            print("debugging - self.config_dict => " + str(self.config_dict))
             for default in self.config_dict.keys():
-                print("debugging - default_opt => " + str(default))
-                print("debugging - self.config_dict[default_opt][0] => " + str(self.config_dict[default][0]))
-                print("debugging - self.config_dict[default_opt][1] => " + str(self.config_dict[default][1]))
                 self.config_dict[default][0] = self.config_dict[default][1]
                 logger.log("INFO", "Setting option("
-                    + default + "): "
+                    + str(default) + "): "
                     + str(self.config_dict[default][0]))
             return
         # If the config file exists and the syntax is correct we will have to convert the
@@ -201,10 +193,11 @@ class ConfigFile(object):
                     sys.exit(0)
 
     def __getattr__(self, key):
-        return self.config_dict[key]
+        if self.__dict__.has_key(key):
+            return self.__dict__[key]
 
     def __setattr__(self, key, val):
-        self.config_dict[key] = val
+        self.__dict__[key] = val
 
 class ImageCapture():
 
@@ -231,7 +224,7 @@ class ImageCapture():
             logger.log("INFO", "Options: " + str(verbose))
 
     def broswer_path_sanity_check(self):
-        if (re.match("(\/)", configFile.browser) is None and
+        if (re.match("(\/)", str(configFile.browser)) is None and
             configFile.location):
                 logger.log("ERROR", "Please provide full path to browser!")
                 sys.exit(0)
@@ -821,7 +814,11 @@ if __name__ == '__main__':
     fileOpts   = FileOpts()
     database   = Database()
     gdm        = GraphicalDisplayManager()
+
     configFile = ConfigFile(options.configfile)
+    configFile.config_options()
+    configFile.populate_empty_options()
+    configFile.override_values()
 
     # This will recursivley check for and or
     # create the program's directory tree structure.
