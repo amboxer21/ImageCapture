@@ -78,6 +78,12 @@ class ConfigFile():
                 logger.log("ERROR","Config file does not exist.")
                 sys.exit(0)
 
+    def __getattr__(self, key):
+        pass
+
+    def __setattr__(self, key, val):
+        pass
+
     # If a config file is 'NOT' passed via command line then this method will set the global
     # base variables for the config_dict data structure using the optparsers default values.
     # ---
