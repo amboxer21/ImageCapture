@@ -108,6 +108,7 @@ class ConfigFile(object):
         self.args_list = []
         self.file_name = file_name
         self.empty_config_option = []
+
         if file_name:
             try:
                 self.config_file = open(file_name,'r').read().splitlines()
@@ -131,15 +132,15 @@ class ConfigFile(object):
     def config_options(self):
         # If config file is 'NOT' supplied use optparsers default values.
         if not self.file_name:
-            print("debugging - " + str(self.config_dict))
-            for default_opt in self.config_dict.keys():
-                print("debugging - default_opt => " + str(default_opt))
-                print("debugging - self.config_dict[default_opt][0] => " + str(self.config_dict[default_opt][0]))
-                print("debugging - self.config_dict[default_opt][1] => " + str(self.config_dict[default_opt][1]))
-                self.config_dict[default_opt][0] = self.config_dict[default_opt][1]
+            print("debugging - self.config_dict => " + str(self.config_dict))
+            for default in self.config_dict.keys():
+                print("debugging - default_opt => " + str(default))
+                print("debugging - self.config_dict[default_opt][0] => " + str(self.config_dict[default][0]))
+                print("debugging - self.config_dict[default_opt][1] => " + str(self.config_dict[default][1]))
+                self.config_dict[default][0] = self.config_dict[default][1]
                 logger.log("INFO", "Setting option("
-                    + default_opt + "): "
-                    + str(self.config_dict[default_opt][0]))
+                    + default + "): "
+                    + str(self.config_dict[default][0]))
             return
         # If the config file exists and the syntax is correct we will have to convert the
         # 'bool' values in the file which are being loaded in as strings to actual bool values.
@@ -163,15 +164,15 @@ class ConfigFile(object):
     # will override the default values set with optparser as well as override the options
     # in the config file that was passed.
     def override_values(self):
-        for default_opt in self.config_dict.keys():
+        for default in self.config_dict.keys():
             comm = re.search('-(\w{0,9}|)'
-                + self.config_dict[default_opt][2], str(sys.argv[1:]), re.M)
+                + self.config_dict[default][2], str(sys.argv[1:]), re.M)
             if comm is not None:
                 logger.log("INFO", "Overriding "
-                    + str(default_opt)
+                    + str(default)
                     + " default value with command line switch value("
-                    + str(self.config_dict[default_opt][1]) + ")")
-                self.config_dict[default_opt][0] = self.config_dict[default_opt][1]
+                    + str(self.config_dict[default][1]) + ")")
+                self.config_dict[default][0] = self.config_dict[default][1]
 
     # If a config file is supplied then this method will use the default options
     # in optparser if the option in the config file has no value. So if the password 
