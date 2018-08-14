@@ -65,9 +65,48 @@ class Logging():
 # The config filename is passed to this class in the ImageCapture classes __init__ method.
 # The option is the default value set in optparser and is blank by default. See the 
 # optparser declaration at the bottom in the if __name__ == '__main__' check.
-class ConfigFile():
+class ConfigFile(object):
 
     def __init__(self, file_name):
+
+        object.__setattr__(self, 'opt', {})
+
+        # These strings are used to compare against the command line args passed.
+        # It could have been done with an action but default values were used instead.
+        # These strings are coupled with their respective counterpart in the config_dist
+        # data structure declared below.
+
+        email          = '(e|--email)'
+        password       = '(p|--password)'
+        video          = '(V|--video)'
+        verbose        = '(v|--verbose)'
+        port           = '(P|--port)'
+        attempts       = '(a|--attempts)'
+        location       = '(L|--location)'
+        logfile        = '(l|--log-file)'
+        enablecam      = '(c|--enable-cam)'
+        autologin      = '(A|--auto-login)'
+        website        = '(w|--website)'
+        clearautologin = '(X|--clear-autologin)'
+        allowsucessful = '(s|--allow-sucessful)'
+        browser        = '(B|--browser)'
+
+        self.config_dict = [{
+            'email': ['', options.email, email],
+            'password': ['', options.password, password],
+            'video': ['', options.video, video],
+            'verbose': ['', options.verbose, verbose],
+            'port': ['', options.port, port],
+            'attempts': ['', options.attempts, attempts],
+            'location': ['', options.location, location],
+            'logfile': ['', options.logfile, logfile],
+            'enablecam': ['', options.enablecam, enablecam],
+            'autologin': ['', options.autologin, autologin],
+            'website': ['', options.website, website],
+            'clearautologin': ['', options.clearautologin, clearautologin],
+            'allowsucessful': ['', options.allowsucessful, allowsucessful],
+            'browser': ['', options.browser, browser]}, []]
+
         self.args_list = []
         self.file_name = file_name
         if file_name:
@@ -75,14 +114,12 @@ class ConfigFile():
                 self.config_file = open(file_name,'r').read().splitlines()
                 self.config_file_syntax_sanity_check()
             except IOError:
-                logger.log("ERROR","Config file does not exist.")
+                logger.log("ERROR", "Config file does not exist.")
                 sys.exit(0)
 
-    def __getattr__(self, key):
-        pass
-
-    def __setattr__(self, key, val):
-        pass
+        self.config_options()
+        self.populate_empty_options()
+        self.override_values()
 
     # If a config file is 'NOT' passed via command line then this method will set the global
     # base variables for the config_dict data structure using the optparsers default values.
@@ -95,11 +132,11 @@ class ConfigFile():
     def config_options(self):
         # If config file is 'NOT' supplied use optparsers default values.
         if not self.file_name:
-            for default_opt in config_dict[0].keys():
-                config_dict[0][default_opt][0] = config_dict[0][default_opt][1]
+            for default_opt in self.config_dict[0].keys():
+                self.config_dict[0][default_opt][0] = self.config_dict[0][default_opt][1]
                 logger.log("INFO", "Setting option("
                     + default_opt + "): "
-                    + str(config_dict[0][default_opt][0]))
+                    + str(self.config_dict[0][default_opt][0]))
             return
         # If the config file exists and the syntax is correct we will have to convert the
         # 'bool' values in the file which are being loaded in as strings to actual bool values.
@@ -108,39 +145,39 @@ class ConfigFile():
             comm = re.search(r'(^.*)=(.*)', str(line), re.M | re.I)
             if comm is not None:
                 if not comm.group(2):
-                    config_dict[1].append(comm.group(1))
+                    self.config_dict[1].append(comm.group(1))
                 elif re.search('true', comm.group(2), re.I) is not None:
-                    config_dict[0][comm.group(1)][0] = True
+                    self.config_dict[0][comm.group(1)][0] = True
                 elif re.search('false', comm.group(2), re.I) is not None:
-                    config_dict[0][comm.group(1)][0] = False
+                    self.config_dict[0][comm.group(1)][0] = False
                 elif re.search('([0-9]{1,6})', comm.group(2)) is not None:
-                    config_dict[0][comm.group(1)][0] = int(comm.group(2))
+                    self.config_dict[0][comm.group(1)][0] = int(comm.group(2))
                 else:
-                    config_dict[0][comm.group(1)][0] = comm.group(2)
+                    self.config_dict[0][comm.group(1)][0] = comm.group(2)
         return config_dict
 
     # If command line options 'ARE' passed via optparser/command line then this method
     # will override the default values set with optparser as well as override the options
     # in the config file that was passed.
     def override_values(self):
-        for default_opt in config_dict[0].keys():
+        for default_opt in self.config_dict[0].keys():
             comm = re.search('-(\w{0,9}|)'
-                + config_dict[0][default_opt][2], str(sys.argv[1:]), re.M)
+                + self.config_dict[0][default_opt][2], str(sys.argv[1:]), re.M)
             if comm is not None:
                 logger.log("INFO", "Overriding "
                     + str(default_opt)
                     + " default value with command line switch value("
-                    + str(config_dict[0][default_opt][1]) + ")")
-                config_dict[0][default_opt][0] = config_dict[0][default_opt][1]
+                    + str(self.config_dict[0][default_opt][1]) + ")")
+                self.config_dict[0][default_opt][0] = self.config_dict[0][default_opt][1]
 
     # If a config file is supplied then this method will use the default options
     # in optparser if the option in the config file has no value. So if the password 
     # option in the config file looks like this -> password= then it will be populated 
     # by this method.
     def populate_empty_options(self):
-        if config_dict[1] and self.config_file_supplied():
-            for opt in config_dict[1]:
-                config_dict[0][opt][0] = config_dict[0][opt][1]
+        if self.config_dict[1] and self.config_file_supplied():
+            for opt in self.config_dict[1]:
+                self.config_dict[0][opt][0] = self.config_dict[0][opt][1]
 
     def config_file_supplied(self):
         if re.search(r'(\-C|\-\-config\-file)',str(sys.argv[1:]), re.M) is None:
@@ -152,26 +189,28 @@ class ConfigFile():
             comm = re.search(r'(^.*)=(.*)', str(line), re.M | re.I)
             if comm is not None:
                 try:
-                    config_dict[0][comm.group(1)]
+                    self.config_dict[0][comm.group(1)]
                 except KeyError:
                     logger.log("ERROR", "Config file option("
                         + comm.group(1)
                         + ") is not a recognized option!")
                     sys.exit(0)
 
+    def __getattr__(self, key):
+        return self.opt[key]
+
+    def __setattr__(self, key, val):
+        self.opt[key] = val
+
 class ImageCapture():
 
-    def __init__(self,config_dict={},file_name=''):
+    def __init__(self,file_name=''):
         # The order of these calls are important!
-        configFile = ConfigFile(options.configfile)
-        configFile.config_options()
-        configFile.populate_empty_options()
-        configFile.override_values()
 
         self.ip_addr    = urlopen('http://ip.42.pl/raw').read()
         self.send_email = False
 
-        self.logfile_sanity_check(config_dict[0]['logfile'][0])
+        self.logfile_sanity_check(options.logfile)
         database.add_ip_to_db(self.ip_addr)
 
         self.credential_sanity_check()
@@ -182,24 +221,24 @@ class ImageCapture():
     # Display the final base options that the app has set and is using.
     def display_options(self):
         verbose = {}
-        if config_dict[0]['verbose'][0]:
+        if configFile.verbose:
             for option in config_dict[0].keys():
                 verbose[option] = config_dict[0][option][0]
             logger.log("INFO", "Options: " + str(verbose))
 
     def broswer_path_sanity_check(self):
-        if (re.match("(\/)",config_dict[0]['browser'][0]) is None and
-            config_dict[0]['location'][0]):
+        if (re.match("(\/)", configFile.browser) is None and
+            configFile.location):
                 logger.log("ERROR", "Please provide full path to browser!")
                 sys.exit(0)
 
     def location_sanity_check(self):
-        if config_dict[0]['location'][0]:
+        if configFile.location:
             if not self.send_email:
                 logger.log("ERROR", "The location options requires an E-mail and password!")
                 parser.print_help()
                 sys.exit(0)
-            elif not config_dict[0]['autologin'][0]:
+            elif not configFile.autologin:
                 logger.log("ERROR","The location feature requires the autologin option(-A).")
                 sys.exit(0)
             elif not len(os.listdir(fileOpts.root_directory())) > 2:
@@ -213,16 +252,16 @@ class ImageCapture():
     # supply them both then the E-mail features will not work. It
     # sets the send_email variable to a bool value.
     def credential_sanity_check(self):
-        if (not str(config_dict[0]['password'][0]) == 'password' and
-            not str(config_dict[0]['email'][0]) == 'example@gmail.com'):
+        if (not str(configFile.password) == 'password' and
+            not str(configFile.email) == 'example@gmail.com'):
                 self.send_email = True
-        elif (str(config_dict[0]['password'][0]) == 'password' and
-            str(config_dict[0]['email'][0]) == 'example@gmail.com'):
+        elif (str(configFile.password) == 'password' and
+            str(configFile.email) == 'example@gmail.com'):
                 self.send_email = False
-        elif (str(config_dict[0]['password'][0]) == 'password' and
-            not str(config_dict[0]['email'][0]) == 'example@gmail.com' or
-            str(config_dict[0]['email'][0]) == 'example@gmail.com' and
-            not str(config_dict[0]['password'][0]) == 'password'):
+        elif (str(configFile.password) == 'password' and
+            not str(configFile.email) == 'example@gmail.com' or
+            str(configFile.email) == 'example@gmail.com' and
+            not str(configFile.password) == 'password'):
                 logger.log("ERROR",
                     "Both the E-mail and password options must be supplied or none at all!")
                 parser.print_help()
@@ -230,13 +269,13 @@ class ImageCapture():
 
     def logfile_sanity_check(self,logfile):
         if os.path.exists(logfile):
-            config_dict[0]['logfile'][0] = logfile
-            logger.log("INFO", "logfile(1): " + str(config_dict[0]['logfile'][0]))
+            configFile.logfile = logfile
+            logger.log("INFO", "logfile(1): " + str(configFile.logfile))
         elif logfile == '/var/log/auth.log' and not os.path.exists(logfile):
             for log_file in ['messages']:
                 if os.path.exists('/var/log/' + str(log_file)):
-                    config_dict[0]['logfile'][0] = '/var/log/' + str(log_file)
-                    logger.log("INFO", "logfile(2): " + str(config_dict[0]['logfile'][0]))
+                    configFile.logfile = '/var/log/' + str(log_file)
+                    logger.log("INFO", "logfile(2): " + str(configFile.logfile))
                     break
                 else:
                     logger.log("ERROR","Log file " + logfile
@@ -247,10 +286,10 @@ class ImageCapture():
         return find_executable(process) is not None
     
     def get_location(self,init=None):
-        if not config_dict[0]['location'][0]:
+        if not configFile.location:
             logger.log("INFO", "Location option is not enabled.")
             return
-        elif config_dict[0]['location'][0] and not self.send_email:
+        elif configFile.location and not self.send_email:
             logger.log("ERROR",
                 "Cannot E-mail your location without your E-mail and password. "
                 + "Please use the --help option and search for -e and -p.")
@@ -264,20 +303,20 @@ class ImageCapture():
                     try:
                         logger.log("INFO","Sending E-mail now.")
                         self.send_mail(
-                            config_dict[0]['email'][0],
-                            config_dict[0]['email'][0],
-                            config_dict[0]['password'][0],
-                            config_dict[0]['port'][0],
+                            configFile.email,
+                            configFile.email,
+                            configFile.password,
+                            configFile.port,
                             "Failed login from IP " + str(self.ip_addr) + "!",
                             "Someone tried to login into your computer and failed "
-                            + str(config_dict[0]['attempts'][0]) + "times.")
+                            + str(configFile.attempts) + "times.")
                     except:
                         pass
                 try:
                     logger.log("INFO","Grabbing location now.")
-                    GetLocation(config_dict[0]['website'][0],
-                        config_dict[0]['email'][0],
-                        config_dict[0]['browser'][0]).start()
+                    GetLocation(configFile.website,
+                        configFile.email,
+                        configFile.browser).start()
                     if init == 'init':
                         break
                 except:
@@ -290,24 +329,24 @@ class ImageCapture():
         return find_executable(executable_name)
     
     def take_picture(self):
-        if not config_dict[0]['enablecam'][0]:
+        if not configFile.enablecam:
             return
-        camera = cv2.VideoCapture(config_dict[0]['video'][0])
+        camera = cv2.VideoCapture(configFile.video)
         if not camera.isOpened():
             logger.log("ERROR","No cam available at "
-                + str(config_dict[0]['video'][0]) + ".")
-            config_dict[0]['enablecam'][0] = False
+                + str(configFile.video) + ".")
+            configFile.enablecam = False
             return
-        elif not config_dict[0]['enablecam'][0]:
+        elif not configFile.enablecam:
             logger.log("WARNING","Taking pictures from webcam was not enabled.")
             return
-        elif not camera.isOpened() and config_dict[0]['video'][0] == 0:
+        elif not camera.isOpened() and configFile.video == 0:
             logger.log("WARNING","Camera not detected.")
-            config_dict[0]['enablecam'][0] = False
+            configFile.enablecam = False
             return
         elif self.executable_exists() is None:
             logger.log("WARNING", "OpenCV is not installed.")
-            config_dict[0]['enablecam'][0] = False
+            configFile.enablecam = False
             return
         logger.log("INFO","Taking picture.")
         time.sleep(0.1) # Needed or image will be dark.
@@ -320,7 +359,7 @@ class ImageCapture():
             message = MIMEMultipart()
             message['Body'] = body
             message['Subject'] = subject
-            if config_dict[0]['enablecam'][0]:
+            if configFile.enablecam:
                 message.attach(MIMEImage(file(fileOpts.picture_path()).read()))
             mail = smtplib.SMTP('smtp.gmail.com', port)
             mail.starttls()
@@ -334,8 +373,8 @@ class ImageCapture():
     
     def failed_login(self,count):
       logger.log("INFO", "count: " + str(count))
-      if (count == int(config_dict[0]['attempts'][0]) or
-          config_dict[0]['allowsucessful'][0]):
+      if (count == int(configFile.attempts) or
+          configFile.allowsucessful):
               logger.log("INFO", "failed_login True")
               return True
       else:
@@ -346,7 +385,7 @@ class ImageCapture():
     
         count = 0
     
-        gdm.auto_login_remove(config_dict[0]['autologin'][0], user.name())
+        gdm.auto_login_remove(configFile.autologin, user.name())
     
         print("(INFO) ImageCapture - ImageCapture is ready!")
         print("(INFO) ImageCapture - Tailing logfile " + str(logfile))
@@ -359,50 +398,50 @@ class ImageCapture():
             success = re.search(success_regex, line, re.I | re.M)
             failed  = re.search(failed_regex, line, re.I | re.M)
     
-            if failed and not config_dict[0]['allowsucessful'][0]:
+            if failed and not configFile.allowsucessful:
                 count += 1
                 logger.log("INFO", "Failed login at "
                     + failed.group(1) + ":\n"
                     + failed.group() + "\n\n")
                 if self.failed_login(count):
                     logger.log("INFO", "user: " + user.name())
-                    gdm.auto_login(config_dict[0]['autologin'][0], user.name())
+                    gdm.auto_login(configFile.autologin, user.name())
                     self.take_picture()
                     database.add_location_to_db('true')
                     self.get_location()
-                    if not config_dict[0]['enablecam'][0] and self.send_email:
+                    if not configFile.enablecam and self.send_email:
                         try:
                             logger.log("INFO","Sending E-mail now.")
                             self.send_mail(
-                                config_dict[0]['sender'][0],
-                                config_dict[0]['email'][0],
-                                config_dict[0]['password'][0],
-                                config_dict[0]['port'][0],
+                                configFile.sender,
+                                configFile.email,
+                                configFile.password,
+                                configFile.port,
                                 "Failed login from IP " + self.ip_addr + "!",
                                 "Someone tried to login into your computer and failed "
-                                + config_dict[0]['attempts'][0] + " times.")
+                                + configFile.attempts + " times.")
                         except:
                             pass
                 time.sleep(1)
-            if success and config_dict[0]['allowsucessful'][0]:
+            if success and configFile.allowsucessful:
                 logger.log("INFO", "Sucessful login at "
                     + success.group(1) + ":\n" 
                     + success.group() + "\n\n")
-                gdm.auto_login(config_dict[0]['autologin'][0], user.name())
+                gdm.auto_login(configFile.autologin, user.name())
                 self.take_picture()
                 database.add_location_to_db('true')
                 self.get_location()
-                if not config_dict[0]['enablecam'][0] and self.send_email:
+                if not configFile.enablecam and self.send_email:
                     try:
                         logger.log("INFO","Sending E-mail now.")
                         self.send_mail(
-                            config_dict[0]['sender'][0],
-                            config_dict[0]['email'][0],
-                            config_dict[0]['password'][0],
-                            config_dict[0]['port'][0],
+                            configFile.sender,
+                            configFile.email,
+                            configFile.password,
+                            configFile.port,
                             "Failed GDM login from IP " + self.ip_addr + "!",
                             "Someone tried to login into your computer and failed "
-                            + config_dict[0]['attempts'][0] + " times.")
+                            + configFile.attempts + " times.")
                     except:
                         pass
                 time.sleep(1)
@@ -417,12 +456,12 @@ class ImageCapture():
             sys.exit(0)
         logger.log("INFO", "Python version set to 2.7.")
 
-        gdm.clear_auto_login(config_dict[0]['clearautologin'][0], user.name())
+        gdm.clear_auto_login(configFile.clearautologin, user.name())
         self.get_location()
 
         while True:
             try:
-                self.tail_file(config_dict[0]['logfile'][0])
+                self.tail_file(configFile.logfile)
             except IOError as ioError:
                 logger.log("ERROR", "IOError: " + str(ioError))
             except KeyboardInterrupt:
@@ -438,9 +477,9 @@ class GetLocation(Thread):
     def __init__(self,website,email,browser):
         Thread.__init__(self)
         self.count = 0
-        self._email_,config_dict[0]['email'][0]   = (email,email)
-        self._website_,config_dict[0]['website'][0] = (website,website)
-        self._browser_,config_dict[0]['browser'][0] = (browser,browser)
+        self._email_,configFile.email     = (email,email)
+        self._website_,configFile.website = (website,website)
+        self._browser_,configFile.browser = (browser,browser)
 
     def browser_exists(self,browser):
         return find_executable(browser)
@@ -631,7 +670,7 @@ class GraphicalDisplayManager():
         elif not autologin and not self.user_present(user):
             logger.log("WARN", "Cannot remove user " + str(user)
                 + " from the nopasswdlogin group because they are not present.")
-        elif not autologin and config_dict[0]['location'][0]:
+        elif not autologin and configFile.location:
             logger.log("WARN", "Cannot remove user " + str(user)
                 + " from nopasswdlogin group while using the location feature.")
 
@@ -771,57 +810,14 @@ if __name__ == '__main__':
         help="Configuration file path.")
     (options, args) = parser.parse_args()
 
-    net      = Net()
-    user     = User()
-    logger   = Logging()
-    version  = Version()
-    fileOpts = FileOpts()
-    database = Database()
-    gdm      = GraphicalDisplayManager()
-
-    # These strings are used to compare against the command line args passed.
-    # It could have been done with an action but default values were used instead.
-    # These strings are coupled with their respective counterpart in the config_dist
-    # data structure declared below.
-
-    email          = '(e|--email)'
-    password       = '(p|--password)'
-    video          = '(V|--video)'
-    verbose        = '(v|--verbose)'
-    port           = '(P|--port)'
-    attempts       = '(a|--attempts)'
-    location       = '(L|--location)'
-    logfile        = '(l|--log-file)'
-    enablecam      = '(c|--enable-cam)'
-    autologin      = '(A|--auto-login)'
-    website        = '(w|--website)'
-    clearautologin = '(X|--clear-autologin)'
-    allowsucessful = '(s|--allow-sucessful)'
-    browser        = '(B|--browser)'
-
-    # Easiest way to share variables between clases without wanting to 
-    # chop my computer up with an fucking axe! The key is used for reference
-    # while the first value is reserved for config files values and if they 
-    # are blank then they are filled in with the 2nd values value. The array 
-    # inside the array after the dictionary declaration is reserved for when 
-    # the config file option is passed but an option has no value. That key
-    # name is stored in this array.
-
-    config_dict = [{
-        'email': ['', options.email, email],
-        'password': ['', options.password, password],
-        'video': ['', options.video, video],
-        'verbose': ['', options.verbose, verbose],
-        'port': ['', options.port, port],
-        'attempts': ['', options.attempts, attempts],
-        'location': ['', options.location, location],
-        'logfile': ['', options.logfile, logfile],
-        'enablecam': ['', options.enablecam, enablecam],
-        'autologin': ['', options.autologin, autologin],
-        'website': ['', options.website, website],
-        'clearautologin': ['', options.clearautologin, clearautologin],
-        'allowsucessful': ['', options.allowsucessful, allowsucessful],
-        'browser': ['', options.browser, browser]}, []]
+    net        = Net()
+    user       = User()
+    logger     = Logging()
+    version    = Version()
+    fileOpts   = FileOpts()
+    database   = Database()
+    gdm        = GraphicalDisplayManager()
+    configFile = ConfigFile(options.configfile)
 
     # This will recursivley check for and or
     # create the program's directory tree structure.
@@ -840,4 +836,4 @@ if __name__ == '__main__':
     if not fileOpts.file_exists('/var/log/imagecapture.log'):
         fileOpts.create_file('/var/log/imagecapture.log')
 
-    ImageCapture(config_dict).main()
+    ImageCapture().main()
