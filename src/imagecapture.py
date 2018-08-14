@@ -34,9 +34,6 @@ except ImportError:
 
 class Logging():
 
-    def __init__(self):
-        pass
-
     def log(self,level,message):
         comm = re.search("(WARN|INFO|ERROR)", str(level), re.M)
         try:
@@ -144,17 +141,6 @@ class ConfigFile():
             return False
         return True
 
-    # This method is written this way instead of just returning
-    # len(sys.argv[1:] because this method only grabs the command
-    # line switches and not its counterpart. So this method grabs
-    # the -v and not the 0 here -> -v 0, making the count 1 and not 2.
-    def number_of_args_passed(self):
-        for arg in sys.argv[1:]:
-            comm = re.search('(\-[a-z])', str(arg), re.M | re.I)
-            if comm is not None:
-                self.args_list.append(comm.group())
-        return len(self.args_list)
-
     def config_file_syntax_sanity_check(self):
         for line in self.config_file:
             comm = re.search(r'(^.*)=(.*)', str(line), re.M | re.I)
@@ -166,12 +152,6 @@ class ConfigFile():
                         + comm.group(1)
                         + ") is not a recognized option!")
                     sys.exit(0)
-
-    def command_line_options(self):
-        pass
-
-    def default_options(self):
-        pass
 
 class ImageCapture():
 
@@ -623,9 +603,6 @@ class Database():
 # in the optparser via command line option.
 class GraphicalDisplayManager():
 
-    def __init__(self):
-        pass
-
     def add_to_group(self,user):
         os.system("sudo usermod -a -G nopasswdlogin " + str(user))
 
@@ -671,32 +648,17 @@ class GraphicalDisplayManager():
             logger.log("INFO", "Automatically logging you in now.")
             self.add_to_group(user)
 
-    def pam_d(self):
-        if version.system_package_manager() == 'rpm':
-            return ('password-auth',)
-        elif version.system_package_manager() == 'apt':
-            return ('common-auth',)
-        elif self.version.system_package_manager() == 'eix':
-            return ('system-login',)
-
-
 # This class returns user name you logged in with. This is used a lot in 
 # this program especially in the GraphicalDisplayManager class. In that class 
 # it allows this program to add/remove your username from the nopasswordlogin 
 # group. See the GraphicalDisplayManager class for further explaination.
 class User():
 
-    def __init__(self):
-        pass
-
     def name(self):
         comm = subprocess.Popen(["users"], shell=True, stdout=subprocess.PIPE)
         return re.search("(\w+)", str(comm.stdout.read())).group()
     
 class Net():
-
-    def __init__(self):
-        pass
 
     def connected(self):
         try:
@@ -705,7 +667,8 @@ class Net():
         except urllib2.URLError as err:
             return False
 
-    # Returns your mac address.
+    # Returns your mac address. I will send this along with the other data
+    # to better tie the data into the laptop definitively proving it's yours.
     def get_hardware_address(self,ifname):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', ifname[:15]))
@@ -713,38 +676,13 @@ class Net():
 
 class Version():
 
-    def __init__(self):
-        pass
-
     def python(self):
         python_version = re.search('\d\.\d', str(sys.version), re.I | re.M)
         if python_version is not None:
             return python_version.group()
         return "None"
 
-    def release(self):
-        comm = subprocess.Popen(["lsb_release -irs"], shell=True, stdout=subprocess.PIPE)
-        return re.search("(\w+)", str(comm.stdout.read())).group()
-
-    def system_package_manager(self):
-        package_manager = {
-            'rpm': ('centos','fedora','scientific','opensuse'),
-            'apt': ('debian','ubuntu','linuxmint'),
-            'eix': ('gentoo',)}
-        for key,value in package_manager.items():
-            manager = re.search(release().lower(),str(value), re.I | re.M)
-            if manager is not None:
-                return key
-        if manager is None:
-            return False
-
 class FileOpts():
-
-    def __init__(self):
-        pass
-
-    def home_directory(self):
-        return "/home/" + user.name()
 
     def root_directory(self):
         return "/home/" + str(user.name()) + "/.imagecapture"
@@ -758,23 +696,12 @@ class FileOpts():
     def database_path(self):
         return str(self.root_directory()) + '/imagecapture.db'
 
-    def current_directory(self):
-        return str(os.getcwd())
-
     def file_exists(self,file_name):
         return os.path.isfile(file_name)
 
     def create_file(self,file_name):
         if not self.file_exists(file_name):
             open(file_name, 'w')
-
-    def chown(self,dir_path,user_name,group_name):
-        uid = pwd.getpwnam(user_name).pw_uid
-        gid = grp.getgrnam(group_name).gr_gid
-        os.chown(dir_path, uid, gid)
-
-    def chmod(self,dir_path,mode):
-        os.chmod(dir_path, mode)
 
     def dir_exists(self,dir_path):
         return os.path.isdir(dir_path)
