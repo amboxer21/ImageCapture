@@ -688,7 +688,7 @@ class FileOpts():
         return "/home/" + str(user.name()) + "/.imagecapture"
 
     def picture_directory(self):
-        return "/home/" + str(user.name()) + "/.imagecapture/pictures"
+        return self.root_directory + "/pictures"
 
     def picture_path(self):
         return str(self.picture_directory()) + '/capture.png'
