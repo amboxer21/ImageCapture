@@ -49,14 +49,14 @@ class Logging():
                 print(level + " is not a level. Use: WARN, ERROR, or INFO!")
                 return
             elif comm.group() == 'ERROR':
-                logging.error("(" + str(level) + ") " + "SSHMonitor - " + str(message))
+                logging.error("(" + str(level) + ") " + "ImageCapture - " + str(message))
             elif comm.group() == 'INFO':
-                logging.info("(" + str(level) + ") " + "SSHMonitor - " + str(message))
+                logging.info("(" + str(level) + ") " + "ImageCapture - " + str(message))
             elif comm.group() == 'WARN':
-                logging.warn("(" + str(level) + ") " + "SSHMonitor - " + str(message))
+                logging.warn("(" + str(level) + ") " + "ImageCapture - " + str(message))
             # Print to stdout only if the verbose option is passed or log level = ERROR.
             if options.verbose or str(level) == 'ERROR':
-                print("(" + str(level) + ") " + "SSHMonitor - " + str(message))
+                print("(" + str(level) + ") " + "ImageCapture - " + str(message))
         except Exception as e:
             print("Error in Logging class => " + str(e))
             pass
