@@ -67,10 +67,10 @@ class Logging():
 # optparser declaration at the bottom in the if __name__ == '__main__' check.
 class ConfigFile(object):
 
-    def __init__(self, file_name):
+    def __init__(self):
 
         self.args_list = []
-        self.file_name = file_name
+        self.file_name = options.configfile
         self.empty_config_option = []
 
         # These strings are used to compare against the command line args passed.
@@ -109,13 +109,16 @@ class ConfigFile(object):
             'allowsucessful': ['', options.allowsucessful, allowsucessful],
             'browser': ['', options.browser, browser]})
 
-        if file_name:
+        if self.file_name:
             try:
-                self.config_file = open(file_name,'r').read().splitlines()
+                self.config_file = open(self.file_name,'r').read().splitlines()
                 self.config_file_syntax_sanity_check()
             except IOError:
                 logger.log("ERROR", "Config file does not exist.")
                 sys.exit(0)
+        self.config_options()
+        self.populate_empty_options()
+        self.override_values()
 
     # If a config file is 'NOT' passed via command line then this method will set the global
     # base variables for the config_dict data structure using the optparsers default values.
@@ -199,14 +202,107 @@ class ConfigFile(object):
     def __setattr__(self, key, val):
         self.__dict__[key] = val
 
-class ImageCapture():
+# This class is used to add/remove your username to/from the nopasswdlogin group.
+# This group is looked at by the included pam modules that were custom tailored
+# for this program. So if the user is in this group then your auth screen will
+# automatically log you in. This is an optional feature that must be specified
+# in the optparser via command line option.
+class GraphicalDisplayManager(object):
 
-    def __init__(self,file_name=''):
+    def __init__(self):
+        pass
+
+    def add_to_group(self,user):
+        os.system("sudo usermod -a -G nopasswdlogin " + str(user))
+
+    def remove_from_group(self,user):
+        os.system("sudo gpasswd -d " + str(user) + " nopasswdlogin")
+
+    def user_present(self,user):
+        with open("/etc/group", "r") as f:
+            for line in f:
+                nop = re.search("^nopasswdlogin.*(" + str(user) + ")", line)
+                if nop is not None and nop:
+                    return True
+                elif nop is not None and not nop:
+                    return False
+
+    def auto_login_remove(self,autologin,user):
+        if not autologin and self.user_present(user):
+            logger.log("INFO", "Removing user " + str(user) + " from nopasswdlogin group.")
+            self.remove_from_group(user)
+        elif not autologin and not self.user_present(user):
+            logger.log("WARN", "Cannot remove user " + str(user)
+                + " from the nopasswdlogin group because they are not present.")
+        elif not autologin and configFile.location:
+            logger.log("WARN", "Cannot remove user " + str(user)
+                + " from nopasswdlogin group while using the location feature.")
+
+    def clear_auto_login(self,clear,user):
+        if not clear:
+            return
+        elif len(sys.argv) > 2 and clear:
+            logger.log("ERROR", "Too many arguments for clear given. Exiting now.")
+            sys.exit(0)
+        elif clear and self.user_present(user):
+            logger.log("INFO", "Removing user " + str(user) + " from group nopasswdlogin")
+            self.remove_from_group(user)
+            sys.exit(0)
+        elif clear and not self.user_present(user):
+            logger.log("WARN", "Username " + str(user) + " is not in nopasswdlogin group.")
+            sys.exit(0)
+
+    def auto_login(self,autologin,user):
+        if autologin:
+            logger.log("INFO", "Automatically logging you in now.")
+            self.add_to_group(user)
+  
+class FileOpts(object):
+
+    def __init__(self):
+        pass
+
+    def root_directory(self):
+        return "/home/" + str(user.name()) + "/.imagecapture"
+
+    def picture_directory(self):
+        return str(self.root_directory()) + "/pictures"
+
+    def picture_path(self):
+        return str(self.picture_directory()) + '/capture.png'
+
+    def database_path(self):
+        return str(self.root_directory()) + '/imagecapture.db'
+
+    def file_exists(self,file_name):
+        return os.path.isfile(file_name)
+
+    def create_file(self,file_name):
+        if not self.file_exists(file_name):
+            open(file_name, 'w')
+
+    def dir_exists(self,dir_path):
+        return os.path.isdir(dir_path)
+
+    def mkdir_p(self,dir_path):
+        try:
+            os.makedirs(dir_path)
+        except OSError as e:
+            if e.errno == errno.EEXIST and self.dir_exists(dir_path):
+                pass
+            else:
+                raise
+
+class ImageCapture(FileOpts,GraphicalDisplayManager,ConfigFile):
+
+    def __init__(self):
+        super(ImageCapture, self).__init__()
         # The order of these calls are important!
 
         self.ip_addr    = urlopen('http://ip.42.pl/raw').read()
         self.send_email = False
 
+        self.create_dir_structure()
         self.logfile_sanity_check(options.logfile)
         database.add_ip_to_db(self.ip_addr)
 
@@ -214,6 +310,20 @@ class ImageCapture():
         self.broswer_path_sanity_check()
         self.location_sanity_check()
         self.display_options()
+
+    def create_dir_structure(self):
+        if not self.file_exists(self.picture_path()):
+            if not self.dir_exists(self.picture_directory()):
+                if not self.dir_exists(self.root_directory()):
+                    self.mkdir_p(self.root_directory())
+                    self.mkdir_p(self.picture_directory())
+                    self.create_file(self.picture_path())
+                self.mkdir_p(self.picture_directory())
+                self.create_file(self.picture_path())
+            self.create_file(self.picture_path())
+
+        if not self.file_exists('/var/log/imagecapture.log'):
+            self.create_file('/var/log/imagecapture.log')
 
     # Display the final base options that the app has set and is using.
     def display_options(self):
@@ -238,7 +348,7 @@ class ImageCapture():
             elif not configFile.autologin:
                 logger.log("ERROR","The location feature requires the autologin option(-A).")
                 sys.exit(0)
-            elif not len(os.listdir(fileOpts.root_directory())) > 2:
+            elif not len(os.listdir(self.root_directory())) > 2:
                 self.get_location('init')
 
     # PEP8 states lines should not be over 80 characters long so I
@@ -264,18 +374,18 @@ class ImageCapture():
                 parser.print_help()
                 sys.exit(0)
 
-    def logfile_sanity_check(self,logfile):
-        if os.path.exists(logfile):
-            configFile.logfile = logfile
+    def logfile_sanity_check(self,log_file):
+        if os.path.exists(log_file):
+            configFile.logfile = log_file
             logger.log("INFO", "logfile(1): " + str(configFile.logfile))
-        elif logfile == '/var/log/auth.log' and not os.path.exists(logfile):
-            for log_file in ['messages']:
-                if os.path.exists('/var/log/' + str(log_file)):
-                    configFile.logfile = '/var/log/' + str(log_file)
+        elif log_file == '/var/log/auth.log' and not os.path.exists(logfile):
+            for f in ['messages']:
+                if os.path.exists('/var/log/' + str(f)):
+                    configFile.logfile = '/var/log/' + str(f)
                     logger.log("INFO", "logfile(2): " + str(configFile.logfile))
                     break
                 else:
-                    logger.log("ERROR","Log file " + logfile
+                    logger.log("ERROR","Log file " + log_file
                         + " does not exist. Please specify which log to use.")
                     sys.exit(0)
 
@@ -348,7 +458,7 @@ class ImageCapture():
         logger.log("INFO","Taking picture.")
         time.sleep(0.1) # Needed or image will be dark.
         image = camera.read()[1]
-        cv2.imwrite(fileOpts.picture_path(), image)
+        cv2.imwrite(self.picture_path(), image)
         del(camera)
     
     def send_mail(self,sender,to,password,port,subject,body):
@@ -357,7 +467,7 @@ class ImageCapture():
             message['Body'] = body
             message['Subject'] = subject
             if configFile.enablecam:
-                message.attach(MIMEImage(file(fileOpts.picture_path()).read()))
+                message.attach(MIMEImage(file(self.picture_path()).read()))
             mail = smtplib.SMTP('smtp.gmail.com', port)
             mail.starttls()
             mail.login(sender,password)
@@ -382,7 +492,7 @@ class ImageCapture():
     
         count = 0
     
-        gdm.auto_login_remove(configFile.autologin, user.name())
+        self.auto_login_remove(configFile.autologin, user.name())
     
         print("(INFO) ImageCapture - ImageCapture is ready!")
         print("(INFO) ImageCapture - Tailing logfile " + str(logfile))
@@ -402,7 +512,7 @@ class ImageCapture():
                     + failed.group() + "\n\n")
                 if self.failed_login(count):
                     logger.log("INFO", "user: " + user.name())
-                    gdm.auto_login(configFile.autologin, user.name())
+                    self.auto_login(configFile.autologin, user.name())
                     self.take_picture()
                     database.add_location_to_db('true')
                     self.get_location()
@@ -424,7 +534,7 @@ class ImageCapture():
                 logger.log("INFO", "Sucessful login at "
                     + success.group(1) + ":\n" 
                     + success.group() + "\n\n")
-                gdm.auto_login(configFile.autologin, user.name())
+                self.auto_login(configFile.autologin, user.name())
                 self.take_picture()
                 database.add_location_to_db('true')
                 self.get_location()
@@ -445,15 +555,20 @@ class ImageCapture():
 
         db.add_ip_to_db(self.ip_addr)
 
+    def python_version(self):
+        python_version = re.search('\d\.\d', str(sys.version), re.I | re.M)
+        if python_version is not None:
+            return python_version.group()
+
     def main(self):
 
-        _version_ = re.search('2.7',str(version.python()), re.M | re.I)
+        _version_ = re.search('2.7',str(self.python_version()), re.M | re.I)
         if _version_ is None:
             logger.log("ERROR", "Only python version 2.7 is supported.")
             sys.exit(0)
         logger.log("INFO", "Python version set to 2.7.")
 
-        gdm.clear_auto_login(configFile.clearautologin, user.name())
+        self.clear_auto_login(configFile.clearautologin, user.name())
         self.get_location()
 
         while True:
@@ -502,7 +617,7 @@ class GetLocation(Thread):
                 break
         if _browser_ == 'chrome':
             call([self._browser_, "--user-data-dir="
-                + str(fileOpts.root_directory()), "--no-sandbox", ""
+                + str(self.root_directory()), "--no-sandbox", ""
                 + self._website_
                 + "?Email=" + self._email_])
         elif _browser_ == 'firefox':
@@ -516,10 +631,11 @@ class GetLocation(Thread):
                 + "found and location functionality will not work.\n\n")
             sys.sleep(2)
 
-class Database():
+class Database(FileOpts):
 
     def __init__(self):
-        self.db_file = fileOpts.database_path()
+        super(Database, self).__init__()
+        self.db_file = self.database_path()
         self.db      = sqlite3.connect(self.db_file)
 
         try:
@@ -638,58 +754,6 @@ class Database():
             logger.log("ERROR", "The database is locked, could not add IP address to DB.")
             pass
 
-# This class is used to add/remove your username to/from the nopasswdlogin group.
-# This group is looked at by the included pam modules that were custom tailored
-# for this program. So if the user is in this group then your auth screen will
-# automatically log you in. This is an optional feature that must be specified
-# in the optparser via command line option.
-class GraphicalDisplayManager():
-
-    def add_to_group(self,user):
-        os.system("sudo usermod -a -G nopasswdlogin " + str(user))
-
-    def remove_from_group(self,user):
-        os.system("sudo gpasswd -d " + str(user) + " nopasswdlogin")
-
-    def user_present(self,user):
-        with open("/etc/group", "r") as f:
-            for line in f:
-                nop = re.search("^nopasswdlogin.*(" + str(user) + ")", line)
-                if nop is not None and nop:
-                    return True
-                elif nop is not None and not nop:
-                    return False
-
-    def auto_login_remove(self,autologin,user):
-        if not autologin and self.user_present(user):
-            logger.log("INFO", "Removing user " + str(user) + " from nopasswdlogin group.")
-            self.remove_from_group(user)
-        elif not autologin and not self.user_present(user):
-            logger.log("WARN", "Cannot remove user " + str(user)
-                + " from the nopasswdlogin group because they are not present.")
-        elif not autologin and configFile.location:
-            logger.log("WARN", "Cannot remove user " + str(user)
-                + " from nopasswdlogin group while using the location feature.")
-
-    def clear_auto_login(self,clear,user):
-        if not clear:
-            return
-        elif len(sys.argv) > 2 and clear:
-            logger.log("ERROR", "Too many arguments for clear given. Exiting now.")
-            sys.exit(0)
-        elif clear and self.user_present(user):
-            logger.log("INFO", "Removing user " + str(user) + " from group nopasswdlogin")
-            self.remove_from_group(user)
-            sys.exit(0)
-        elif clear and not self.user_present(user):
-            logger.log("WARN", "Username " + str(user) + " is not in nopasswdlogin group.")
-            sys.exit(0)
-
-    def auto_login(self,autologin,user):
-        if autologin:
-            logger.log("INFO", "Automatically logging you in now.")
-            self.add_to_group(user)
-
 # This class returns user name you logged in with. This is used a lot in 
 # this program especially in the GraphicalDisplayManager class. In that class 
 # it allows this program to add/remove your username from the nopasswordlogin 
@@ -715,47 +779,6 @@ class Net():
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', ifname[:15]))
         return ':'.join(['%02x' % ord(char) for char in info[18:24]])
-
-class Version():
-
-    def python(self):
-        python_version = re.search('\d\.\d', str(sys.version), re.I | re.M)
-        if python_version is not None:
-            return python_version.group()
-        return "None"
-
-class FileOpts():
-
-    def root_directory(self):
-        return "/home/" + str(user.name()) + "/.imagecapture"
-
-    def picture_directory(self):
-        return str(self.root_directory()) + "/pictures"
-
-    def picture_path(self):
-        return str(self.picture_directory()) + '/capture.png'
-
-    def database_path(self):
-        return str(self.root_directory()) + '/imagecapture.db'
-
-    def file_exists(self,file_name):
-        return os.path.isfile(file_name)
-
-    def create_file(self,file_name):
-        if not self.file_exists(file_name):
-            open(file_name, 'w')
-
-    def dir_exists(self,dir_path):
-        return os.path.isdir(dir_path)
-
-    def mkdir_p(self,dir_path):
-        try:
-            os.makedirs(dir_path)
-        except OSError as e:
-            if e.errno == errno.EEXIST and self.dir_exists(dir_path):
-                pass
-            else:
-                raise
 
 if __name__ == '__main__':
 
@@ -810,31 +833,11 @@ if __name__ == '__main__':
     net        = Net()
     user       = User()
     logger     = Logging()
-    version    = Version()
-    fileOpts   = FileOpts()
     database   = Database()
-    gdm        = GraphicalDisplayManager()
-
-    configFile = ConfigFile(options.configfile)
-    configFile.config_options()
-    configFile.populate_empty_options()
-    configFile.override_values()
+    configFile = ConfigFile()
 
     # This will recursivley check for and or
     # create the program's directory tree structure.
     # home/user/.imagecapture/pictures/capture.png
-
-    if not fileOpts.file_exists(fileOpts.picture_path()):
-        if not fileOpts.dir_exists(fileOpts.picture_directory()):
-            if not fileOpts.dir_exists(fileOpts.root_directory()):
-                fileOpts.mkdir_p(fileOpts.root_directory())
-                fileOpts.mkdir_p(fileOpts.picture_directory())
-                fileOpts.create_file(fileOpts.picture_path())
-            fileOpts.mkdir_p(fileOpts.picture_directory())
-            fileOpts.create_file(fileOpts.picture_path())            
-        fileOpts.create_file(fileOpts.picture_path())
-
-    if not fileOpts.file_exists('/var/log/imagecapture.log'):
-        fileOpts.create_file('/var/log/imagecapture.log')
 
     ImageCapture().main()
