@@ -196,8 +196,7 @@ class ConfigFile(object):
                     sys.exit(0)
 
     def __getattr__(self, key):
-        if self.__dict__.has_key(key):
-            return self.__dict__[key]
+        return self.config_dict[key][0]
 
     def __setattr__(self, key, val):
         self.__dict__[key] = val
@@ -683,7 +682,8 @@ class ImageCapture(Database,FileOpts,GraphicalDisplayManager,ConfigFile,Net):
     
     def failed_login(self,count):
       logger.log("INFO", "count: " + str(count))
-      if (count == int(configFile.attempts) or
+      print("count: " + str(count) + ", configFile.attempts: " + str(configFile.attempts))
+      if (int(count) == int(configFile.attempts) or
           configFile.allowsucessful):
               logger.log("INFO", "failed_login True")
               return True
