@@ -32,7 +32,7 @@ try:
 except ImportError:
     import urllib
 
-class Logging():
+class Logging(object):
 
     def log(self,level,message):
         comm = re.search("(WARN|INFO|ERROR)", str(level), re.M)
@@ -67,7 +67,7 @@ class Logging():
 # optparser declaration at the bottom in the if __name__ == '__main__' check.
 class ConfigFile(object):
 
-    def __init__(self):
+    def __init__(self, *args):
 
         self.args_list = []
         self.file_name = options.configfile
@@ -209,7 +209,8 @@ class ConfigFile(object):
 # in the optparser via command line option.
 class GraphicalDisplayManager(object):
 
-    def __init__(self):
+    def __init__(self, *args):
+        print("GraphicalDisplayManager => " + str(args))
         pass
 
     def add_to_group(self,user):
@@ -259,7 +260,8 @@ class GraphicalDisplayManager(object):
   
 class FileOpts(object):
 
-    def __init__(self):
+    def __init__(self, *args):
+        print(" => " + str(args))
         pass
 
     def root_directory(self):
@@ -293,10 +295,208 @@ class FileOpts(object):
             else:
                 raise
 
-class ImageCapture(FileOpts,GraphicalDisplayManager,ConfigFile):
+class Net(object):
+
+    def connected(self, *args):
+        try:
+            urllib2.urlopen('http://www.google.com', timeout=1)
+            return True
+        except urllib2.URLError as err:
+            return False
+
+    # Returns your mac address. I will send this along with the other data
+    # to better tie the data into the laptop definitively proving it's yours.
+    def get_hardware_address(self,ifname):
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', ifname[:15]))
+        return ':'.join(['%02x' % ord(char) for char in info[18:24]])
+
+# This class is used to grab the location of the laptop. The loacation data
+# is in the form of longitude/latitude coordinates and is E-mailed to you.
+# This is done through a website I wrote in PHP/HTML, Javascript, and JQuery 
+# using a post request that is sent to heroku.
+class GetLocation(Thread):
+
+    def __init__(self,website,email,browser):
+        Thread.__init__(self)
+        self.count = 0
+        self._email_,configFile.email     = (email,email)
+        self._website_,configFile.website = (website,website)
+        self._browser_,configFile.browser = (browser,browser)
+
+    def browser_exists(self,browser):
+        return find_executable(browser)
+
+    def run(self):
+
+        # This is the supported browser list and can be added to.
+        browsers = [
+            '/opt/google/chome/chrome',
+            '/usr/bin/firefox',
+            '/usr/bin/opera']
+
+        for b in browsers: 
+            if self.browser_exists(self._browser_) and self.count == 0:
+                _browser_ = re.match("(\/\w+)(.*\/)(\w+)",self._browser_).group(3)
+                break
+            self.count += 1
+            if self.count > len(b):
+                logger.log("ERROR",
+                    "Only the following browsers are supported: Chrome, Opera, and Firefox.")
+            elif self.browser_exists(b):
+                _browser_ = re.match("(\/\w+)(.*\/)(\w+)",b).group(3)
+                break
+        if _browser_ == 'chrome':
+            call([self._browser_, "--user-data-dir="
+                + str(self.root_directory()), "--no-sandbox", ""
+                + self._website_
+                + "?Email=" + self._email_])
+        elif _browser_ == 'firefox':
+            call([self._browser_,"--new-window", ""
+                + self._website_
+                + "?Email="
+                + self._email_ + "\""])
+        #elif _browser_ == 'opera':
+        else:
+            logger.log("WARNING", "\n\nBrowser not "
+                + "found and location functionality will not work.\n\n")
+            sys.sleep(2)
+
+class Database(object):
+
+    def __init__(self,file_name,*args):
+        self.db = sqlite3.connect(file_name)
+
+        try:
+            query = self.db.execute("select * from connected")
+        except sqlite3.OperationalError:
+            self.db.execute("CREATE TABLE connected(id integer primary key AUTOINCREMENT, "
+                + "location_bool text not null, coordinates text not null, ip_addr text not null);")
+            logger.log("INFO","Table(connected) does not exist, creating now.")
+
+    def file_exists(self,file_name):
+        return os.path.exists(file_name)
+
+    def write_to_db(self,location_bool,coordinates,ip_addr):
+        if location_bool is None or coordinates is None or ip_addr is None:
+            return
+        elif not re.search("true|false|NULL", location_bool, re.I|re.M):
+            logger.log("ERROR", str(location_bool) + " is not a known mode.")
+        elif not re.search("\A\((\d|\-\d)+\.\d+,\s(\d|\-\d)+\.\d+\)|NULL", coordinates, re.M | re.I):
+            logger.log("ERROR", "Improper coordinate format -> " + str(coordinates) + ".")
+        elif not re.search("\A\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}$|NULL", ip_addr, re.M|re.I):
+            logger.log("ERROR", "Improper ip address format -> " + str(ip_addr) + ".")
+        else:
+            coor = re.sub("[\(\)]", "", str(coordinates))
+            self.db.execute("insert into connected (location_bool, coordinates, ip_addr) "
+                + "values(\""
+                + str(location_bool) + "\", \""
+                + str(coor) + "\", \""
+                + str(ip_addr) + "\")")
+            self.db.commit()
+
+    def read_from_db(self,column):
+        query = self.db.execute("select * from connected")
+        for row in query:
+            if column == 'location_bool' and row[1] is not None:
+                return str(row[1])
+            elif column == 'coordinates' and row[2] is not None:
+                return str(row[2])
+            elif column == 'ip_addr' and row[3] is not None:
+                return str(row[3])
+            else:
+                logger.log("ERROR", "Not a known column or DB is empty.")
+                return
+
+    def update_db(self,column,value):
+        if column is None or value is None:
+            return
+        try:
+            if (self.read_from_db('location_bool') is None or
+                self.read_from_db('coordinates') is None or 
+                self.read_from_db('ip_addr') is None):
+                    logger.log("ERROR", "You must write to the database first before updating!")
+                    return
+            elif re.search("true|false", value, re.I|re.M) and column == 'location_bool':
+                self.db.execute("update connected set location_bool = \"" + value + "\"")
+                self.db.commit()
+            elif (re.search("\A(\d|\-\d)+\.\d+,\s(\d|\-\d)+\.\d+", value, re.M | re.I) and
+                column == 'coordinates'):
+                    self.db.execute("update connected set coordinates = \"" + value + "\"")
+                    self.db.commit()
+            elif (re.search("\A\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}$", value, re.M|re.I) and
+                column == 'ip_addr'):
+                    self.db.execute("update connected set ip_addr = \"" + value + "\"")
+                    self.db.commit()
+            else:
+                logger.log("ERROR", str(column)
+                    + " is not a known column for the connected table in the imagecapture db.")
+                return
+        except sqlite3.OperationalError:
+            logger.log("ERROR", "The database is lock, could not add coordinates to DB.")
+
+    def add_location_to_db(self,location_bool):
+        try:
+            if self.read_from_db('location_bool') is None:
+                self.write_to_db(location_bool,'NULL','NULL')
+                logger.log("INFO", "Writing location_bool to DB.")
+            elif (self.read_from_db('location_bool') != location_bool and
+                self.read_from_db('location_bool') is not None):
+                    self.update_db('location_bool', location_bool)
+                    logger.log("INFO", "Updating location_bool variable in DB.")
+            else:
+                return
+        except sqlite3.OperationalError:
+            call(['/usr/bin/rm', self.db_file])
+            logger.log("ERROR", "The database is locked, could not add location_bool to DB.")
+            pass
+
+    def add_coordinates_to_db(self,coordinates):
+        try:
+            if self.read_from_db('coordinates') is None:
+                self.write_to_db('NULL', coordinates,'NULL')
+                logger.log("INFO", "Writing coordinates to DB.")
+            elif (not self.read_from_db('coordinates') == coordinates
+                and self.read_from_db('coordinates') is not None):
+                    self.update_db('coordinates', ip_addr)
+                    logger.log("INFO", "Updating coordinates variable in DB.")
+            else:
+                return
+        except sqlite3.OperationalError:
+            call(['/usr/bin/rm', self.db_file])
+            logger.log("ERROR", "The database is locked, could not add coordinates to DB.")
+            pass
+
+    def add_ip_to_db(self,ip_addr):
+        try:
+            if self.read_from_db('ip_addr') is None:
+                self.write_to_db('NULL','NULL', ip_addr)
+                logger.log("INFO", "Writing ip_addr to DB.")
+            elif (self.read_from_db('ip_addr') != ip_addr and
+                self.read_from_db('ip_addr') is not None):
+                    self.update_db('ip_addr', ip_addr)
+                    logger.log("INFO", "Updating ip_addr variable in DB.")
+            else:
+                return
+        except sqlite3.OperationalError:
+            call(['/usr/bin/rm', self.db_file])
+            logger.log("ERROR", "The database is locked, could not add IP address to DB.")
+            pass
+
+# This class returns user name you logged in with. This is used a lot in 
+# this program especially in the GraphicalDisplayManager class. In that class 
+# it allows this program to add/remove your username from the nopasswordlogin 
+# group. See the GraphicalDisplayManager class for further explaination.
+class User(object):
+
+    def name(self):
+        comm = subprocess.Popen(["users"], shell=True, stdout=subprocess.PIPE)
+        return re.search("(\w+)", str(comm.stdout.read())).group()
+
+class ImageCapture(Database,FileOpts,GraphicalDisplayManager,ConfigFile,Net):
 
     def __init__(self):
-        super(ImageCapture, self).__init__()
+        super(ImageCapture, self).__init__(self.database_path())
         # The order of these calls are important!
 
         self.ip_addr    = urlopen('http://ip.42.pl/raw').read()
@@ -304,13 +504,16 @@ class ImageCapture(FileOpts,GraphicalDisplayManager,ConfigFile):
 
         self.create_dir_structure()
         self.logfile_sanity_check(options.logfile)
-        database.add_ip_to_db(self.ip_addr)
+        self.add_ip_to_db(self.ip_addr)
 
         self.credential_sanity_check()
         self.broswer_path_sanity_check()
         self.location_sanity_check()
         self.display_options()
-
+        
+    # This will recursivley check for and or
+    # create the program's directory tree structure.
+    # home/user/.imagecapture/pictures/capture.png
     def create_dir_structure(self):
         if not self.file_exists(self.picture_path()):
             if not self.dir_exists(self.picture_directory()):
@@ -402,10 +605,10 @@ class ImageCapture(FileOpts,GraphicalDisplayManager,ConfigFile):
                 + "Please use the --help option and search for -e and -p.")
             sys.exit(0)
 
-        while database.read_from_db('location_bool') == 'true' or init == 'init':
-            if net.connected():
+        while self.read_from_db('location_bool') == 'true' or init == 'init':
+            if self.connected():
                 time.sleep(3)
-                database.add_location_to_db('false')
+                self.add_location_to_db('false')
                 if self.send_email:
                     try:
                         logger.log("INFO","Sending E-mail now.")
@@ -514,7 +717,7 @@ class ImageCapture(FileOpts,GraphicalDisplayManager,ConfigFile):
                     logger.log("INFO", "user: " + user.name())
                     self.auto_login(configFile.autologin, user.name())
                     self.take_picture()
-                    database.add_location_to_db('true')
+                    self.add_location_to_db('true')
                     self.get_location()
                     if not configFile.enablecam and self.send_email:
                         try:
@@ -536,7 +739,7 @@ class ImageCapture(FileOpts,GraphicalDisplayManager,ConfigFile):
                     + success.group() + "\n\n")
                 self.auto_login(configFile.autologin, user.name())
                 self.take_picture()
-                database.add_location_to_db('true')
+                self.add_location_to_db('true')
                 self.get_location()
                 if not configFile.enablecam and self.send_email:
                     try:
@@ -579,206 +782,6 @@ class ImageCapture(FileOpts,GraphicalDisplayManager,ConfigFile):
             except KeyboardInterrupt:
                 logger.log("INFO", " [Control C caught] - Exiting ImageCapturePy now!")
                 break
-
-# This class is used to grab the location of the laptop. The loacation data
-# is in the form of longitude/latitude coordinates and is E-mailed to you.
-# This is done through a website I wrote in PHP/HTML, Javascript, and JQuery 
-# using a post request that is sent to heroku.
-class GetLocation(Thread):
-
-    def __init__(self,website,email,browser):
-        Thread.__init__(self)
-        self.count = 0
-        self._email_,configFile.email     = (email,email)
-        self._website_,configFile.website = (website,website)
-        self._browser_,configFile.browser = (browser,browser)
-
-    def browser_exists(self,browser):
-        return find_executable(browser)
-
-    def run(self):
-
-        # This is the supported browser list and can be added to.
-        browsers = [
-            '/opt/google/chome/chrome',
-            '/usr/bin/firefox',
-            '/usr/bin/opera']
-
-        for b in browsers: 
-            if self.browser_exists(self._browser_) and self.count == 0:
-                _browser_ = re.match("(\/\w+)(.*\/)(\w+)",self._browser_).group(3)
-                break
-            self.count += 1
-            if self.count > len(b):
-                logger.log("ERROR",
-                    "Only the following browsers are supported: Chrome, Opera, and Firefox.")
-            elif self.browser_exists(b):
-                _browser_ = re.match("(\/\w+)(.*\/)(\w+)",b).group(3)
-                break
-        if _browser_ == 'chrome':
-            call([self._browser_, "--user-data-dir="
-                + str(self.root_directory()), "--no-sandbox", ""
-                + self._website_
-                + "?Email=" + self._email_])
-        elif _browser_ == 'firefox':
-            call([self._browser_,"--new-window", ""
-                + self._website_
-                + "?Email="
-                + self._email_ + "\""])
-        #elif _browser_ == 'opera':
-        else:
-            logger.log("WARNING", "\n\nBrowser not "
-                + "found and location functionality will not work.\n\n")
-            sys.sleep(2)
-
-class Database(FileOpts):
-
-    def __init__(self):
-        super(Database, self).__init__()
-        self.db_file = self.database_path()
-        self.db      = sqlite3.connect(self.db_file)
-
-        try:
-            query = self.db.execute("select * from connected")
-        except sqlite3.OperationalError:
-            self.db.execute("CREATE TABLE connected(id integer primary key AUTOINCREMENT, "
-                + "location_bool text not null, coordinates text not null, ip_addr text not null);")
-            logger.log("INFO","Table(connected) does not exist, creating now.")
-
-    def file_exists(self,file_name):
-        return os.path.exists(file_name)
-
-    def write_to_db(self,location_bool,coordinates,ip_addr):
-        if location_bool is None or coordinates is None or ip_addr is None:
-            return
-        elif not re.search("true|false|NULL", location_bool, re.I|re.M):
-            logger.log("ERROR", str(location_bool) + " is not a known mode.")
-        elif not re.search("\A\((\d|\-\d)+\.\d+,\s(\d|\-\d)+\.\d+\)|NULL", coordinates, re.M | re.I):
-            logger.log("ERROR", "Improper coordinate format -> " + str(coordinates) + ".")
-        elif not re.search("\A\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}$|NULL", ip_addr, re.M|re.I):
-            logger.log("ERROR", "Improper ip address format -> " + str(ip_addr) + ".")
-        else:
-            coor = re.sub("[\(\)]", "", str(coordinates))
-            self.db.execute("insert into connected (location_bool, coordinates, ip_addr) "
-                + "values(\""
-                + str(location_bool) + "\", \""
-                + str(coor) + "\", \""
-                + str(ip_addr) + "\")")
-            self.db.commit()
-
-    def read_from_db(self,column):
-        query = self.db.execute("select * from connected")
-        for row in query:
-            if column == 'location_bool' and row[1] is not None:
-                return str(row[1])
-            elif column == 'coordinates' and row[2] is not None:
-                return str(row[2])
-            elif column == 'ip_addr' and row[3] is not None:
-                return str(row[3])
-            else:
-                logger.log("ERROR", "Not a known column or DB is empty.")
-                return
-
-    def update_db(self,column,value):
-        if column is None or value is None:
-            return
-        try:
-            if (self.read_from_db('location_bool') is None or
-                self.read_from_db('coordinates') is None or 
-                self.read_from_db('ip_addr') is None):
-                    logger.log("ERROR", "You must write to the database first before updating!")
-                    return
-            elif re.search("true|false", value, re.I|re.M) and column == 'location_bool':
-                self.db.execute("update connected set location_bool = \"" + value + "\"")
-                self.db.commit()
-            elif (re.search("\A(\d|\-\d)+\.\d+,\s(\d|\-\d)+\.\d+", value, re.M | re.I) and
-                column == 'coordinates'):
-                    self.db.execute("update connected set coordinates = \"" + value + "\"")
-                    self.db.commit()
-            elif (re.search("\A\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}$", value, re.M|re.I) and
-                column == 'ip_addr'):
-                    self.db.execute("update connected set ip_addr = \"" + value + "\"")
-                    self.db.commit()
-            else:
-                logger.log("ERROR", str(column)
-                    + " is not a known column for the connected table in the imagecapture db.")
-                return
-        except sqlite3.OperationalError:
-            logger.log("ERROR", "The database is lock, could not add coordinates to DB.")
-
-    def add_location_to_db(self,location_bool):
-        try:
-            if self.read_from_db('location_bool') is None:
-                write_to_db(location_bool,'NULL','NULL')
-                logger.log("INFO", "Writing location_bool to DB.")
-            elif (self.read_from_db('location_bool') != location_bool and
-                self.read_from_db('location_bool') is not None):
-                    self.update_db('location_bool', location_bool)
-                    logger.log("INFO", "Updating location_bool variable in DB.")
-            else:
-                return
-        except sqlite3.OperationalError:
-            call(['/usr/bin/rm', self.db_file])
-            logger.log("ERROR", "The database is locked, could not add location_bool to DB.")
-            pass
-
-    def add_coordinates_to_db(self,coordinates):
-        try:
-            if self.read_from_db('coordinates') is None:
-                self.write_to_db('NULL', coordinates,'NULL')
-                logger.log("INFO", "Writing coordinates to DB.")
-            elif (not self.read_from_db('coordinates') == coordinates
-                and self.read_from_db('coordinates') is not None):
-                    self.update_db('coordinates', ip_addr)
-                    logger.log("INFO", "Updating coordinates variable in DB.")
-            else:
-                return
-        except sqlite3.OperationalError:
-            call(['/usr/bin/rm', self.db_file])
-            logger.log("ERROR", "The database is locked, could not add coordinates to DB.")
-            pass
-
-    def add_ip_to_db(self,ip_addr):
-        try:
-            if self.read_from_db('ip_addr') is None:
-                self.write_to_db('NULL','NULL', ip_addr)
-                logger.log("INFO", "Writing ip_addr to DB.")
-            elif (self.read_from_db('ip_addr') != ip_addr and
-                self.read_from_db('ip_addr') is not None):
-                    self.update_db('ip_addr', ip_addr)
-                    logger.log("INFO", "Updating ip_addr variable in DB.")
-            else:
-                return
-        except sqlite3.OperationalError:
-            call(['/usr/bin/rm', self.db_file])
-            logger.log("ERROR", "The database is locked, could not add IP address to DB.")
-            pass
-
-# This class returns user name you logged in with. This is used a lot in 
-# this program especially in the GraphicalDisplayManager class. In that class 
-# it allows this program to add/remove your username from the nopasswordlogin 
-# group. See the GraphicalDisplayManager class for further explaination.
-class User():
-
-    def name(self):
-        comm = subprocess.Popen(["users"], shell=True, stdout=subprocess.PIPE)
-        return re.search("(\w+)", str(comm.stdout.read())).group()
-    
-class Net():
-
-    def connected(self):
-        try:
-            urllib2.urlopen('http://www.google.com', timeout=1)
-            return True
-        except urllib2.URLError as err:
-            return False
-
-    # Returns your mac address. I will send this along with the other data
-    # to better tie the data into the laptop definitively proving it's yours.
-    def get_hardware_address(self,ifname):
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', ifname[:15]))
-        return ':'.join(['%02x' % ord(char) for char in info[18:24]])
 
 if __name__ == '__main__':
 
@@ -830,14 +833,8 @@ if __name__ == '__main__':
         help="Configuration file path.")
     (options, args) = parser.parse_args()
 
-    net        = Net()
     user       = User()
     logger     = Logging()
-    database   = Database()
     configFile = ConfigFile()
-
-    # This will recursivley check for and or
-    # create the program's directory tree structure.
-    # home/user/.imagecapture/pictures/capture.png
 
     ImageCapture().main()
