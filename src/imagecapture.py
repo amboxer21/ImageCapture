@@ -57,8 +57,15 @@ class Logging(object):
             # Print to stdout only if the verbose option is passed or log level = ERROR.
             if options.verbose or str(level) == 'ERROR':
                 print("(" + str(level) + ") " + "ImageCapture - " + str(message))
+        except IOError as e:
+            if re.search('\[Errno 13\] Permission denied:', str(e), re.M | re.I):
+                print("(ERROR) ImageCapture - Must be sudo to run ImageCapture!")
+                sys.exit(0)
+            print("(ERROR) ImageCapture - IOError in Logging class => " + str(e))
+            logging.error("(ERROR) ImageCapture - IOError => " + str(e))
         except Exception as e:
-            print("Error in Logging class => " + str(e))
+            print("(ERROR) ImageCapture - Exception in Logging class => " + str(e))
+            logging.error("(ERROR) ImageCapture - Exception => " + str(e))
             pass
         return
 
@@ -196,7 +203,8 @@ class ConfigFile(object):
                     sys.exit(0)
 
     def __getattr__(self, key):
-        return self.config_dict[key][0]
+        if self.__dict__.has_key(key):
+            return self.config_dict[key][0]
 
     def __setattr__(self, key, val):
         self.__dict__[key] = val
