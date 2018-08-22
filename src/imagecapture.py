@@ -203,8 +203,7 @@ class ConfigFile(object):
                     sys.exit(0)
 
     def __getattr__(self, key):
-        if self.__dict__.has_key(key):
-            return self.config_dict[key][0]
+        return self.config_dict[key][0]
 
     def __setattr__(self, key, val):
         self.__dict__[key] = val
