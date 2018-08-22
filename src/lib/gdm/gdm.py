@@ -43,9 +43,9 @@ def auto_login(auto_login, user):
 
 def pam_d():
     if version.system_package_manager() == 'rpm':
-        return ('password-auth',)
+        return ('password-auth','mate-screensaver')
     elif version.system_package_manager() == 'apt':
-        return ('common-auth',)
+        return ('common-auth','mate-screensaver')
     elif version.system_package_manager() == 'eix':
-        return ('system-login',)
+        return ('system-login','mate-screensaver')
 
