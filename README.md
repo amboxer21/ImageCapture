@@ -1,10 +1,10 @@
-# ImageCapturePy
+# ImageCapture
 ### Description
-&nbsp;&nbsp;&nbsp;&nbsp;A program that captures an image and the geolocation data of any user that attempts to login to your compuper x amount of times. The data collected by ImageCapturePy is then E-mailed to the address you specify.
+&nbsp;&nbsp;&nbsp;&nbsp;A program that captures an image and the geolocation data of any user that attempts to login to your compuper x amount of times. The data collected by ImageCapture is then E-mailed to the address you specify.
 
 ### [Details]
 ##### Overview:
-<p>&nbsp;&nbsp;&nbsp;&nbsp;ImageCapturePy allows you to take a picture of the offender after the numbers of attempts of failed logins are reached. The number of attempts can be specified when starting the program. You can also grab the devices location in the form of geolocationdata. Both the picture and or the location data can then be E-mailed to you if you'd like. All you would need to do is pass an E-mail address and password to the program when starting it. E-mail credentials are needed because I am not providing an E-mail service so you have to be able to send the information someway - That way is through your own E-mail account. You should be able to see the outgoing E-mails in your sent box.</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;ImageCapture allows you to take a picture of the offender after the numbers of attempts of failed logins are reached. The number of attempts can be specified when starting the program. You can also grab the devices location in the form of geolocationdata. Both the picture and or the location data can then be E-mailed to you if you'd like. All you would need to do is pass an E-mail address and password to the program when starting it. E-mail credentials are needed because I am not providing an E-mail service so you have to be able to send the information someway - That way is through your own E-mail account. You should be able to see the outgoing E-mails in your sent box.</p>
    
 More to come...
 
@@ -26,7 +26,7 @@ More to come...
 
 ### [Visual of All Options]
 ```
-[anthony@ghost ImageCapturePy]$ sudo python src/imagecapture.py --help
+[anthony@ghost ImageCapture]$ sudo python src/imagecapture.py --help
 Usage: imagecapture.py [options]
 
 Options:
@@ -35,7 +35,7 @@ Options:
   -p PASSWORD, --password=PASSWORD
   -V VIDEO, --video=VIDEO
                         Specify camera location.
-  -v, --verbose         Print the options passed to ImageCapturePy.
+  -v, --verbose         Print the options passed to ImageCapture.
   -P PORT, --port=PORT  E-mail port defaults to 587 if not specified.
   -a ATTEMPTS, --attempts=ATTEMPTS
                         Number of failed attempts defaults to 3.
@@ -54,7 +54,7 @@ Options:
                         Select the browser used to grab geolocation data.
 ```
 
-### [ImageCapturePy's default values]
+### [ImageCapture's default values]
       
    * Browser:
    
