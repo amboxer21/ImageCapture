@@ -68,7 +68,7 @@ class Logging(object):
                 + " - ImageCapture - "
                 + str(message)))
         except IOError as eIOError:
-            if re.search('\[Errno 13\] Permission denied:', str(eIOError), re.M | r    e.I):
+            if re.search('\[Errno 13\] Permission denied:', str(eIOError), re.M | re.I):
                 print("(ERROR) SSHMonitor - Must be sudo to run SSHMonitor!")
                 sys.exit(0)
             print("(ERROR) SSHMonitor - IOError in Logging class => "
@@ -85,6 +85,33 @@ class Logging(object):
             pass
         return
 
+    class Mail(object):
+    
+        __disabled__ = False
+    
+        @staticmethod
+        def send(sender,to,password,port,subject,body):
+            try:
+                if not Mail.__disabled__:
+                    message = MIMEMultipart()
+                    message['Body'] = body
+                    message['Subject'] = subject
+                    mail = smtplib.SMTP('smtp.gmail.com',port)
+                    mail.starttls()
+                    mail.login(sender,password)
+                    mail.sendmail(sender, to, message.as_string())
+                    mail.quit()
+                    Logging.log("INFO", "(Mail.send) - Sent email successfully!")
+                else:
+                    Logging.log("WARN", "(Mail.send) - Sending mail has been disabled!"    )
+            except smtplib.SMTPAuthenticationError:
+                Logging.log("WARN", "(Mail.send) - Could not athenticate with password     and username!")
+            except Exception as e:
+                Logging.log("ERROR",
+                    "(Mail.send) - Unexpected error in Mail.send() error e => "
+                    + str(e))
+                pass
+    
 # The config filename is passed to this class in the ImageCapture classes __init__ method.
 # The option is the default value set in optparser and is blank by default. See the 
 # optparser declaration at the bottom in the if __name__ == '__main__' check.
@@ -682,17 +709,18 @@ class GraphicalDisplayManager():
 # this program especially in the GraphicalDisplayManager class. In that class 
 # it allows this program to add/remove your username from the nopasswordlogin 
 # group. See the GraphicalDisplayManager class for further explaination.
-class User():
+class User(object):
 
     @staticmethod
-    def name(self):
-        comm = subprocess.Popen(["users"], shell=True, stdout=subprocess.PIPE)
+    def name():
+        comm = subprocess.Popen(["/bin/echo $USER"], shell=True, stdout=subprocess.PIPE)
+        print re.search("(\w+)", str(comm.stdout.read())).group()
         return re.search("(\w+)", str(comm.stdout.read())).group()
     
-class Net():
+class Net(object):
 
     @staticmethod
-    def connected(self):
+    def connected():
         try:
             urllib2.urlopen('http://www.google.com', timeout=1)
             return True
@@ -702,15 +730,15 @@ class Net():
     # Returns your mac address. I will send this along with the other data
     # to better tie the data into the laptop definitively proving it's yours.
     @staticmethod
-    def get_hardware_address(self,ifname):
+    def get_hardware_address(ifname):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', ifname[:15]))
         return ':'.join(['%02x' % ord(char) for char in info[18:24]])
 
-class Version():
+class Version(object):
 
     @staticmethod
-    def python(self):
+    def python():
         python_version = re.search('\d\.\d', str(sys.version), re.I | re.M)
         if python_version is not None:
             return python_version.group()
