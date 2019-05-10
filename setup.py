@@ -20,11 +20,14 @@ class Check():
             'eix': ('mail-mta/sendmail','app-admin/syslog-ng','dev-lang/python',
                 'dev-python/sqlite3dbm','mail-filter/procmail','media-libs/opencv'),
             'apt': ('libopencv-dev','python-opencv','python-dev','procmail','sqlite3',
-                'sendmail-bin','sendmail-cf','sensible-mda','syslog-ng','sendmail-base')}
+                'sendmail-bin','sendmail-cf','sensible-mda','syslog-ng','sendmail-base')
+        }
+
         self.package_manager  = {
             'rpm': ('centos','fedora','scientific','opensuse'),
             'apt': ('debian','ubuntu','linuxmint'),
-            'eix': ('gentoo',)}
+            'eix': ('gentoo',)
+        }
 
     def system_query_command(self):
         if version.system_package_manager() == 'rpm':
@@ -36,12 +39,12 @@ class Check():
         return system_query_command
 
     def grep_system_packages(self,package_name):
-        comm = subprocess.Popen([self.system_query_command() + " " + str(package_name)],
+        comm = subprocess.Popen([self.system_query_command() + ' ' + str(package_name) + ' 2> /dev/null'],
             shell=True, stdout=subprocess.PIPE)
-        if comm is not None:
-            logger.log("INFO", "Package " + str(comm.stdout.read()).strip() + " was found.")
+        if not comm.stdout.readline(): 
+            logger.log("ERROR", "Package " + str(package_name) + " was not found.")
         else:
-            logger.log("ERROR", "Package " + str(comm.stdout.read()).strip() + " was not found.")
+            logger.log("INFO", "Package " + str(package_name) + " was found.")
 
     def main(self):
         try:
