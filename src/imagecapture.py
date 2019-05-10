@@ -6,6 +6,7 @@ import re
 import sys
 import cv2
 import time
+import errno
 import fcntl
 import socket
 import struct
@@ -291,15 +292,13 @@ class ImageCapture():
     
     def take_picture(self):
         if not config_dict[0]['enablecam'][0]:
+            logger.log("WARNING","Taking pictures from webcam was not enabled.")
             return
         camera = cv2.VideoCapture(config_dict[0]['video'][0])
         if not camera.isOpened():
             logger.log("ERROR","No cam available at "
                 + str(config_dict[0]['video'][0]) + ".")
             config_dict[0]['enablecam'][0] = False
-            return
-        elif not config_dict[0]['enablecam'][0]:
-            logger.log("WARNING","Taking pictures from webcam was not enabled.")
             return
         elif not camera.isOpened() and config_dict[0]['video'][0] == 0:
             logger.log("WARNING","Camera not detected.")
@@ -662,6 +661,8 @@ class User():
 
     def name(self):
         comm = subprocess.Popen(["users"], shell=True, stdout=subprocess.PIPE)
+        if '' in comm.stdout.read():
+            return 'root'
         return re.search("(\w+)", str(comm.stdout.read())).group()
     
 class Net():
