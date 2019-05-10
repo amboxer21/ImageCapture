@@ -716,8 +716,7 @@ class User(object):
         comm = subprocess.Popen(["users"], shell=True, stdout=subprocess.PIPE)
         if '' in comm.stdout.read():
             return 'root'
-        else:
-            return re.search("(\w+)", str(comm.stdout.read())).group()
+        return re.search("(\w+)", str(comm.stdout.read())).group()
     
 class Net(object):
 
