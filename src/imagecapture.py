@@ -531,7 +531,7 @@ class GetLocation(Thread):
                 + "found and location functionality will not work.\n\n")
             sys.sleep(2)
 
-class Database():
+class Database(object):
 
     def __init__(self):
         self.db_file = fileOpts.database_path()
@@ -658,7 +658,7 @@ class Database():
 # for this program. So if the user is in this group then your auth screen will
 # automatically log you in. This is an optional feature that must be specified
 # in the optparser via command line option.
-class GraphicalDisplayManager():
+class GraphicalDisplayManager(object):
 
     def add_to_group(self,user):
         os.system("sudo usermod -a -G nopasswdlogin " + str(user))
@@ -746,7 +746,7 @@ class Version(object):
             return python_version.group()
         return "None"
 
-class FileOpts():
+class FileOpts(object):
 
     def root_directory(self):
         return "/home/" + str(User.name()) + "/.imagecapture"
