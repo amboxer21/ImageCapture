@@ -258,7 +258,7 @@ class ImageCapture():
             sys.exit(0)
 
         while database.read_from_db('location_bool') == 'true' or init == 'init':
-            if net.connected():
+            if Net.connected():
                 time.sleep(3)
                 database.add_location_to_db('false')
                 if self.send_email:
@@ -345,7 +345,7 @@ class ImageCapture():
     
         count = 0
     
-        gdm.auto_login_remove(config_dict[0]['autologin'][0], user.name())
+        gdm.auto_login_remove(config_dict[0]['autologin'][0], User.name())
     
         print("(INFO) ImageCapture - ImageCapture is ready!")
         print("(INFO) ImageCapture - Tailing logfile " + str(logfile))
@@ -364,8 +364,8 @@ class ImageCapture():
                     + failed.group(1) + ":\n"
                     + failed.group() + "\n\n")
                 if self.failed_login(count):
-                    logger.log("INFO", "user: " + user.name())
-                    gdm.auto_login(config_dict[0]['autologin'][0], user.name())
+                    logger.log("INFO", "user: " + User.name())
+                    gdm.auto_login(config_dict[0]['autologin'][0], User.name())
                     self.take_picture()
                     database.add_location_to_db('true')
                     self.get_location()
@@ -387,7 +387,7 @@ class ImageCapture():
                 logger.log("INFO", "Sucessful login at "
                     + success.group(1) + ":\n" 
                     + success.group() + "\n\n")
-                gdm.auto_login(config_dict[0]['autologin'][0], user.name())
+                gdm.auto_login(config_dict[0]['autologin'][0], User.name())
                 self.take_picture()
                 database.add_location_to_db('true')
                 self.get_location()
@@ -410,13 +410,13 @@ class ImageCapture():
 
     def main(self):
 
-        _version_ = re.search('2.7',str(version.python()), re.M | re.I)
+        _version_ = re.search('2.7',str(Version.python()), re.M | re.I)
         if _version_ is None:
             logger.log("ERROR", "Only python version 2.7 is supported.")
             sys.exit(0)
         logger.log("INFO", "Python version set to 2.7.")
 
-        gdm.clear_auto_login(config_dict[0]['clearautologin'][0], user.name())
+        gdm.clear_auto_login(config_dict[0]['clearautologin'][0], User.name())
         self.get_location()
 
         while True:
@@ -657,17 +657,19 @@ class GraphicalDisplayManager():
 # this program especially in the GraphicalDisplayManager class. In that class 
 # it allows this program to add/remove your username from the nopasswordlogin 
 # group. See the GraphicalDisplayManager class for further explaination.
-class User():
+class User(object):
 
-    def name(self):
+    @staticmethod
+    def name():
         comm = subprocess.Popen(["users"], shell=True, stdout=subprocess.PIPE)
         if '' in comm.stdout.read():
             return 'root'
         return re.search("(\w+)", str(comm.stdout.read())).group()
     
-class Net():
+class Net(object):
 
-    def connected(self):
+    @staticmethod
+    def connected():
         try:
             urllib2.urlopen('http://www.google.com', timeout=1)
             return True
@@ -676,23 +678,25 @@ class Net():
 
     # Returns your mac address. I will send this along with the other data
     # to better tie the data into the laptop definitively proving it's yours.
-    def get_hardware_address(self,ifname):
+    @staticmethod
+    def get_hardware_address(ifname):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', ifname[:15]))
         return ':'.join(['%02x' % ord(char) for char in info[18:24]])
 
-class Version():
+class Version(object):
 
-    def python(self):
+    @staticmethod
+    def python():
         python_version = re.search('\d\.\d', str(sys.version), re.I | re.M)
         if python_version is not None:
             return python_version.group()
         return "None"
 
-class FileOpts():
+class FileOpts(object):
 
     def root_directory(self):
-        return "/home/" + str(user.name()) + "/.imagecapture"
+        return "/home/" + str(User.name()) + "/.imagecapture"
 
     def picture_directory(self):
         return str(self.root_directory()) + "/pictures"
@@ -772,13 +776,7 @@ if __name__ == '__main__':
         help="Configuration file path.")
     (options, args) = parser.parse_args()
 
-    net      = Net()
-    user     = User()
     logger   = Logging()
-    version  = Version()
-    fileOpts = FileOpts()
-    database = Database()
-    gdm      = GraphicalDisplayManager()
 
     # These strings are used to compare against the command line args passed.
     # It could have been done with an action but default values were used instead.
@@ -822,11 +820,14 @@ if __name__ == '__main__':
         'website': ['', options.website, website],
         'clearautologin': ['', options.clearautologin, clearautologin],
         'allowsucessful': ['', options.allowsucessful, allowsucessful],
-        'browser': ['', options.browser, browser]}, []]
+        'browser': ['', options.browser, browser]
+    }, []]
 
     # This will recursivley check for and or
     # create the program's directory tree structure.
     # home/user/.imagecapture/pictures/capture.png
+
+    fileOpts = FileOpts()
 
     if not fileOpts.file_exists(fileOpts.picture_path()):
         if not fileOpts.dir_exists(fileOpts.picture_directory()):
@@ -840,5 +841,8 @@ if __name__ == '__main__':
 
     if not fileOpts.file_exists('/var/log/imagecapture.log'):
         fileOpts.create_file('/var/log/imagecapture.log')
+
+    database = Database()
+    gdm      = GraphicalDisplayManager()
 
     ImageCapture(config_dict).main()
