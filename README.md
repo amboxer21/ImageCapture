@@ -189,3 +189,8 @@ password='password'
 ```
 
 https://www.python-course.eu/python3_decorators.php
+
+## Building OpenCV with CMake
+```javascript
+cmake -DWITH_EIGEN=TRUE -DWITH_FFMPEG=TRUE -DWITH_GSTREAMER=TRUE -DWITH_GTK=TRUE -DWITH_JPEG=TRUE -DWITH_OPENGL=TRUE -DWITH_PNG=TRUE -DWITH_LIBV4L=TRUE -DWITH_VA=TRUE -DWITH_GPHOTO2=TRUE CMAKE_INSTALL_PREFIX=/usr/local/bin/ ..
+```
