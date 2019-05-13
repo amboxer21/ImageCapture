@@ -194,3 +194,22 @@ https://www.python-course.eu/python3_decorators.php
 ```javascript
 cmake -DCAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=/usr/local/opencv-3.4.0 -DWITH_OPENCL=OFF -DWITH_VTK=OFF -DWITH_QT=OFF -DWITH_EIGEN=ON -DWITH_FFMPEG=ON -DWITH_GSTREAMER=ON -DWITH_GTK=OFF -DWITH_JPEG=ON -DWITH_OPENGL=OFF -DWITH_OPENCL=OFF -DWITH_PNG=ON -DWITH_V4L=ON -DWITH_LIBV4L=ON -DWITH_VA=ON -DWITH_GPHOTO2=ON -DINSTALL_PYTHON_EXAMPLES=ON -DBUILD_EXAMPLES=ON -DBUILD_DOCS=ON -DWITH_CUDA=OFF -DWITH_OPENCL_SVM=OFF -DWITH_OPENCLAMDFFT=OFF -DWITH_OPENCLAMDBLAS=OFF -DOPENCV_EXTRA_MODULES_PATH=../opencv_contrib/modules ..
 ```
+<p>Steps to obtaining the opencv_contrib package</p>
+
+- git clone git@github.com:opencv/opencv_contrib.git
+
+- git branch -r | more
+
+<p>Example output:</p>
+
+```javascript
+anthony@anthony:~/Documents/Source/opencv_contrib$ git branch -r | more
+  origin/3.4
+  origin/HEAD -> origin/master
+  origin/master
+anthony@anthony:~/Documents/Source/opencv_contrib$
+```
+
+- git checkout 3.4
+
+<p>Now the opencv_contrib package is ready to use and include in your `CMAKE` compilation!</p>
