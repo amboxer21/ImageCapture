@@ -105,7 +105,7 @@ Options:
       ```3```
       
 
-## IMAGECAPTUREPY INSTALLATION
+## IMAGECAPTURE INSTALLATION
 ```
 sudo python setup.py sdist 
 ```
@@ -116,7 +116,7 @@ sudo python setup.py build
 sudo python setup.py install
 ```
 
-## IMAGECAPTUREPY SYSTEM DEPENDENCY CHECK
+## IMAGECAPTURE SYSTEM DEPENDENCY CHECK
 ```
 sudo python setup.py check
 ```
@@ -149,28 +149,28 @@ https://support.google.com/accounts/answer/6010255
 ```javascript
     setup(
         packages=[],
-        name='imagecapturepy',
+        name='imagecapture',
         version='0.0.6', # increment version number
 ```
 **`AFTER:`**
 ```javascript
     setup(
         packages=[],
-        name='imagecapturepy',
+        name='imagecapture',
         version='0.0.7', # increment version number
 ```
 ## Build package for PyPi
 
-**[anthony@ghost ImageCapturePy]$** `sudo python setup.py sdist`
+**[anthony@ghost ImageCapture]$** `sudo python setup.py sdist`
   
-**[anthony@ghost ImageCapturePy]$** `twine upload dist/*`
+**[anthony@ghost ImageCapture]$** `twine upload dist/*`
   
 **NOTE:** If twine does not work with the above command you can try,
 
-`twine upload --repository-url 'https://upload.pypi.org/legacy/' dist/imagecapturepy-0.0.6.tar.gz`.
+`twine upload --repository-url 'https://upload.pypi.org/legacy/' dist/imagecapture-0.0.6.tar.gz`.
    
    
-**NOTE:** `dist/imagecapturepy-0.0.6.tar.gz` will be the name of the file twine just created.
+**NOTE:** `dist/imagecapture-0.0.6.tar.gz` will be the name of the file twine just created.
 
 ## Contents of ~/.pypirc
 ```javascript
@@ -187,8 +187,6 @@ repository=https://testpypi.python.org/pypi
 username=username
 password='password'
 ```
-
-https://www.python-course.eu/python3_decorators.php
 
 ## Building OpenCV with CMake
 ```javascript
