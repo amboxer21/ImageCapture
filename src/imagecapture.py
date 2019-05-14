@@ -470,12 +470,13 @@ class GetLocation(Thread):
 
         # This is the supported browser list and can be added to.
         browsers = [
+            self._browser_,
             '/opt/google/chome/chrome',
-            '/usr/bin/firefox',
+            #'/usr/bin/firefox',
             '/usr/bin/opera']
 
         for b in browsers: 
-            if self.browser_exists(self._browser_) and self.count == 0:
+            if self.browser_exists(b) is not None and self.count == 0:
                 _browser_ = re.match("(\/\w+)(.*\/)(\w+)",self._browser_).group(3)
                 break
             self.count += 1
@@ -485,17 +486,22 @@ class GetLocation(Thread):
             elif self.browser_exists(b):
                 _browser_ = re.match("(\/\w+)(.*\/)(\w+)",b).group(3)
                 break
+        print('=> browser -> '+str(_browser_))
         if _browser_ == 'chrome':
-            call([self._browser_, "--user-data-dir="
+            call([_browser_, "--user-data-dir="
                 + str(fileOpts.root_directory()), "--no-sandbox", ""
                 + self._website_
                 + "?Email=" + self._email_])
-        elif _browser_ == 'firefox':
-            call([self._browser_,"--new-window", ""
+        #elif _browser_ == 'firefox':
+            #call([_browser_,"--new-window", ""
+                #+ self._website_
+                #+ "?Email="
+                #+ self._email_ + "\""])
+        elif _browser_ == 'opera':
+            call([_browser_, "--user-data-dir="
+                + str(fileOpts.root_directory()), "--no-sandbox", ""
                 + self._website_
-                + "?Email="
-                + self._email_ + "\""])
-        #elif _browser_ == 'opera':
+                + "?Email=" + self._email_])
         else:
             logger.log("WARNING", "\n\nBrowser not "
                 + "found and location functionality will not work.\n\n")
