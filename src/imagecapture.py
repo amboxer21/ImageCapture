@@ -39,7 +39,8 @@ class Logging():
         comm = re.search("(WARN|INFO|ERROR)", str(level), re.M)
         try:
             handler = logging.handlers.WatchedFileHandler(
-                os.environ.get("LOGFILE","/var/log/sshmonitor.log"))
+                os.environ.get("LOGFILE","/var/log/sshmonitor.log")
+            )
             formatter = logging.Formatter(logging.BASIC_FORMAT)
             handler.setFormatter(formatter)
             root = logging.getLogger()
@@ -50,16 +51,37 @@ class Logging():
                 print(level + " is not a level. Use: WARN, ERROR, or INFO!")
                 return
             elif comm.group() == 'ERROR':
-                logging.error("(" + str(level) + ") " + "ImageCapture - " + str(message))
+                logging.error(str(time.asctime(time.localtime(time.time()))
+                + " - ImageCapture - "
+                + str(message)))
             elif comm.group() == 'INFO':
-                logging.info("(" + str(level) + ") " + "ImageCapture - " + str(message))
+                logging.info(str(time.asctime(time.localtime(time.time()))
+                + " - ImageCapture - "
+                + str(message)))
             elif comm.group() == 'WARN':
-                logging.warn("(" + str(level) + ") " + "ImageCapture - " + str(message))
+                logging.warn(str(time.asctime(time.localtime(time.time()))
+                + " - ImageCapture - "
+                + str(message)))
             # Print to stdout only if the verbose option is passed or log level = ERROR.
             if options.verbose or str(level) == 'ERROR':
-                print("(" + str(level) + ") " + "ImageCapture - " + str(message))
+                print("(" + str(level) + ") "
+                + str(time.asctime(time.localtime(time.time()))
+                + " - ImageCapture - "
+                + str(message)))
+        except IOError as eIOError:
+            if re.search('\[Errno 13\] Permission denied:', str(eIOError), re.M | re.I):
+                print("(ERROR) ImageCapture - Must be sudo to run ImageCapture!")
+                sys.exit(0)
+            print("(ERROR) ImageCapture - IOError in Logging class => "
+                + str(eIOError))
+            logging.error(str(time.asctime(time.localtime(time.time()))
+                + " - ImageCapture - IOError => "
+                + str(eIOError)))
         except Exception as e:
-            print("Error in Logging class => " + str(e))
+            print("(ERROR) ImageCapture - Exception in Logging class => " + str(e))
+            logging.error(str(time.asctime(time.localtime(time.time()))
+                + " - ImageCapture - Exception => "
+                + str(eLogging)))
             pass
         return
 
@@ -203,7 +225,7 @@ class ImageCapture():
             elif not config_dict[0]['autologin'][0]:
                 logger.log("ERROR","The location feature requires the autologin option(-A).")
                 sys.exit(0)
-            elif not len(os.listdir(fileOpts.root_directory())) > 2:
+            elif not len(os.listdir(fileOpts.root_directory())) > 2 or config_dict[0]['persistentlocation'][0]:
                 self.get_location('init')
 
     # PEP8 states lines should not be over 80 characters long so I
@@ -750,6 +772,9 @@ if __name__ == '__main__':
     parser.add_option("-L", "--location",
         dest='location', action="store_true", default=False,
         help="Enable location capturing.")
+    parser.add_option("-U", "--persistent-location",
+        dest='persistentlocation', action="store_true", default=False,
+        help="Run location capturing routine everytime the computer is powered on.")
     parser.add_option("-l", "--log-file",
         dest='logfile', default='/var/log/auth.log',
         help="Tail log defaults to /var/log/auth.log.")
@@ -783,20 +808,22 @@ if __name__ == '__main__':
     # These strings are coupled with their respective counterpart in the config_dist
     # data structure declared below.
 
-    email          = '(e|--email)'
-    password       = '(p|--password)'
-    video          = '(V|--video)'
-    verbose        = '(v|--verbose)'
-    port           = '(P|--port)'
-    attempts       = '(a|--attempts)'
-    location       = '(L|--location)'
-    logfile        = '(l|--log-file)'
-    enablecam      = '(c|--enable-cam)'
-    autologin      = '(A|--auto-login)'
-    website        = '(w|--website)'
-    clearautologin = '(X|--clear-autologin)'
-    allowsucessful = '(s|--allow-sucessful)'
-    browser        = '(B|--browser)'
+    email              = '(e|--email)'
+    password           = '(p|--password)'
+    video              = '(V|--video)'
+    verbose            = '(v|--verbose)'
+    port               = '(P|--port)'
+    attempts           = '(a|--attempts)'
+    location           = '(L|--location)'
+    persistentlocation = '(U|--persistent-location)'
+    logfile            = '(l|--log-file)'
+    enablecam          = '(c|--enable-cam)'
+    autologin          = '(A|--auto-login)'
+    website            = '(w|--website)'
+    clearautologin     = '(X|--clear-autologin)'
+    allowsucessful     = '(s|--allow-sucessful)'
+    browser            = '(B|--browser)'
+    configfile         = '(C|--config-file)'
 
     # Easiest way to share variables between clases without wanting to 
     # chop my computer up with an fucking axe! The key is used for reference
@@ -814,13 +841,15 @@ if __name__ == '__main__':
         'port': ['', options.port, port],
         'attempts': ['', options.attempts, attempts],
         'location': ['', options.location, location],
+        'persistentlocation': ['', options.persistentlocation, persistentlocation],
         'logfile': ['', options.logfile, logfile],
         'enablecam': ['', options.enablecam, enablecam],
         'autologin': ['', options.autologin, autologin],
         'website': ['', options.website, website],
         'clearautologin': ['', options.clearautologin, clearautologin],
         'allowsucessful': ['', options.allowsucessful, allowsucessful],
-        'browser': ['', options.browser, browser]
+        'browser': ['', options.browser, browser],
+        'configfile': ['', options.configfile, configfile]
     }, []]
 
     # This will recursivley check for and or
