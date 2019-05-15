@@ -46,7 +46,19 @@ class Check():
         else:
             logger.log("INFO", "Package " + str(package_name) + " was found.")
 
+    def pip_package_check(self):
+        packages = [
+            'cv2', 'pytailf'
+        ]
+        for package in packages:
+            try:
+                import package
+                logger.log("INFO", "PIP package " + str(package) + " was found.")
+            except ImportError as importError:
+                logger.log("ERROR", "PIP package " + str(package) + " was not found.")                
+
     def main(self):
+        self.pip_package_check()
         try:
             for item in self.sys_dependencies[version.system_package_manager()]:
                 self.grep_system_packages(item)
