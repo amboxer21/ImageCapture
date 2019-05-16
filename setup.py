@@ -53,7 +53,8 @@ class Check():
 
         for package in packages:
 
-            pip_query = subprocess.Popen(["pip show \'"+str(package)+"\' 2> /dev/null"],shell=True, stdout=subprocess.PIPE)
+            pip_query = subprocess.Popen(["pip show \'"+str(package)+"\' 2> /dev/null"],
+                shell=True, stdout=subprocess.PIPE)
 
             if '' not in pip_query.stdout.readlines():
                 logger.log("INFO", "Package " + str(package) + " was found.")
