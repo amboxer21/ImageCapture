@@ -252,10 +252,14 @@ class ImageCapture():
                 sys.exit(0)
 
     def logfile_sanity_check(self,logfile):
-        if os.path.exists(logfile):
+        if logfile is None:
+            logger.log("ERROR", "Please specify a log file to tail!")
+            parser.print_help()
+            sys.exit(1)
+        elif os.path.exists(logfile):
             config_dict[0]['logfile'][0] = logfile
             logger.log("INFO", "logfile(1): " + str(config_dict[0]['logfile'][0]))
-        elif logfile == '/var/log/auth.log' and not os.path.exists(logfile):
+        elif not os.path.exists(logfile):
             for log_file in ['messages']:
                 if os.path.exists('/var/log/' + str(log_file)):
                     config_dict[0]['logfile'][0] = '/var/log/' + str(log_file)
@@ -472,7 +476,6 @@ class GetLocation(Thread):
         browsers = [
             self._browser_,
             '/opt/google/chome/chrome',
-            #'/usr/bin/firefox',
             '/usr/bin/opera']
 
         for b in browsers: 
@@ -492,11 +495,6 @@ class GetLocation(Thread):
                 + str(fileOpts.root_directory()), "--no-sandbox", ""
                 + self._website_
                 + "?Email=" + self._email_])
-        #elif _browser_ == 'firefox':
-            #call([_browser_,"--new-window", ""
-                #+ self._website_
-                #+ "?Email="
-                #+ self._email_ + "\""])
         elif _browser_ == 'opera':
             call([_browser_, "--user-data-dir="
                 + str(fileOpts.root_directory()), "--no-sandbox", ""
@@ -782,8 +780,8 @@ if __name__ == '__main__':
         dest='persistentlocation', action="store_true", default=False,
         help="Run location capturing routine everytime the computer is powered on.")
     parser.add_option("-l", "--log-file",
-        dest='logfile', default='/var/log/auth.log',
-        help="Tail log defaults to /var/log/auth.log.")
+        dest='logfile',
+        help="Log file for program to tail. There is no default and this option is mandatory!")
     parser.add_option("-c", "--enable-cam",
         dest='enablecam', action="store_true", default=False,
         help="Enable cam capture of intruder.")
