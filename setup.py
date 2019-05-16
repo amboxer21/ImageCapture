@@ -48,22 +48,22 @@ class Check():
 
     def pip_package_check(self):
         packages = [
-            'cv2', 'pytailf'
+            'opencv-python', 'pytailf'
         ]
         for package in packages:
-            try:
-                import package
-                logger.log("INFO", "PIP package " + str(package) + " was found.")
-            except ImportError as importError:
-                logger.log("ERROR", "PIP package " + str(package) + " was not found.")                
+            if os.system("pip show \'"+str(package)+"\' 2> /dev/null") is not None:
+                logger.log("INFO", "Package " + str(package) + " was found.")
+            else:
+                logger.log("ERROR", "Package " + str(package) + " was not found.")
 
     def main(self):
-        self.pip_package_check()
         try:
             for item in self.sys_dependencies[version.system_package_manager()]:
                 self.grep_system_packages(item)
         except DistutilsExecError as distutilsExecError:
             logger.log("ERROR", "Exception DistutilsExecError: " + str(distutilsExecError))
+        except Exception as exception:
+            logger.log("ERROR", "Exception exception: " + str(exception))
 
 class PrepareBuild():
     def modify_conf_files(self,username):
@@ -102,8 +102,11 @@ if __name__ == '__main__':
         logger.log("ERROR","Option is not supported.")
         sys.exit(0)
     elif argument.group() == 'check':
+        check = Check()
         logger.log("INFO","Grepping System Packages")
-        Check().main()
+        check.main()
+        logger.log("INFO","Grepping PIP Packages")
+        check.pip_package_check()
         sys.exit(0)
 
     username  = str(user.name())
