@@ -48,10 +48,14 @@ class Check():
 
     def pip_package_check(self):
         packages = [
-            'opencv-python', 'pytailf'
+            'opencv-python', 'pytailf', 'python-crontab'
         ]
+
         for package in packages:
-            if os.system("pip show \'"+str(package)+"\' 2> /dev/null") is not None:
+
+            pip_query = subprocess.Popen(["pip show \'"+str(package)+"\' 2> /dev/null"],shell=True, stdout=subprocess.PIPE)
+
+            if '' not in pip_query.stdout.readlines():
                 logger.log("INFO", "Package " + str(package) + " was found.")
             else:
                 logger.log("ERROR", "Package " + str(package) + " was not found.")
