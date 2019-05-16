@@ -14,15 +14,19 @@ More to come...
 ### [Example use cases]
 1) Capture an image of the offender only and E-mail that picture to yourself.
 
-   ```sudo python imagecapture.py -c -e 'example@gmail.com' -p 'password'```
+   ```sudo python imagecapture.py -c -e 'example@gmail.com' -p 'password' -l '/var/log/messages'```
    
 2) Capture an image of the offender, autolog them in, grab the devices location, and E-mail the resulting info to yourself.
 
-   ```sudo python imagecapture.py -ALc -e 'example@gmail.com' -p 'password'```
+   ```sudo python imagecapture.py -ALc -e 'example@gmail.com' -p 'password' -l '/var/log/messages'```
 
-3) Capture an image of the offender, autolog them in, grab the devices location, specify the auth logs location, specify the browser, specify the camera index, and E-mail resulting info to yourself.
+3) Capture an image of the offender, autolog them in, grab the devices location, specify the auth logs location, specify the browser, specify the camera index, print verbose messages to the log, and E-mail resulting info to yourself.
 
-   ```sudo python imagecapture.py -AL -v 1 -l '/var/log/messages' -B '/opt/google/chrom/chrome' -e 'example@gmail.com' -p 'password'```
+   ```sudo python imagecapture.py -AL -v -l '/var/log/messages' -B '/opt/google/chrom/chrome' -e 'example@gmail.com' -p 'password' ```
+   
+4) Capture an image of the offender, autolog them in, grab the devices location, E-mail the resulting info to yourself, and run the location gathering functionality everytime the computer is booted up.
+
+   ```sudo python imagecapture.py -ALUc -e 'example@gmail.com' -p 'password' -l '/var/log/messages'```
 
 ### [Visual of All Options]
 ```
@@ -32,26 +36,34 @@ Usage: imagecapture.py [options]
 Options:
   -h, --help            show this help message and exit
   -e EMAIL, --email=EMAIL
+                        E-mail address to send notofications to.
   -p PASSWORD, --password=PASSWORD
+                        Password used to sign-in to your E-mail account.
   -V VIDEO, --video=VIDEO
                         Specify camera location.
-  -v, --verbose         Print the options passed to ImageCapture.
+  -v, --verbose         Print the options passed to ImageCapturePy.
   -P PORT, --port=PORT  E-mail port defaults to 587 if not specified.
   -a ATTEMPTS, --attempts=ATTEMPTS
                         Number of failed attempts defaults to 3.
   -L, --location        Enable location capturing.
+  -U, --persistent-location
+                        Run location capturing routine everytime the computer
+                        is powered on.
   -l LOGFILE, --log-file=LOGFILE
-                        Tail log defaults to /var/log/auth.log.
+                        Log file for program to tail. There is no default and
+                        this option is mandatory!
   -c, --enable-cam      Enable cam capture of intruder.
   -A, --auto-login      Auto login user after no of failed attempts.
   -w WEBSITE, --website=WEBSITE
                         Use alternate website to capture location.
-  -C, --clear-autologin
+  -X, --clear-autologin
                         Remove autologin. Must be root to use this feature.
   -s, --allow-sucessful
                         Run ImageCapture even if login is sucessful.
   -B BROWSER, --browser=BROWSER
                         Select the browser used to grab geolocation data.
+  -C CONFIGFILE, --config-file=CONFIGFILE
+                        Configuration file path.
 ```
 
 ### [ImageCapture's default values]
@@ -72,9 +84,9 @@ Options:
    
       ```false```
       
-   * Logfile:
+   * Logfile(*):
    
-      ```/var/log/auth.log```
+      ```There is NO default value  set for this option.```
       
    * Loation:
     
