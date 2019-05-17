@@ -15,11 +15,11 @@ import sqlite3
 import smtplib
 import webbrowser
 import subprocess
+import multiprocessing
 import logging.handlers
  
 from tailf import tailf
 from urllib2 import urlopen
-from threading import Thread
 from optparse import OptionParser
 from subprocess import Popen,call
 from email.MIMEImage import MIMEImage
@@ -302,13 +302,21 @@ class ImageCapture():
                         pass
                 try:
                     logger.log("INFO","Grabbing location now.")
-                    GetLocation(config_dict[0]['website'][0],
-                        config_dict[0]['email'][0],
-                        config_dict[0]['browser'][0]).start()
+                    process = multiprocessing.Process(
+                        target=GetLocation(
+                            config_dict[0]['website'][0],
+                            config_dict[0]['email'][0],
+                            config_dict[0]['browser'][0]
+                        ).launch_browser
+                    )
+                    process.daemon = True
+                    process.start() 
                     if init == 'init':
                         break
-                except:
-                    logger.log("WARNING","Could not open your browser.")
+                except Exception as exception:
+                    logger.log("WARNING","Could not open your browser, error => "
+                        + str(exception)
+                        + ".")
                     pass
             else:
                 break
@@ -458,10 +466,9 @@ class ImageCapture():
 # is in the form of longitude/latitude coordinates and is E-mailed to you.
 # This is done through a website I wrote in PHP/HTML, Javascript, and JQuery 
 # using a post request that is sent to heroku.
-class GetLocation(Thread):
+class GetLocation(object):
 
     def __init__(self,website,email,browser):
-        Thread.__init__(self)
         self._email_,config_dict[0]['email'][0]   = (email,email)
         self._website_,config_dict[0]['website'][0] = (website,website)
         self._browser_,config_dict[0]['browser'][0] = (browser,browser)
@@ -469,7 +476,7 @@ class GetLocation(Thread):
     def browser_exists(self,browser):
         return find_executable(browser)
 
-    def run(self):
+    def launch_browser(self):
 
         browser = None
 
