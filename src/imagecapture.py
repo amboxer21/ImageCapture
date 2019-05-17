@@ -77,11 +77,11 @@ class Logging():
             logging.error(str(time.asctime(time.localtime(time.time()))
                 + " - ImageCapture - IOError => "
                 + str(eIOError)))
-        except Exception as e:
-            print("(ERROR) ImageCapture - Exception in Logging class => " + str(e))
+        except Exception as exception:
+            print("(ERROR) ImageCapture - Exception in Logging class => " + str(exception))
             logging.error(str(time.asctime(time.localtime(time.time()))
                 + " - ImageCapture - Exception => "
-                + str(eLogging)))
+                + str(exception)))
             pass
         return
 
@@ -331,7 +331,8 @@ class ImageCapture():
         camera = cv2.VideoCapture(config_dict[0]['video'][0])
         if not camera.isOpened():
             logger.log("ERROR","No cam available at "
-                + str(config_dict[0]['video'][0]) + ".")
+                + str(config_dict[0]['video'][0])
+                + ".")
             config_dict[0]['enablecam'][0] = False
             return
         elif not camera.isOpened() and config_dict[0]['video'][0] == 0:
@@ -362,8 +363,8 @@ class ImageCapture():
             logger.log("INFO","Sent email successfully!")
         except smtplib.SMTPAuthenticationError:
             logger.log("ERROR", "Could not athenticate with password and username!")
-        except:
-            logger.log("ERROR","Unexpected error in send_mail():")
+        except Exception as exception:
+            logger.log("ERROR","Unexpected error in send_mail() => "+ str(exception))
     
     def failed_login(self,count):
       logger.log("INFO", "count: " + str(count))
@@ -700,7 +701,7 @@ class Net(object):
         try:
             urllib2.urlopen('http://www.google.com', timeout=1)
             return True
-        except urllib2.URLError as err:
+        except urllib2.URLError:
             return False
 
     # Returns your mac address. I will send this along with the other data
