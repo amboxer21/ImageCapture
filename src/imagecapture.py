@@ -15,11 +15,11 @@ import sqlite3
 import smtplib
 import webbrowser
 import subprocess
+import multiprocessing
 import logging.handlers
  
 from tailf import tailf
 from urllib2 import urlopen
-from threading import Thread
 from optparse import OptionParser
 from subprocess import Popen,call
 from email.MIMEImage import MIMEImage
@@ -302,13 +302,21 @@ class ImageCapture():
                         pass
                 try:
                     logger.log("INFO","Grabbing location now.")
-                    GetLocation(config_dict[0]['website'][0],
-                        config_dict[0]['email'][0],
-                        config_dict[0]['browser'][0]).start()
+                    process = multiprocessing.Process(
+                        target=GetLocation(
+                            config_dict[0]['website'][0],
+                            config_dict[0]['email'][0],
+                            config_dict[0]['browser'][0]
+                        ).launch_browser
+                    )
+                    process.daemon = True
+                    process.start() 
                     if init == 'init':
                         break
-                except:
-                    logger.log("WARNING","Could not open your browser.")
+                except Exception as exception:
+                    logger.log("WARNING","Could not open your browser, error => "
+                        + str(exception)
+                        + ".")
                     pass
             else:
                 break
@@ -458,11 +466,9 @@ class ImageCapture():
 # is in the form of longitude/latitude coordinates and is E-mailed to you.
 # This is done through a website I wrote in PHP/HTML, Javascript, and JQuery 
 # using a post request that is sent to heroku.
-class GetLocation(Thread):
+class GetLocation(object):
 
     def __init__(self,website,email,browser):
-        Thread.__init__(self)
-        self.count = 0
         self._email_,config_dict[0]['email'][0]   = (email,email)
         self._website_,config_dict[0]['website'][0] = (website,website)
         self._browser_,config_dict[0]['browser'][0] = (browser,browser)
@@ -470,40 +476,35 @@ class GetLocation(Thread):
     def browser_exists(self,browser):
         return find_executable(browser)
 
-    def run(self):
+    def launch_browser(self):
+
+        browser = None
 
         # This is the supported browser list and can be added to.
         browsers = [
             self._browser_,
             '/opt/google/chome/chrome',
-            '/usr/bin/opera']
+            '/usr/bin/opera'
+        ]
 
         for b in browsers: 
-            if self.browser_exists(b) is not None and self.count == 0:
-                _browser_ = re.match("(\/\w+)(.*\/)(\w+)",self._browser_).group(3)
+            if self.browser_exists(b) is not None:
+                browser = re.match("(\/\w+)(.*\/)(\w+)",b).group(3)
                 break
-            self.count += 1
-            if self.count > len(b):
-                logger.log("ERROR",
-                    "Only the following browsers are supported: Chrome, Opera, and Firefox.")
-            elif self.browser_exists(b):
-                _browser_ = re.match("(\/\w+)(.*\/)(\w+)",b).group(3)
-                break
-        print('=> browser -> '+str(_browser_))
-        if _browser_ == 'chrome':
-            call([_browser_, "--user-data-dir="
+        if browser is None:
+            logger.log("WARNING",
+                "Browser not found and location functionality will not work.")
+        elif browser == 'chrome':
+            call([browser, "--user-data-dir="
                 + str(fileOpts.root_directory()), "--no-sandbox", ""
                 + self._website_
                 + "?Email=" + self._email_])
-        elif _browser_ == 'opera':
-            call([_browser_, "--user-data-dir="
+        elif browser == 'opera':
+            call([browser, "--user-data-dir="
                 + str(fileOpts.root_directory()), "--no-sandbox", ""
                 + self._website_
                 + "?Email=" + self._email_])
-        else:
-            logger.log("WARNING", "\n\nBrowser not "
-                + "found and location functionality will not work.\n\n")
-            sys.sleep(2)
+            time.sleep(2)
 
 class Database():
 
