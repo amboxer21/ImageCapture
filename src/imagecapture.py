@@ -33,7 +33,7 @@ try:
 except ImportError:
     import urllib
 
-class Logging():
+class Logging(object):
 
     def log(self,level,message):
         comm = re.search("(WARN|INFO|ERROR)", str(level), re.M)
@@ -88,7 +88,7 @@ class Logging():
 # The config filename is passed to this class in the ImageCapture classes __init__ method.
 # The option is the default value set in optparser and is blank by default. See the 
 # optparser declaration at the bottom in the if __name__ == '__main__' check.
-class ConfigFile():
+class ConfigFile(object):
 
     def __init__(self, file_name):
         self.args_list = []
@@ -182,7 +182,7 @@ class ConfigFile():
                         + ") is not a recognized option!")
                     sys.exit(0)
 
-class ImageCapture():
+class ImageCapture(object):
 
     def __init__(self,config_dict={},file_name=''):
         # The order of these calls are important!
@@ -387,6 +387,11 @@ class ImageCapture():
 
         for line in tailf(logfile):
     
+            #'(^.*\d+:\d+:\d+).*'
+            #May 18 12:04:21 anthony unix_chkpwd[13522]: password check failed for user (anthony) i3
+            #May 18 12:20:46 anthony sshd[14392]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=127.0.0.1  user=anthony ssh
+            #May 18 12:27:50 anthony slimlock[14639]: pam_succeed_if(slimlock:auth): requirement "user ingroup nopasswdlogin" not met by user "anthony" slim
+
             success_regex = '(^.*\d+:\d+:\d+).*password.*pam: unlocked login keyring'
             failed_regex  = '(^.*\d+:\d+:\d+).*pam_unix.*:auth\): authentication failure'
 
@@ -479,13 +484,21 @@ class GetLocation(object):
 
     def launch_browser(self):
 
+        # Needed tp prevent a variable reference before assingment error.
         browser = None
 
-        # This is the supported browser list and can be added to.
+        # This is the supported browser list(with the exception of the first browser)
+        # and can be added to. Currently FireFox is not supported because it requires
+        # a hack in order to get working. Calling FireFox as a root user is looked down
+        # upon by Mozilla and they try to prevent this for the average user. Sorry for now!
+        #
+        # The first browser is there for convience so I dont have to write a seperate
+        # method to check if the user proved browser path exists; It checks that browser first.
+        # If it doesnt exist, then it will move on to the hard coded browsers in the list.
         browsers = [
             self._browser_,
-            '/opt/google/chome/chrome',
-            '/usr/bin/opera'
+            '/usr/bin/opera',
+            '/opt/google/chome/chrome'
         ]
 
         for b in browsers: 
@@ -507,7 +520,7 @@ class GetLocation(object):
                 + "?Email=" + self._email_])
             time.sleep(2)
 
-class Database():
+class Database(object):
 
     def __init__(self):
         self.db_file = fileOpts.database_path()
@@ -634,7 +647,7 @@ class Database():
 # for this program. So if the user is in this group then your auth screen will
 # automatically log you in. This is an optional feature that must be specified
 # in the optparser via command line option.
-class GraphicalDisplayManager():
+class GraphicalDisplayManager(object):
 
     def add_to_group(self,user):
         os.system("sudo usermod -a -G nopasswdlogin " + str(user))
@@ -691,6 +704,8 @@ class User(object):
     def name():
         comm = subprocess.Popen(["users"], shell=True, stdout=subprocess.PIPE)
         if '' in comm.stdout.read():
+            logger.log("WARN", "The users command is not working properly. "
+            + "This could break imagecapture's functionality!")
             return 'root'
         return re.search("(\w+)", str(comm.stdout.read())).group()
     
