@@ -406,21 +406,14 @@ class ImageCapture(object):
             # May 19 16:00:01 anthony slimlock[4617]: pam_succeed_if(slimlock:auth): requirement "user ingroup nopasswdlogin" not met by user "anthony" slim
 
             success_regex = '(^.*\d+:\d+:\d+).*password.*pam: unlocked login keyring'
-            failed_regex  = '(^.*\d+:\d+:\d+).*pam_unix.*:auth\): authentication failure'
 
             success = re.search(success_regex, line, re.I | re.M)
-            #failed  = re.search(failed_regex, line, re.I | re.M)
-
-            #i3lock_regex1   = '(^\w+ \d+ \d+:\d+:\d+) .* unix_chkpwd'
-            #i3lock_regex2   = '\[\d+\]: password check failed for user'
 
             slimlock_regex1 = '(^\w+ \d+ \d+:\d+:\d+) .* slimlock\[\d+\]: '
             slimlock_regex2 = 'pam_succeed_if\(slimlock:auth\): requirement.*not met by user'
 
-            #i3lock_regex    = re.search(i3lock_regex1+i3lock_regex2,str(line), re.M | re.I)
             slimlock_regex  = re.search(slimlock_regex1+slimlock_regex2,str(line), re.M | re.I)
 
-            failed = None
             if slimlock_regex:
                 failed = slimlock_regex
             elif not slimlock_regex and not gdm.user_present(User.name()):
