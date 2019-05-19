@@ -1,4 +1,4 @@
-# ImageCapture(regex broken at the moment)
+# ImageCapture
 ### Description
 &nbsp;&nbsp;&nbsp;&nbsp;A program that captures an image and the geolocation data of any user that attempts to login to your compuper x amount of times. The data collected by ImageCapture is then E-mailed to the address you specify.
 
