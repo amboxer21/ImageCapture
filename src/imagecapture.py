@@ -341,10 +341,10 @@ class ImageCapture(object):
             logger.log("WARNING","Camera not detected.")
             config_dict[0]['enablecam'][0] = False
             return
-        elif self.executable_exists() is None:
-            logger.log("WARNING", "OpenCV is not installed.")
-            config_dict[0]['enablecam'][0] = False
-            return
+        #elif self.executable_exists('/usr/local/bin/opencv') is None:
+            #logger.log("WARNING", "OpenCV is not installed.")
+            #config_dict[0]['enablecam'][0] = False
+            #return
         logger.log("INFO","Taking picture.")
         time.sleep(0.1) # Needed or image will be dark.
         image = camera.read()[1]
