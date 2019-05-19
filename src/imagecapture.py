@@ -252,7 +252,9 @@ class ImageCapture(object):
                 sys.exit(0)
 
     def logfile_sanity_check(self,logfile):
-        if logfile is None:
+        if config_dict[0]['clearautologin'][0]:
+            return
+        elif logfile is None:
             logger.log("ERROR", "Please specify a log file to tail!")
             parser.print_help()
             sys.exit(1)
@@ -375,10 +377,17 @@ class ImageCapture(object):
       else:
           logger.log("INFO", "failed_login False")
           return False
+
+    def slimlock(self):
+        _v = None
+
+    def i3lock(self):
+        _v = None
     
     def tail_file(self,logfile):
     
-        count = 0
+        count  = 0
+        failed = None
     
         gdm.auto_login_remove(config_dict[0]['autologin'][0], User.name())
     
@@ -387,17 +396,36 @@ class ImageCapture(object):
 
         for line in tailf(logfile):
     
+            # Failed
             #'(^.*\d+:\d+:\d+).*'
             #May 18 12:04:21 anthony unix_chkpwd[13522]: password check failed for user (anthony) i3
             #May 18 12:20:46 anthony sshd[14392]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=127.0.0.1  user=anthony ssh
             #May 18 12:27:50 anthony slimlock[14639]: pam_succeed_if(slimlock:auth): requirement "user ingroup nopasswdlogin" not met by user "anthony" slim
 
+            # Successful
+            # May 19 16:00:01 anthony slimlock[4617]: pam_succeed_if(slimlock:auth): requirement "user ingroup nopasswdlogin" not met by user "anthony" slim
+
             success_regex = '(^.*\d+:\d+:\d+).*password.*pam: unlocked login keyring'
             failed_regex  = '(^.*\d+:\d+:\d+).*pam_unix.*:auth\): authentication failure'
 
             success = re.search(success_regex, line, re.I | re.M)
-            failed  = re.search(failed_regex, line, re.I | re.M)
-    
+            #failed  = re.search(failed_regex, line, re.I | re.M)
+
+            #i3lock_regex1   = '(^\w+ \d+ \d+:\d+:\d+) .* unix_chkpwd'
+            #i3lock_regex2   = '\[\d+\]: password check failed for user'
+
+            slimlock_regex1 = '(^\w+ \d+ \d+:\d+:\d+) .* slimlock\[\d+\]: '
+            slimlock_regex2 = 'pam_succeed_if\(slimlock:auth\): requirement.*not met by user'
+
+            #i3lock_regex    = re.search(i3lock_regex1+i3lock_regex2,str(line), re.M | re.I)
+            slimlock_regex  = re.search(slimlock_regex1+slimlock_regex2,str(line), re.M | re.I)
+
+            failed = None
+            if slimlock_regex:
+                failed = slimlock_regex
+            elif not slimlock_regex and not gdm.user_present(User.name()):
+                logger.log("WARN", "This login manager is not supported! Only Slim is supported.")
+
             if failed and not config_dict[0]['allowsucessful'][0]:
                 count += 1
                 logger.log("INFO", "Failed login at "
@@ -445,6 +473,8 @@ class ImageCapture(object):
                     except:
                         pass
                 time.sleep(1)
+            else:
+                pass
 
         db.add_ip_to_db(self.ip_addr)
 
@@ -703,11 +733,11 @@ class User(object):
     @staticmethod
     def name():
         comm = subprocess.Popen(["users"], shell=True, stdout=subprocess.PIPE)
-        if '' in comm.stdout.read():
-            logger.log("WARN", "The users command is not working properly. "
+        if comm is not None:
+            return re.search("(\w+)", str(comm.stdout.read())).group()
+        logger.log("WARN", "The users command is not working properly. "
             + "This could break imagecapture's functionality!")
-            return 'root'
-        return re.search("(\w+)", str(comm.stdout.read())).group()
+        return 'root'
     
 class Net(object):
 
