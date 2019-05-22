@@ -430,14 +430,14 @@ class ImageCapture(object):
             logger.log("ERROR","Unexpected error in send_mail() => "+ str(exception))
     
     def failed_login(self,count):
-      if (count == int(config_dict[0]['attempts'][0]) or
-          config_dict[0]['allowsucessful'][0]):
-              logger.log("INFO", "count: " + str(count))
-              logger.log("INFO", "failed_login True")
-              return True
-      else:
-          #logger.log("INFO", "failed_login False")
-          return False
+        if (count == int(config_dict[0]['attempts'][0]) or
+            config_dict[0]['allowsucessful'][0]):
+                logger.log("INFO", "count: " + str(count))
+                logger.log("INFO", "failed_login True")
+                return True
+        else:
+            #logger.log("INFO", "failed_login False")
+            return False
 
     def slimlock(self):
         _v = None
@@ -480,8 +480,8 @@ class ImageCapture(object):
             if self.failed and not config_dict[0]['allowsucessful'][0]:
                 # Prevents the loop from producing duplicate positives
                 if not self.date.has_key(self.failed.group(1)):
-                    self.date[str(self.failed.group(1))] = 1
                     self.count += 1
+                    self.date[str(self.failed.group(1))] = self.count
                     logger.log("INFO", "Failed login at "
                         + self.failed.group(1) + ":\n"
                         + self.failed.group() + "\n\n")
