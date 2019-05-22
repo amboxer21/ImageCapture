@@ -48,7 +48,7 @@ class Check():
 
     def pip_package_check(self):
         packages = [
-            'opencv-python', 'pytailf', 'python-crontab'
+            'opencv-python', 'python-crontab'
         ]
 
         for package in packages:
@@ -153,7 +153,7 @@ if __name__ == '__main__':
         ('/usr/local/bin/', ['src/imagecapture.py']),
         ('/home/root/.ssh/' ,['src/system/home/user/.ssh/is_imagecapture_running.sh'])],
     zip_safe=True,
-    setup_requires=['pytailf', 'python-crontab'],)
+    setup_requires=['python-crontab'],)
     #setup_requires=['pytailf', 'opencv-python','python-crontab'],)
 
     prepareBuild.pip_install_package('opencv-python')

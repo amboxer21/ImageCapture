@@ -30,7 +30,7 @@ class Tail(object):
         
         return process
     
-    def f(self, filename, ignore_stderr=True):
+    def f(self, filename):
 
         process = self.process(filename)
         
@@ -51,15 +51,10 @@ class Tail(object):
     
                 if lines:
                     for line in lines:
-                        if ignore_stderr:
-                            yield line
-                        else:
-                            yield (line, None)
+                        yield line
                     
             if process.stderr in reads:
                 stderr_input = process.stderr.read()
-                if not ignore_stderr:
-                    yield (None, stderr_input)
     
             if process.stderr in errors or process.stdout in errors:
                 print("Error received. Errors: ", errors)

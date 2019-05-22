@@ -8,6 +8,7 @@ import cv2
 import time
 import errno
 import fcntl
+import select
 import socket
 import struct
 import logging
@@ -18,7 +19,6 @@ import subprocess
 import multiprocessing
 import logging.handlers
  
-from tailf import tailf
 from urllib2 import urlopen
 from optparse import OptionParser
 from subprocess import Popen,call
@@ -182,6 +182,58 @@ class ConfigFile(object):
                         + ") is not a recognized option!")
                     sys.exit(0)
 
+class Tail(object):
+
+    def __init__(self):
+        self.buffer       = str()
+        self.tail_command = ['/usr/bin/tail', '-F', '-n0']
+
+    def process(self,filename):
+
+        process = subprocess.Popen(
+            self.tail_command + [filename], stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+    
+        # set non-blocking mode for file
+        function_control = fcntl.fcntl(process.stdout, fcntl.F_GETFL)
+        fcntl.fcntl(process.stdout, fcntl.F_SETFL, function_control | os.O_NONBLOCK)
+    
+        function_control = fcntl.fcntl(process.stderr, fcntl.F_GETFL)
+        fcntl.fcntl(process.stderr, fcntl.F_SETFL, function_control | os.O_NONBLOCK)
+        
+        return process
+    
+    def f(self, filename):
+
+        process = self.process(filename)
+        
+        while True:
+            reads, writes, errors = select.select(
+                [process.stdout, process.stderr], [], [process.stdout, process.stderr], 0.1
+            )
+            if process.stdout in reads:
+                self.buffer += process.stdout.read()
+                lines = self.buffer.split('\n')
+                
+                if '' in lines[-1]:
+                    #whole line received
+                    self.buffer = str()
+                else:
+                    self.buffer = lines[-1]
+                lines = lines[:-1]
+    
+                if lines:
+                    for line in lines:
+                        yield line
+                    
+            if process.stderr in reads:
+                stderr_input = process.stderr.read()
+    
+            if process.stderr in errors or process.stdout in errors:
+                print("Error received. Errors: ", errors)
+                process = self.process(filename)                    
+
 class ImageCapture(object):
 
     def __init__(self,config_dict={},file_name=''):
@@ -191,6 +243,11 @@ class ImageCapture(object):
         configFile.populate_empty_options()
         configFile.override_values()
 
+        self.count  = 0
+        self.date   = {}
+        self.failed = None
+
+        self.tail       = Tail()
         self.ip_addr    = urlopen('http://ip.42.pl/raw').read()
         self.send_email = False
 
@@ -345,11 +402,15 @@ class ImageCapture(object):
             #logger.log("WARNING", "OpenCV is not installed.")
             #config_dict[0]['enablecam'][0] = False
             #return
-        logger.log("INFO","Taking picture.")
-        time.sleep(0.1) # Needed or image will be dark.
-        image = camera.read()[1]
-        cv2.imwrite(fileOpts.picture_path(), image)
-        del(camera)
+        try:
+            logger.log("INFO","Taking picture.")
+            time.sleep(0.1) # Needed or image will be dark.
+            image = camera.read()[1]
+            cv2.imwrite(fileOpts.picture_path(), image)
+            del(camera)
+        except Exception as exception:
+            logger.log("ERROR", "Error taking picture, exception => "
+                + str(exception))
     
     def send_mail(self,sender,to,password,port,subject,body):
         try:
@@ -369,13 +430,13 @@ class ImageCapture(object):
             logger.log("ERROR","Unexpected error in send_mail() => "+ str(exception))
     
     def failed_login(self,count):
-      logger.log("INFO", "count: " + str(count))
       if (count == int(config_dict[0]['attempts'][0]) or
           config_dict[0]['allowsucessful'][0]):
+              logger.log("INFO", "count: " + str(count))
               logger.log("INFO", "failed_login True")
               return True
       else:
-          logger.log("INFO", "failed_login False")
+          #logger.log("INFO", "failed_login False")
           return False
 
     def slimlock(self):
@@ -386,15 +447,12 @@ class ImageCapture(object):
     
     def tail_file(self,logfile):
     
-        count  = 0
-        failed = None
-    
         gdm.auto_login_remove(config_dict[0]['autologin'][0], User.name())
     
         print("(INFO) ImageCapture - ImageCapture is ready!")
         print("(INFO) ImageCapture - Tailing logfile " + str(logfile))
 
-        for line in tailf(logfile):
+        for line in self.tail.f(logfile):
     
             # Failed
             #'(^.*\d+:\d+:\d+).*'
@@ -410,26 +468,30 @@ class ImageCapture(object):
             success = re.search(success_regex, line, re.I | re.M)
 
             slimlock_regex1 = '(^\w+ \d+ \d+:\d+:\d+) .* slimlock\[\d+\]: '
-            slimlock_regex2 = 'pam_succeed_if\(slimlock:auth\): requirement.*not met by user'
+            slimlock_regex2 = 'pam_succeed_if\(slimlock:auth\): requirement \".*\" not met by user'
 
-            slimlock_regex  = re.search(slimlock_regex1+slimlock_regex2,str(line), re.M | re.I)
+            slimlock_regex  = re.search(slimlock_regex1+slimlock_regex2, str(line), re.I)
 
             if slimlock_regex:
-                failed = slimlock_regex
+                self.failed = slimlock_regex
             elif not slimlock_regex and not gdm.user_present(User.name()):
                 logger.log("WARN", "This login manager is not supported! Only Slim is supported.")
 
-            if failed and not config_dict[0]['allowsucessful'][0]:
-                count += 1
-                logger.log("INFO", "Failed login at "
-                    + failed.group(1) + ":\n"
-                    + failed.group() + "\n\n")
-                if self.failed_login(count):
+            if self.failed and not config_dict[0]['allowsucessful'][0]:
+                # Prevents the loop from producing duplicate positives
+                if not self.date.has_key(self.failed.group(1)):
+                    self.date[str(self.failed.group(1))] = 1
+                    self.count += 1
+                    logger.log("INFO", "Failed login at "
+                        + self.failed.group(1) + ":\n"
+                        + self.failed.group() + "\n\n")
+                if self.failed_login(self.count):
                     logger.log("INFO", "user: " + User.name())
                     gdm.auto_login(config_dict[0]['autologin'][0], User.name())
                     self.take_picture()
                     database.add_location_to_db('true')
                     self.get_location()
+                    self.count += 1
                     if not config_dict[0]['enablecam'][0] and self.send_email:
                         try:
                             logger.log("INFO","Sending E-mail now.")
@@ -468,6 +530,7 @@ class ImageCapture(object):
                 time.sleep(1)
             else:
                 pass
+            time.sleep(1)
 
         db.add_ip_to_db(self.ip_addr)
 
@@ -482,14 +545,30 @@ class ImageCapture(object):
         gdm.clear_auto_login(config_dict[0]['clearautologin'][0], User.name())
         self.get_location()
 
-        while True:
-            try:
-                self.tail_file(config_dict[0]['logfile'][0])
-            except IOError as ioError:
-                logger.log("ERROR", "IOError: " + str(ioError))
-            except KeyboardInterrupt:
-                logger.log("INFO", " [Control C caught] - Exiting ImageCapturePy now!")
-                break
+        try:
+            self.tail_file(config_dict[0]['logfile'][0])
+            #process = multiprocessing.Process(
+                #target=self.tail_file, args=(config_dict[0]['logfile'][0],)
+            #)
+            #process.start()
+        except IOError as ioError:
+            logger.log("ERROR", "IOError: " + str(ioError))
+        except KeyboardInterrupt:
+            logger.log("INFO", " [Control C caught] - Exiting ImageCapturePy now!")
+            process.terminate()
+        except Exception as exception:
+            logger.log("ERROR", "Exception in main(), exception => "+str(exception))
+
+#        while True:
+#            try:
+#                self.tail_file(config_dict[0]['logfile'][0])
+#            except IOError as ioError:
+#                logger.log("ERROR", "IOError: " + str(ioError))
+#            except KeyboardInterrupt:
+#                logger.log("INFO", " [Control C caught] - Exiting ImageCapturePy now!")
+#                break
+#            except Exception as exception:
+#                logger.log("ERROR", "Exception in main(), exception => "+str(exception))
 
 # This class is used to grab the location of the laptop. The loacation data
 # is in the form of longitude/latitude coordinates and is E-mailed to you.
