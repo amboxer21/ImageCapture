@@ -1,6 +1,6 @@
 # ImageCapture
 ### Description
-&nbsp;&nbsp;&nbsp;&nbsp;A program that captures an image and the geolocation data of any user that attempts to login to your compuper x amount of times. The data collected by ImageCapture is then E-mailed to the address you specify. This is a work in progress, so if you find any issues or bugs, please create an issue! I would very much appreciate it!
+&nbsp;&nbsp;&nbsp;&nbsp;A program that captures an image and the geolocation data of any user that attempts to login to your compuper x amount of times. The data collected by ImageCapture is then E-mailed to the address you specify. This is a work in progress, so if you find any issues or bugs, please create an issue! I would very much appreciate it! PLEASE FORK INSTEAD OF CLONE, I WOULD GREATLY APPRECIATE IT!
 
 ### [Details]
 ##### Overview:
